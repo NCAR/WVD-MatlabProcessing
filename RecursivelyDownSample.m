@@ -1,8 +1,8 @@
 % Written by: Robert Stillwell 
 % Written for: NCAR
-% Modificication Info: Created February 13, 2018
+% Modificication Info: Created March 23, 2018
 
-function [ReturnDataStructure] = RecursivelyInterpolateStructure(OriginalDataStructure,OldTime,NewTime,Method,Extraoplation)
+function [ReturnDataStructure] = RecursivelyDownSample(OriginalDataStructure,DownSample,OriginalSize)
 %
 %
 %
@@ -10,7 +10,7 @@ function [ReturnDataStructure] = RecursivelyInterpolateStructure(OriginalDataStr
 %% Converting the surface weather structure into a cell array
 [Cell, FieldNames] = RecursiveStruct2Cell(OriginalDataStructure);
 %% Recursively performing an interpolation of the cell contents
-CellDataNew = RecursiveInterpolateData(Cell,OldTime,NewTime,Method,Extraoplation);
+CellDataNew = RecursiveDownSample(Cell,DownSample,OriginalSize);
 %% Convert the surface weather cell array back to a structure
 ReturnDataStructure = RecursiveCell2Struct(CellDataNew, FieldNames);
 
@@ -35,22 +35,17 @@ for m=1:1:size(Cell,1)
             Cell{m,1} = Temp;
         end
     end
-   FieldNames2{m,1} = FieldNames{m,1}; 
+   FieldNames2{m,1} = FieldNames{m,1}; %#ok<AGROW>
 end
 Struct = cell2struct(Cell,FieldNames2);
 end
 
 % This function performs interpolation on all elements in a cell array
 % recursively
-function [CellDataNew] = RecursiveInterpolateData(CellData, OldTime, NewTime, Method, Extraoplation) 
+function [CellDataNew] = RecursiveDownSample(CellData,DownSample,OriginalSize) 
 %                        
 % Inputs: CellData:      
-%         OldTime:       
-%         NewTime:       
-%         Method:        The method of interpolation. Inputs should be the
-%                        same as those for the interp1 function
-%         Extrapolation: The method of extrapolation. Inputs should be the
-%                        same as those for the interp1 function
+%         Fill:     
 %                        
 % Outputs: CellDataNew:  
 %                        
@@ -58,17 +53,17 @@ function [CellDataNew] = RecursiveInterpolateData(CellData, OldTime, NewTime, Me
 for m=1:1:size(CellData,1)
    if iscell(CellData{m,1}) 
        % Need to dive down further into the cell array
-       Temp = RecursiveInterpolateData(CellData{m,1},OldTime,NewTime,Method,Extraoplation);
+       Temp = RecursivelyDownSample(CellData{m,1},DownSample,OriginalSize);
        CellDataNew{m,1} = Temp;                       %#ok<*AGROW>
    else
-       % At the bottom of the cell tree so interpolate if it is not just a
+       % At the bottom of the cell tree so fill data if it is not just a
        % single number
-       if size(OldTime,1) == size(CellData{m,1},1)
-           if size(OldTime,1) ~= size(NewTime,1) % Already interpolated
-               CellDataNew{m,1} = interp1(OldTime,CellData{m,1},NewTime,Method);
-           else
-               CellDataNew{m,1} = CellData{m,1};
-           end
+       if size(CellData{m,1},1) == OriginalSize % length(CellData{m,1}) > 1
+           % Downsampling by taking the moving mean then taking the middle
+           % point
+           CellData{m,1} = downsample(movmean(CellData{m,1},DownSample),...
+                                      DownSample,ceil((DownSample+1)/2));
+           CellDataNew{m,1} = CellData{m,1};
        else
            CellDataNew{m,1} = CellData{m,1};
        end

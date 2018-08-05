@@ -18,20 +18,19 @@ function DIALAnalysis_V01_01(JSondeData, Options, Paths)
 %
 %%
 fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
-%% Defining type map
-if strcmp(Paths.FigureType,'DIAL01') || ...
-   strcmp(Paths.FigureType,'DIAL03') || ...
-   strcmp(Paths.FigureType,'DIAL04')
+%% Defining type map  (Info that should end up in jsond files eventually) 
+if strcmp(Paths.FigureType,'DIAL01') || strcmp(Paths.FigureType,'DIAL03') ||  ...
+   strcmp(Paths.FigureType,'DIAL04')   
     % Map in the stored cell arrays
     Map.Channels  = {'Offline';'Online'};
     Map.Offline   = 1;
     Map.Online    = 2;
     % Map to get to hardware location
-    HardwareMap.ChannelName    = {'WV Offline';'WV Online'};
+    HardwareMap.ChannelName    = {'WVOffline';'WVOnline'};
     HardwareMap.Etalon         = [0;0];
     HardwareMap.Laser          = [0;1];
-    HardwareMap.PhotonCounting = [0;8];
-    HardwareMap.Power          = [0;6];
+    HardwareMap.PhotonCounting = [0;8]; % Still need from file
+    HardwareMap.Power          = [0;6]; % Still need from file
 elseif strcmp(Paths.FigureType,'DIAL02')
     % Map in the stored cell arrays
     Map.Channels  = {'Online';'Offline';'Molecular';'Combined'};
@@ -40,22 +39,18 @@ elseif strcmp(Paths.FigureType,'DIAL02')
     Map.Online    = 1;
     Map.Molecular = 3;
     % Map to get to hardware location
-    HardwareMap.ChannelName    = {'WV Online';'WV Offline';'HSRL Molecular';'HSRL Combined'};
+    HardwareMap.ChannelName    = {'WVOnline';'WVOffline';'HSRLMolecular';'HSRLCombined'};
     HardwareMap.PhotonCounting = [0;8;2;3];
     HardwareMap.Power          = [0;6;1;1];
     HardwareMap.Etalon         = [0;0;1;1];
     HardwareMap.Laser          = [0;1;2;2];
 end
 
-DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';'WSsample*.nc'};
+DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
 
 %% Pulling information out of the file names and paths
-% DayOfYear = juliandate(['20',Paths.Date],'yyyymmdd') - ...
-%             juliandate(['20',Paths.Date(1:2),'0101'],'yyyymmdd') + 1; 
-DayOfYear = day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');    
-        
+DayOfYear = day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');         
 year      = 2000 + str2double(Paths.Date(1:2)); 
-        
 Paths.FolderDate = Paths.Date;
 Paths.FolderType = 'All';
 
@@ -72,40 +67,32 @@ Plotting.ColorMap = importdata('NCAR_C_Map.mat');
 HitranData = dlmread('815nm_841nm_HITRAN_2008.csv',',',[1 1 1676 8]);
 cd(Paths.Code)
 
+%% Importing online and offline files from the selected date
+% Loading data
+fprintf('Loading Data\n')
+[Counts,PulseInfoNew] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths);
+
+% Determining pulse info
+PulseInfo.BinWidth    = round((double(mean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
+PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + DayOfYear;
+PulseInfo.DeltaRIndex = 150/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing 
+PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
+clear DayOfYear
+
 %% Defining constants 
 % use to keep the arbitrary units of RB scale the same before
 RB_scale = 1; 
-%Spatial averaging (range average) in bins.  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Should be removable with current data availible 
-PulseInfo.BinWidth    = round((JSondeData.MCS.bin_duration*1e-9*3e8/2)*10)/10;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-PulseInfo.DeltaRIndex = 150/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing 
-PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
 % Defining arrays used to smooth the data
 AverageRange   = [1;round(1500/PulseInfo.BinWidth);round(2500/PulseInfo.BinWidth)];
 SpatialAverage = [150/PulseInfo.BinWidth; 300/PulseInfo.BinWidth; 600/PulseInfo.BinWidth];
 
-%% Importing online and offline files from the selected date
-% Loading data
-fprintf('Loading Data\n')
-[Etalon,Laser,MCS,Power,WStation] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths);
-[Counts,PulseInfoNew]             = RawNetCDFDataParse(Etalon,Laser,MCS,Power,WStation,HardwareMap);
-[~,PulseInfoNew]                  = RawNetCDFData2RegularGrid(PulseInfoNew);
-clear Etalon Laser MCS Power WStation
-
-PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + DayOfYear;
-clear DayOfYear
-
 %% read in housekeeping station data
-PulseInfo.BenchTemperature      = nan.*PulseInfo.DataTimeRaw;                                            % transmitted average power
+PulseInfo.BenchTemperature      = PulseInfoNew.Housekeeping.Temperature;     % Thermocouple data
 PulseInfo.LaserCurrent{1,1}     = PulseInfoNew.Laser.Current{1,1};           % Offline current
 PulseInfo.LaserCurrent{2,1}     = PulseInfoNew.Laser.Current{2,1};           % Online current
 PulseInfo.LaserTemperature{1,1} = PulseInfoNew.Laser.TemperatureActual{1,1}; % offline current
 PulseInfo.LaserTemperature{2,1} = PulseInfoNew.Laser.TemperatureActual{2,1}; % online current
-% % % PulseInfo.LaserPower            = PulseInfoNew.Laser.Power{1,1};             % transmitted average power
+PulseInfo.LaserPower            = PulseInfoNew.Laser.Power{1,1};             % transmitted average power
 
 if Options.flag.WS==1
   SurfaceWeather.Temperature      = PulseInfoNew.WeatherStation.Temperature;            %temperature in C
@@ -166,17 +153,10 @@ for m=1:1:size(PulseInfo.Lambda,1)
     end
 end
 clear A edges value Possible
-
-
-
   
 %% Range vector in meters
 Altitude.RangeOriginal = single(0:PulseInfo.BinWidth:(size(Counts.Raw{2,1},2)-1)*PulseInfo.BinWidth);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 Altitude.RangeSquared  = (Altitude.RangeOriginal).^2./((JSondeData.MCS.bin_duration*JSondeData.MCS.accum*(1-JSondeData.SwitchRatio)));  % in units of km^2 C/ns
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Altitude.RangeShift    = (PulseInfo.DeltaRIndex-1)/2*PulseInfo.BinWidth + JSondeData.RangeCorrection; %
 Altitude.RangeActual   = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
 
@@ -192,6 +172,10 @@ for m=1:1:size(Counts.Raw,1)
     if Options.flag.pileup == 1
         Counts.Parsed{m,1} = CorrectPileUp(Counts.Parsed{m,1},JSondeData.MCS,JSondeData.DeadTime);
     end
+%     %%%%%%%%%%%%%%%%%%%%%% Insert denoising here %%%%%%%%%%%%%%%%%%%%%%
+%     12  tic; Counts.Denoised = iterVSTpoisson(Counts.Parsed{m,1}); toc;
+%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     % select last ~1200 meters to measure background
     Counts.Background1D{m,1} = mean(Counts.Parsed{m,1}(:,end-round(1200/PulseInfo.BinWidth):end),2)-0;
     % Instantiate the 2 dimensional background array
@@ -259,9 +243,9 @@ if Options.flag.gradient_filter == 1
 end
 
 %% Spectral Line Fitting
-if strcmp(Options.System, 'DIAL04')
-    Options.flag.WS = 0;
-end
+% % % if strcmp(Options.System, 'DIAL04')
+% % %     Options.flag.WS = 0;
+% % % end
 
 [DataProducts.Sigma{Map.Online,1},DataProducts.Sigma{Map.Offline,1}] =  ...
     SpectralLineFitting(Options.flag, PulseInfo.LambdaNearest{Map.Online,1},  ...
@@ -273,23 +257,21 @@ end
                                       Altitude.RangeOriginal,                 ...
                                       SurfaceWeather.Pressure,                ...
                                       SurfaceWeather.Temperature);
-if strcmp(Options.System, 'DIAL04')
-    Options.flag.WS = 1;
-end
+% % % if strcmp(Options.System, 'DIAL04')
+% % %     Options.flag.WS = 1;
+% % % end
                                   
-% [DataProducts.Sigma{Map.Online,1},DataProducts.Sigma{Map.Offline,1}] =  ...
-%     SpectralLineFitting(Options.flag, PulseInfo.LambdaNearest{Map.Online,1}, PulseInfo.LambdaNearest{Map.Offline,1}, PulseInfo.LambdaNumber{Map.Online,1}, PulseInfo.LambdaNumber{Map.Offline,1}, HitranData,Counts.CountRate{Map.Online,1},Altitude.RangeOriginal, SurfaceWeather.Pressure, SurfaceWeather.Temperature);
-
 %% DIAL Equation to calculate Number Density and error
-[DataProducts.N,DataProducts.N_Error] = DIALEquationNarrowlySpaced(Counts.CountRate{Map.Online,1},     ...
-                                                                   Counts.Integrated{Map.Online,1},    ...
-                                                                   Counts.CountRate{Map.Offline,1},    ...
-                                                                   Counts.Integrated{Map.Offline,1},   ...
-                                                                   Counts.Background2D{Map.Online,1},  ...
-                                                                   Counts.Background2D{Map.Offline,1}, ...
-                                                                   DataProducts.Sigma{Map.Online,1},   ...
-                                                                   DataProducts.Sigma{Map.Offline,1},  ...
-                                                                   PulseInfo.BinWidth);
+[DataProducts.N,DataProducts.N_Error] =  ...
+    DIALEquationNarrowlySpaced(Counts.CountRate{Map.Online,1},     ...
+                               Counts.Integrated{Map.Online,1},    ...
+                               Counts.CountRate{Map.Offline,1},    ...
+                               Counts.Integrated{Map.Offline,1},   ...
+                               Counts.Background2D{Map.Online,1},  ...
+                               Counts.Background2D{Map.Offline,1}, ...
+                               DataProducts.Sigma{Map.Online,1},   ...
+                               DataProducts.Sigma{Map.Offline,1},  ...
+                               PulseInfo.BinWidth);
 
 %% Molecular backscatter 
 % Calculate temperature and pressure profile based on surface measurement and 
@@ -421,7 +403,7 @@ fprintf('Saving Data\n')
 if Options.flag.save_data == 1
     cd(Paths.SaveData)
     Paths.FileName = ['ProcessedDIALData_DIAL0',Options.System(6),'_20',num2str(Paths.FolderDate),'.mat'];
-    save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','SurfaceWeather')
+    save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','PulseInfoNew','SurfaceWeather')
     cd(Paths.Code)
 end
 if Options.flag.save_netCDF == 1  % save the data as an nc file
@@ -449,6 +431,8 @@ cd(Paths.Code) % point back to original directory
 if Options.flag.troubleshoot == 1
   Plotting_TroubleshootingPlots2
 end
+
+PlotHousekeepingData(PulseInfoNew,Options,Paths)
 
 %% Trying to get my arms around the variables
 % Variables used only for plotting
@@ -720,8 +704,8 @@ netcdf.close(ncid);
 end
 
 
-
-function [Etalon,Laser,MCS,Power,WStation] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths)
+%%%%%%%%%%% Functions to help and merge data %%%%%%%%%%%
+function [Counts,PulseInfoNew] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths)
 %
 %
 %
@@ -730,18 +714,26 @@ function [Etalon,Laser,MCS,Power,WStation] = RawNetCDFDataRead(DataTypes,Hardwar
 %
 %%
 cd(Paths.RawNetCDFData)
+
+%% Hardware types
+EtalonTypes = {'WVEtalon','HSRLEtalon','O2Etalon'};
+LaserTypes  = {'WVOnline','WVOffline','HSRL','O2Online','O2Offline'};
+
 %% Pre-allocating data
 Etalon.TemperatureActual  = [];
 Etalon.TemperatureDesired = [];
 Etalon.TimeStamp          = [];
-Etalon.Type               = [];  % Not coming through
+Etalon.Type               = [];
+
+Thermocouple.TimeStamp    = [];
+Thermocouple.Temperature  = [];
 
 Laser.Current             = [];
 Laser.Locked              = [];
 Laser.TemperatureActual   = [];
 Laser.TemperatureDesired  = [];
 Laser.TimeStamp           = [];
-Laser.Type                = []; % Not coming through
+Laser.Type                = [];
 Laser.WavelengthActual    = [];
 Laser.WavelengthDesired   = [];
 
@@ -754,6 +746,13 @@ MCS.TimeStamp             = [];
          
 Power.LaserPower          = [];
 Power.TimeStamp           = [];
+
+UPS.BatteryCapacity       = [];
+UPS.BatteryHours          = [];
+UPS.BatteryInUse          = [];
+UPS.BatteryNominal        = [];
+UPS.Temperature           = [];
+UPS.TimeStamp             = [];
 
 WStation.AbsoluteHumidity = [];
 WStation.Pressure         = [];
@@ -771,19 +770,46 @@ for m=1:1:size(DataTypes,1)
        % Loading the data
        switch DataTypes{m,1}
            case 'Etalonsample*.nc'
+               A = h5read(Filename,'/EtalonNum');
+               Type = -1.*ones(size(A));
+               for p=1:1:size(A,1)   % Looping over all data entries
+                   for q=1:1:size(EtalonTypes,2) % Looping over all types
+                       if isequal(A{p,1},EtalonTypes{q})
+                           % If the type is recognized, save it
+                           Type(p,1) = q - 1;
+                           break
+                       end
+                   end
+               end
                Etalon.TimeStamp          = [Etalon.TimeStamp         ;double(ncread(Filename,'time'))];
-%                Etalon.Type               = [Etalon.Type              ;ncread(Filename,'EtalonNum')];
+               Etalon.Type               = [Etalon.Type              ;Type];
                Etalon.TemperatureActual  = [Etalon.TemperatureActual ;ncread(Filename,'Temperature')];
                Etalon.TemperatureDesired = [Etalon.TemperatureDesired;ncread(Filename,'TempDiff')];
+               clear Type
+           case 'HKeepsample*.nc'
+               Thermocouple.TimeStamp   = [Thermocouple.TimeStamp;   double(ncread(Filename,'time'))];
+               Thermocouple.Temperature = [Thermocouple.Temperature; double(ncread(Filename,'Temperature'))];
            case 'LLsample*.nc'
+               A = h5read(Filename,'/LaserName');
+               Type = -1.*ones(size(A));
+               for p=1:1:size(A,1)   % Looping over all data entries
+                   for q=1:1:size(LaserTypes,2) % Looping over all types
+                       if isequal(A{p,1},LaserTypes{q})
+                           % If the type is recognized, save it
+                           Type(p,1) = q - 1;
+                           break
+                       end
+                   end
+               end
                Laser.TimeStamp           = [Laser.TimeStamp          ;double(ncread(Filename,'time'))];
-%                Laser.Type                = [Laser.Type               ;ncread(Filename,'LaserName')];
+               Laser.Type                = [Laser.Type               ;Type];
                Laser.WavelengthActual    = [Laser.WavelengthActual   ;double(ncread(Filename,'Wavelength'))];
                Laser.WavelengthDesired   = [Laser.WavelengthDesired  ;double(ncread(Filename,'WaveDiff'))];
                Laser.Locked              = [Laser.Locked             ;double(ncread(Filename,'IsLocked'))];
                Laser.TemperatureActual   = [Laser.TemperatureActual  ;ncread(Filename,'TempMeas')];
                Laser.TemperatureDesired  = [Laser.TemperatureDesired ;ncread(Filename,'TempDesired')];
                Laser.Current             = [Laser.Current            ;ncread(Filename,'Current')];
+               clear Type
            case 'MCSsample*.nc'
                A = double(ncread(Filename,'time'));
                if str2double(Filename(10:11)) == 23
@@ -809,6 +835,13 @@ for m=1:1:size(DataTypes,1)
                end
                Power.TimeStamp           = [Power.TimeStamp          ;A];
                clear A
+           case 'UPSsample*.nc'
+               UPS.BatteryCapacity       = [UPS.BatteryCapacity ; ncread(Filename,'BatteryCapacity')];
+               UPS.BatteryHours          = [UPS.BatteryHours    ; ncread(Filename,'BatteryTimeLeft')];
+               UPS.BatteryInUse          = [UPS.BatteryInUse    ; ncread(Filename,'BatteryInUse')];
+               UPS.BatteryNominal        = [UPS.BatteryNominal  ; double(ncread(Filename,'BatteryNominal'))];
+               UPS.Temperature           = [UPS.Temperature     ; ncread(Filename,'UPSTemperature')];
+               UPS.TimeStamp             = [UPS.TimeStamp       ; ncread(Filename,'time')];
            case 'WSsample*.nc'
                A = double(ncread(Filename,'time'));
                if str2double(Filename(9:10)) == 00
@@ -827,17 +860,10 @@ clear m n s A Filename
 Etalon.TemperatureDesired = Etalon.TemperatureActual - Etalon.TemperatureDesired;
 Laser.WavelengthDesired   = Laser.WavelengthActual   - Laser.WavelengthDesired;
 
-%% Temp code needed because I can't fully read netCDF files
-% Temporary code to determine the etalon types
-Etalon.Type = zeros(size(Etalon.TimeStamp));
-Etalon.Type(Etalon.TemperatureDesired<25) = 0;   % Check this
-Etalon.Type(Etalon.TemperatureDesired>25) = 1;
-% Temporary code to determine the laser types
-Laser.Type = zeros(size(Laser.TimeStamp));
-Laser.Type(Laser.WavelengthDesired < 800) = 2;
-Laser.Type(Laser.WavelengthDesired > 828.27) = 1;
+%% Changing back to the coding directory
+cd(Paths.Code)
 
-% Getting rid of identical time stamps in power monitoring data 
+%% Getting rid of identical time stamps in power monitoring data 
 A = find(diff(Power.TimeStamp) == 0);
 Counter = 0;
 while ~isempty(A)
@@ -867,6 +893,13 @@ clear MCSFirst MCSLast
 % Removing incomplete scan in the middle of the day
 MCS = RemoveIncompleteMCSScans(MCS);
 
+%% Downsampling power data to roughly MCS timegrid
+% Determining how many data points to average
+PowerMeasurementsPerData = ceil(size(Power.TimeStamp,1)./ ...
+                                size(MCS.TimeStamp(MCS.Channel == MCS.Channel(1)),1));
+% Downsampling the data by averaging then taking the center values
+Power  = RecursivelyDownSample(Power,PowerMeasurementsPerData,size(Power.TimeStamp,1));
+                         
 %% Removing bad laser scans
 BadData = find(Laser.WavelengthActual <= -1);
 if isempty(BadData) == 0
@@ -892,19 +925,35 @@ if isempty(WStation.TimeStamp)
    WStation.RelativeHumidity = TimeBounds.*nan;
    WStation.Temperature      = TimeBounds.*nan;
 end
-
-%% Marking time gaps
-Laser    = PaddingDataStructureTimeSeries(Laser,5);
-Etalon   = PaddingDataStructureTimeSeries(Etalon,5);
-WStation = PaddingDataStructureTimeSeries(WStation,5);
-% Power    = PaddingDataStructureTimeSeries(Power,5);
-MCS      = PaddingDataStructureMCS(MCS,5,7043);
-
-%% Changing back to the coding directory
-cd(Paths.Code)
+if isempty(Thermocouple.TimeStamp)
+   Thermocouple.TimeStamp    = TimeBounds;
+   Thermocouple.Temperature  = TimeBounds.*nan;
+end
+if isempty(UPS.TimeStamp)
+   UPS.TimeStamp             = TimeBounds;
+   UPS.BatteryCapacity       = TimeBounds.*nan;
+   UPS.BatteryHours          = TimeBounds.*nan;
+   UPS.BatteryInUse          = TimeBounds.*nan;
+   UPS.BatteryNominal        = TimeBounds.*nan;
+   UPS.Temperature           = TimeBounds.*nan;
 end
 
-function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,WStation,HardwareMap)
+%% Marking time gaps
+Laser        = PaddingDataStructureTimeSeries(Laser,5);
+Thermocouple = PaddingDataStructureTimeSeries(Thermocouple,5);
+Etalon       = PaddingDataStructureTimeSeries(Etalon,5);
+WStation     = PaddingDataStructureTimeSeries(WStation,5);
+UPS          = PaddingDataStructureTimeSeries(UPS,5);
+Power        = PaddingDataStructureTimeSeries(Power,5);
+MCS          = PaddingDataStructureMCS(MCS,5,7043);
+
+%% Parsing data
+[Counts,PulseInfoNew] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap);
+%% Pushing data to a regular grid
+[~,PulseInfoNew]      = RawNetCDFData2RegularGrid(PulseInfoNew);
+end
+
+function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
 %
 %
 %
@@ -920,10 +969,12 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     PulseInfo.Etalon.TemperatureActual{m,1}  = Etalon.TemperatureActual(Etalon.Type == HardwareMap.Etalon(m) | isnan(Etalon.Type));
     PulseInfo.Etalon.TemperatureDesired{m,1} = Etalon.TemperatureDesired(Etalon.Type == HardwareMap.Etalon(m) | isnan(Etalon.Type));
     PulseInfo.Etalon.TimeStamp{m,1}          = Etalon.TimeStamp(Etalon.Type == HardwareMap.Etalon(m) | isnan(Etalon.Type));
+    % Parsing out the thermocouple data
+    PulseInfo.Housekeeping.Temperature       = Thermocouple.Temperature;
     % Parsing out the laser
     PulseInfo.Laser.Current{m,1}            = Laser.Current(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.Locked{m,1}             = Laser.Locked(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
-%     PulseInfo.Laser.Power{m,1}              = Power.LaserPower(:,HardwareMap.Power(m)+1);
+    PulseInfo.Laser.Power{m,1}              = Power.LaserPower(:,HardwareMap.Power(m)+1);
     PulseInfo.Laser.TemperatureActual{m,1}  = Laser.TemperatureActual(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.TemperatureDesired{m,1} = Laser.TemperatureDesired(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.WavelengthActual{m,1}   = Laser.WavelengthActual(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
@@ -932,10 +983,18 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     Counts.Raw{m,1}                         = MCS.Data(MCS.Channel == HardwareMap.PhotonCounting(m),:);
     % Time stamps
     PulseInfo.TimeStamp.Etalon{m,1}         = Etalon.TimeStamp(Etalon.Type == HardwareMap.Etalon(m) | isnan(Etalon.Type));
+    PulseInfo.TimeStamp.Housekeeping        = Thermocouple.TimeStamp;
     PulseInfo.TimeStamp.LidarData{m,1}      = MCS.TimeStamp(MCS.Channel == HardwareMap.PhotonCounting(m));
     PulseInfo.TimeStamp.LaserLocking{m,1}   = Laser.TimeStamp(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
-%     PulseInfo.TimeStamp.LaserPower{m,1}     = Power.TimeStamp;
+    PulseInfo.TimeStamp.LaserPower{m,1}     = Power.TimeStamp;
+    PulseInfo.TimeStamp.UPS                 = UPS.TimeStamp;
     PulseInfo.TimeStamp.WeatherStation      = WStation.TimeStamp;
+    % Parsing out the UPS data
+    PulseInfo.UPS.BatteryCapacity = UPS.BatteryCapacity;
+    PulseInfo.UPS.BatteryHours    = UPS.BatteryHours;
+    PulseInfo.UPS.BatteryInUse    = UPS.BatteryInUse;
+    PulseInfo.UPS.BatteryNominal  = UPS.BatteryNominal;
+    PulseInfo.UPS.Temperature     = UPS.Temperature;
     % Parsing out the weather station
     PulseInfo.WeatherStation.AbsHumidity    = WStation.AbsoluteHumidity;
     PulseInfo.WeatherStation.Pressure       = WStation.Pressure;
@@ -951,12 +1010,14 @@ function [PulseInfoOld,PulseInfo] = RawNetCDFData2RegularGrid(PulseInfo)
 %
 %%
 PulseInfoOld = PulseInfo;
-% % % % PulseInfo.TimeStamp.Merged = PulseInfo.TimeStamp.LidarData{1,1};
 PulseInfo.TimeStamp.Merged = double(PulseInfo.TimeStamp.LidarData{1,1});
-% Pushing weather station data to MCS time grid
+% Pushing weather station, housekeeping, and UPS data to MCS time grid
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.WeatherStation,PulseInfo.TimeStamp.Merged,'linear','extrap');
+PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.Housekeeping,PulseInfo.TimeStamp.Merged,'linear','extrap');
+PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.UPS,PulseInfo.TimeStamp.Merged,'linear','extrap');
+
 % Pushing power data to MCS time grid
-% % % % PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.LaserPower{1,1},PulseInfo.TimeStamp.Merged,'linear','extrap');
+PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.LaserPower{1,1},PulseInfo.TimeStamp.Merged,'linear','extrap');
 % Pushing laser locking data to MCS time grid by looping over lasers...need
 % to loop because native grids are all unique until this step
 for m=1:1:size(PulseInfo.TimeStamp.LaserLocking)

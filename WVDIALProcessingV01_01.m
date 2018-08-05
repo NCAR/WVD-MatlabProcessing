@@ -8,7 +8,7 @@ clear; close all; clc
 
 %% Defining processing options
 Options = DefineOptions;
-Options.System   = 'DIAL01';
+Options.System   = 'DIAL03';
 Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
@@ -19,7 +19,14 @@ Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 %                 '180427';'180428';'180429';'180430'};
 % DatesDesired = {'180523';'180524';'180525';'180526';'180527';'180528';
 %                 '180529';'180530';'180531'};
-DatesDesired = {'180702'};
+DatesDesired = {'180804'};
+% DatesDesired = {'180614';'180615';'180616';'180617';'180618';'180619';'180620';
+%                 '180621';'180622';'180623';'180624';'180625';'180626';'180627';
+%                 '180628';'180629';'180630';'180701';'180702'};
+% DatesDesired = {'180702';'180703';'180704';'180705';'180706';'180707';'180708';...
+%                 '180709';'180710';'180711';'180712';'180713';'180714';'180715';...
+%                 '180716';'180717';'180718';'180719';'180720';'180721';'180722'};
+
 
 for m=1:1:size(DatesDesired,1)
     % Parsing the dates out for processing

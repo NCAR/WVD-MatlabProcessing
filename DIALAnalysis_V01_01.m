@@ -73,7 +73,7 @@ fprintf('Loading Data\n')
 [Counts,PulseInfoNew] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths);
 
 % Determining pulse info
-PulseInfo.BinWidth    = round((double(mean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
+PulseInfo.BinWidth    = round((double(nanmean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
 PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + DayOfYear;
 PulseInfo.DeltaRIndex = 150/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing 
 PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
@@ -432,7 +432,7 @@ if Options.flag.troubleshoot == 1
   Plotting_TroubleshootingPlots2
 end
 
-PlotHousekeepingData(PulseInfoNew,Options,Paths)
+PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
 
 %% Trying to get my arms around the variables
 % Variables used only for plotting
@@ -1117,7 +1117,7 @@ DataPadded = cell2struct(NewCell,FieldNames);
 end
 
 % This function looks at the time series of MCS data and attempts to find
-% any sets of data that are incomplete. This can happen when the system is
+% any sets of data thclose aat are incomplete. This can happen when the system is
 % turned on or off in the middle of the transmission of a set of MCS
 % data-grams or when the set is interupted by the start or end of a day
 function [MCS] = RemoveIncompleteMCSScans(MCS)

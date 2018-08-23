@@ -8,12 +8,18 @@ clear; close all; clc
 
 %% Defining processing options
 Options = DefineOptions;
-Options.System   = 'DIAL03';
+Options.System   = 'DIAL04';
 Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
-DatesDesired = {'180810';'180811';'180812';'180813';'180814';'180815';
+% DatesDesired = {'180801';'180802';'180803';'180804';'180805';
+%                 '180806';'180807';'180808';'180809';
+%                 '180810';'180811';'180812';'180813';'180814';'180815';
+%                 '180816';'180817';'180818';'180819';'180820';'180821';'180822'};
+DatesDesired = {'180803';'180804';'180805';
+                '180806';'180807';'180808';'180809';
+                '180810';'180811';'180812';'180813';'180814';'180815';
                 '180816';'180817';'180818';'180819';'180820';'180821';'180822'};
 % DatesDesired = {'180823'};
 

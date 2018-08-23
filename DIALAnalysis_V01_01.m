@@ -939,12 +939,12 @@ if isempty(UPS.TimeStamp)
 end
 
 %% Marking time gaps
-Laser        = PaddingDataStructureTimeSeries(Laser,5);
-Thermocouple = PaddingDataStructureTimeSeries(Thermocouple,5);
-Etalon       = PaddingDataStructureTimeSeries(Etalon,5);
-WStation     = PaddingDataStructureTimeSeries(WStation,5);
-UPS          = PaddingDataStructureTimeSeries(UPS,5);
-Power        = PaddingDataStructureTimeSeries(Power,5);
+Laser        = PaddingDataStructureTimeSeries(Laser,5,0);
+Thermocouple = PaddingDataStructureTimeSeries(Thermocouple,5,0);
+Etalon       = PaddingDataStructureTimeSeries(Etalon,5,1);
+WStation     = PaddingDataStructureTimeSeries(WStation,5,0);
+UPS          = PaddingDataStructureTimeSeries(UPS,5,0);
+Power        = PaddingDataStructureTimeSeries(Power,5,0);
 MCS          = PaddingDataStructureMCS(MCS,5,7043);
 
 %% Parsing data
@@ -1036,7 +1036,7 @@ end
 % This is a general function used to identify missing data times when the
 % data are not sent in serial. It inserts nan values into the time series
 % which can not be interpolated thus marking all data gaps
-function [DataPadded] = PaddingDataStructureTimeSeries(Data,MedianWidths2Flag)
+function [DataPadded] = PaddingDataStructureTimeSeries(Data,MedianWidths2Flag,IgnoreTight)
 %
 %
 %
@@ -1046,9 +1046,23 @@ function [DataPadded] = PaddingDataStructureTimeSeries(Data,MedianWidths2Flag)
 %% Constants
 TimeStepToAdd = 1e-9;
 %% Defining function handles (distance in medians from the median)
-FindOutliers = @(DiffTimes) (DiffTimes - median(DiffTimes))./median(DiffTimes);
-%% Finding the points where the time stamps are more than 5 median widths away from the median
-A = find(FindOutliers(diff([0;Data.TimeStamp;24])) >= MedianWidths2Flag);
+FindOutliers  = @(DiffTimes) (DiffTimes - median(DiffTimes))./median(DiffTimes);
+FindOutliers2 = @(DiffTimes,Spacing) (DiffTimes - Spacing)./Spacing;
+%% Finding out if closely spaced readings are to be ignored
+if IgnoreTight
+    % Finding the median spacing of unique elements
+    DiffTimes = diff([0;Data.TimeStamp;24]);
+    Spacing = median(diff([0;Data.TimeStamp(Data.Type==min(unique(Data.Type)));24]));
+    % With the second most common value, checking how far away other points
+    % are from that in units of that
+    A = find(FindOutliers2(DiffTimes,Spacing) >= MedianWidths2Flag);
+else
+    % Finding the points where the time stamps are more than ## median 
+    % widths away from the median
+    A = find(FindOutliers(diff([0;Data.TimeStamp;24])) >= MedianWidths2Flag);
+end
+% %% Finding the points where the time stamps are more than 5 median widths away from the median
+% A = find(FindOutliers(diff([0;Data.TimeStamp;24])) >= MedianWidths2Flag);
 %% Converting the names structure to a cell array
 CellArray  = struct2cell(Data);
 FieldNames = fieldnames(Data);

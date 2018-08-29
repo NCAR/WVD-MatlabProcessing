@@ -1,7 +1,7 @@
 
 
 
-function PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plotting,SurfaceWeather)
+function PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
 %
 %
 %
@@ -18,7 +18,7 @@ end
 subplot1=subplot(2,1,1,'Parent',figure1);
 box(subplot1,'on');
 set(gcf,'renderer','zbuffer');
-Z = double(log10((real(Counts.RelativeBackscatter{1,1}')./RB_scale)));
+Z = double(log10((real(Counts.RelativeBackscatter{Map.Offline,1}')./RB_scale)));
 h = pcolor(Plotting.x,Plotting.y,Z);
 set(h, 'EdgeColor', 'none');
 set(gca,'TickDir','out');

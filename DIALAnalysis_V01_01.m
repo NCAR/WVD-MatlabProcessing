@@ -20,7 +20,11 @@ function DIALAnalysis_V01_01(JSondeData, Options, Paths)
 fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 %% Defining type map  (Info that should end up in jsond files eventually) 
 if strcmp(Paths.FigureType,'DIAL01') || strcmp(Paths.FigureType,'DIAL03') ||  ...
-   strcmp(Paths.FigureType,'DIAL04')   
+   strcmp(Paths.FigureType,'DIAL04') 
+    % Capabilities
+    Capabilities.HSRL   = 0;
+    Capabilities.O2DIAL = 0;
+    Capabilities.WVDIAL = 1;
     % Map in the stored cell arrays
     Map.Channels  = {'Offline';'Online'};
     Map.Offline   = 1;
@@ -32,6 +36,10 @@ if strcmp(Paths.FigureType,'DIAL01') || strcmp(Paths.FigureType,'DIAL03') ||  ..
     HardwareMap.PhotonCounting = [0;8]; % Still need from file
     HardwareMap.Power          = [0;6]; % Still need from file
 elseif strcmp(Paths.FigureType,'DIAL02')
+    % Capabilities
+    Capabilities.HSRL   = 1;
+    Capabilities.O2DIAL = 0;
+    Capabilities.WVDIAL = 1;
     % Map in the stored cell arrays
     Map.Channels  = {'Online';'Offline';'Molecular';'Combined'};
     Map.Combined  = 4;
@@ -243,10 +251,6 @@ if Options.flag.gradient_filter == 1
 end
 
 %% Spectral Line Fitting
-% % % if strcmp(Options.System, 'DIAL04')
-% % %     Options.flag.WS = 0;
-% % % end
-
 [DataProducts.Sigma{Map.Online,1},DataProducts.Sigma{Map.Offline,1}] =  ...
     SpectralLineFitting(Options.flag, PulseInfo.LambdaNearest{Map.Online,1},  ...
                                       PulseInfo.LambdaNearest{Map.Offline,1}, ...
@@ -257,9 +261,6 @@ end
                                       Altitude.RangeOriginal,                 ...
                                       SurfaceWeather.Pressure,                ...
                                       SurfaceWeather.Temperature);
-% % % if strcmp(Options.System, 'DIAL04')
-% % %     Options.flag.WS = 1;
-% % % end
                                   
 %% DIAL Equation to calculate Number Density and error
 [DataProducts.N,DataProducts.N_Error] =  ...
@@ -381,22 +382,28 @@ if Options.flag.decimate == 1
 end
 
 %% Calculate HSRL parameters
-% R_size                = 150;
-% % Calculating the HSRL retrievals 
-% [DataProducts.AExtinction, DataProducts.Extinction, DataProducts.ABackscatterCoeff] = ...
-%     FindHSRLParameters(DataProducts.BetaMProfile,Counts.CountRate{4,1},Counts.CountRate{3,1}, ...
-%                        ones(1,size(Counts.CountRate{4,1},2)),ones(1,size(Counts.CountRate{4,1},2)), ...
-%                        Altitude.RangeOriginal,JSondeData.ReceiverScaleFactor);
-% % Applying some data mask for the HSRL data
-% if Options.flag.mask_data == 1
-%     Combined_masked = Counts.CountRate{3,1};
-%     Combined_masked(Counts.CountRate{3,1} < 1/(R_size/PulseInfo.BinWidth)) = nan;
-%     Combined_masked(Counts.CountRate{4,1} < 1/(R_size/PulseInfo.BinWidth)) = nan;
-%     DataProducts.ABackscatterCoeff(isnan(Combined_masked))          = nan;
-%     DataProducts.AExtinction(isnan(DataProducts.ABackscatterCoeff)) = nan;
-%     clear Combined_masked
-% end
-% clear R_size
+if Capabilities.HSRL == 1
+    R_size                = 150;
+    % Calculating the HSRL retrievals
+    [DataProducts.AExtinction, DataProducts.Extinction, DataProducts.ABackscatterCoeff] = ...
+        FindHSRLParameters(DataProducts.BetaMProfile,                         ...
+                           Counts.CountRate{Map.Combined,1},                  ...
+                           Counts.CountRate{Map.Molecular,1},                 ...
+                           ones(1,size(Counts.CountRate{Map.Combined,1},2)),  ...
+                           ones(1,size(Counts.CountRate{Map.Molecular,1},2)), ...
+                           Altitude.RangeOriginal,                            ...
+                           JSondeData.ReceiverScaleFactor);
+    % Applying some data mask for the HSRL data
+    if Options.flag.mask_data == 1
+        Combined_masked = Counts.CountRate{Map.Combined,1};
+        Combined_masked(Counts.CountRate{Map.Combined,1} < 1/(R_size/PulseInfo.BinWidth)) = nan;
+        Combined_masked(Counts.CountRate{Map.Molecular,1} < 1/(R_size/PulseInfo.BinWidth)) = nan;
+        DataProducts.ABackscatterCoeff(isnan(Combined_masked))          = nan;
+        DataProducts.AExtinction(isnan(DataProducts.ABackscatterCoeff)) = nan;
+        clear Combined_masked
+    end
+    clear R_size
+end
 
 %% Save Data
 fprintf('Saving Data\n')
@@ -423,7 +430,7 @@ Plotting.xdata      = linspace(fix(min(PulseInfo.DataTimeDateNumFormat)),...
                               ceil(max(PulseInfo.DataTimeDateNumFormat)), 25);
 Plotting.y          = (Altitude.RangeOriginal./1e3);
 
-PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plotting,SurfaceWeather)
+PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
  
 toc
 cd(Paths.Code) % point back to original directory
@@ -433,6 +440,15 @@ if Options.flag.troubleshoot == 1
 end
 
 PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
+
+% 
+% figure('visible', 'on','Position',[Plotting.ScreenSize(4)/1.5 Plotting.ScreenSize(4)/10 Plotting.ScreenSize(3)/1.5 Plotting.ScreenSize(4)/1.5]);
+% pcolor((Plotting.x-Plotting.x(1)).*24,Plotting.y,real(log10(DataProducts.ABackscatterCoeff')));
+% shading flat; colorbar;
+% caxis([-8,-3]); ylim([0,12])
+% xlabel('Hour [UTC]'); ylabel('Altitude [km]'); 
+% title(['Aerosol Backscatter (20',Paths.Date,')'])
+% colormap jet
 
 %% Trying to get my arms around the variables
 % Variables used only for plotting
@@ -953,7 +969,7 @@ MCS          = PaddingDataStructureMCS(MCS,5,7043);
 [~,PulseInfoNew]      = RawNetCDFData2RegularGrid(PulseInfoNew);
 end
 
-function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
+close function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
 %
 %
 %

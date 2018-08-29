@@ -421,7 +421,7 @@ toc
 cd(Paths.Code) % point back to original directory
 
 PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
-f
+
 %% Trying to get my arms around the variables
 % Variables used only for plotting
 clear year date RB_scale XLim YLim 

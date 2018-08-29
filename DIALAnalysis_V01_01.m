@@ -138,10 +138,6 @@ for ii=1:size(PulseInfo.Lambda{2,1},1)
 end
 clear ii
 
-if nanstd(PulseInfo.Lambda{2,1}) >= 5e-4
-    h = msgbox('Online wavelength not stable during time period','Warning','warn');
-end
-
 %% check for multiple wavelengths
 Possible = [828.180,828.220; 
             828.280,828.320;
@@ -230,7 +226,7 @@ clear m Temp i j
 % blank lowest gates...not needed on HSRL
 blank = nan.*ones(size(Counts.Integrated{1,1}(:,1:JSondeData.BlankRange/PulseInfo.BinWidth)));
 Counts.CountRate{Map.Online,1}  = single(horzcat(blank, Counts.CountRate{Map.Online,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth+1):end)));
-Counts.CountRate{Map.Offline,1}  = single(horzcat(blank, Counts.CountRate{Map.Offline,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth+1):end)));
+Counts.CountRate{Map.Offline,1} = single(horzcat(blank, Counts.CountRate{Map.Offline,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth+1):end)));
 clear blank
 
 % Recursively interpolate weather station data from collected to averaged grid
@@ -434,21 +430,8 @@ PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plot
  
 toc
 cd(Paths.Code) % point back to original directory
-% use this for troubleshooting raw data
-if Options.flag.troubleshoot == 1
-  Plotting_TroubleshootingPlots2
-end
 
 PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
-
-% 
-% figure('visible', 'on','Position',[Plotting.ScreenSize(4)/1.5 Plotting.ScreenSize(4)/10 Plotting.ScreenSize(3)/1.5 Plotting.ScreenSize(4)/1.5]);
-% pcolor((Plotting.x-Plotting.x(1)).*24,Plotting.y,real(log10(DataProducts.ABackscatterCoeff')));
-% shading flat; colorbar;
-% caxis([-8,-3]); ylim([0,12])
-% xlabel('Hour [UTC]'); ylabel('Altitude [km]'); 
-% title(['Aerosol Backscatter (20',Paths.Date,')'])
-% colormap jet
 
 %% Trying to get my arms around the variables
 % Variables used only for plotting
@@ -460,7 +443,6 @@ clear decimate_range decimate_time
 clear SpatialAverage AverageRange
 clear method extrapolation 
 clear m
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -969,7 +951,7 @@ MCS          = PaddingDataStructureMCS(MCS,5,7043);
 [~,PulseInfoNew]      = RawNetCDFData2RegularGrid(PulseInfoNew);
 end
 
-close function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
+function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
 %
 %
 %

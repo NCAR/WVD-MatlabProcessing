@@ -182,8 +182,6 @@ for m=1:1:size(Counts.Raw,1)
     
     % select last ~1200 meters to measure background
     Counts.Background1D{m,1} = mean(Counts.Parsed{m,1}(:,end-round(1200/PulseInfo.BinWidth):end),2)-0;
-% % %     % Instantiate the 2 dimensional background array
-% % %     Counts.Background2D{m,1} = repmat(Counts.Background1D{m,1}, 1, size(Counts.Parsed{m,1},2));
     % Background subtracting the parsed counts
     Counts.BackgroundSubtracted{m,1} = (bsxfun(@minus, Counts.Parsed{m,1}, Counts.Background1D{m,1}));
     % smooth RB for 1 minute and set spatial average 
@@ -197,23 +195,17 @@ for m=1:1:size(Counts.Raw,1)
     Counts.Integrated{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Converting background to count rate (counts/sec
     Counts.Background1D{m,1}        = Counts.Background1D{m,1}/(JSondeData.MCS.bin_duration*1e-9*JSondeData.MCS.accum*JSondeData.SwitchRatio); 
-    % Integrating background counts in time (no need to do space)
-% %     Counts.Background2D{m,1} = cumsum(Counts.Background2D{m,1},1,'omitnan')-[zeros(JSondeData.Profiles2Average.wv,j); cumsum(Counts.Background2D{m,1}(1:i-JSondeData.Profiles2Average.wv,:),1,'omitnan')];  %rolling average of rows or time
-% %     Counts.Background2D{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Grid to regular gate spacing (75 m)
     Counts.Integrated{m,1}   = interp1(Altitude.RangeActual,Counts.Integrated{m,1}',   Altitude.RangeOriginal,method,extrapolation)'; % grid on to standard range bins
-% %     Counts.Background2D{m,1} = interp1(Altitude.RangeActual,Counts.Background2D{m,1}', Altitude.RangeOriginal,method,extrapolation)';
     % Regular averaging
     Counts.CountRate{m,1}    = Counts.Integrated{m,1}./JSondeData.Profiles2Average.wv./PulseInfo.DeltaRIndex;
     % Grid to regular gate spacing in time (???????make recursive???????)
-% %     Counts.Background2D{m,1}        = interp1(PulseInfo.DataTimeRaw, Counts.Background2D{m,1}       ,PulseInfo.DataTime,method,extrapolation);
     Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeRaw, Counts.Background1D{m,1}       ,PulseInfo.DataTime,method,extrapolation);
     Counts.Integrated{m,1}          = interp1(PulseInfo.DataTimeRaw, Counts.Integrated{m,1}         ,PulseInfo.DataTime,method,extrapolation);
     Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeRaw, Counts.CountRate{m,1}          ,PulseInfo.DataTime,method,extrapolation);
     Counts.ParsedFinalGrid{m,1}     = interp1(PulseInfo.DataTimeRaw, Counts.Parsed{m,1}             ,PulseInfo.DataTime,method,extrapolation);
     Counts.RelativeBackscatter{m,1} = interp1(PulseInfo.DataTimeRaw, Counts.RelativeBackscatter{m,1},PulseInfo.DataTime,method,extrapolation);
     % Remove the time lag from cumsum (???????make recursive???????)
-% %     Counts.Background2D{m,1} = interp1(PulseInfo.DataTimeShifted, Counts.Background2D{m,1},PulseInfo.DataTime,method,extrapolation);
     Counts.CountRate{m,1}    = interp1(PulseInfo.DataTimeShifted, Counts.CountRate{m,1}   ,PulseInfo.DataTime,method,extrapolation);
     Counts.Integrated{m,1}   = interp1(PulseInfo.DataTimeShifted, Counts.Integrated{m,1}  ,PulseInfo.DataTime,method,extrapolation);
     % Removing any negative counts 
@@ -240,9 +232,6 @@ PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeR
 if Options.flag.gradient_filter == 1
     [FX,~] = gradient(Counts.CountRate{Map.Offline,1});
     Counts.CountRate{Map.Offline,1}(FX<-1000 | FX> 1000) = nan; % remove falling (leading) edge of clouds
-%     if Options.flag.troubleshoot == 1
-%         Plotting_TroubleshootingPlots4
-%     end
     clear FX
 end
 
@@ -432,7 +421,7 @@ toc
 cd(Paths.Code) % point back to original directory
 
 PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
-
+f
 %% Trying to get my arms around the variables
 % Variables used only for plotting
 clear year date RB_scale XLim YLim 

@@ -10,7 +10,11 @@ close all;
 
 %% Defining processing options
 Options          = DefineOptions;
-Options.Location = 'FL1';
+if strcmp(node,'DIAL01')
+	Options.Location = 'RELAMPAGO';
+else
+	Options.Location = 'FL1';
+end
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Overwriting default options with data inputs
@@ -26,8 +30,13 @@ DatesDesired                = num2str(files);
 % Parsing the dates out for processing
 Date = DatesDesired;
 % Setting up the needed filepaths
+Paths = DefinePaths(Date,Options);
 Paths.Code          = pwd; % get the current path
+if strcmp(node,'DIAL01')
+Paths.Catalog       = '/pub/incoming/catalog/relampago';
+else
 Paths.Catalog       = '/pub/incoming/catalog/operations';
+end
 Paths.Figures       = ['/scr/eldora1/wvdial_',Options.System(6),'_processed_data/Quicklook'];
 Paths.FigureType    = Options.System;
 Paths.RawNetCDFData = ['/scr/eldora1/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];

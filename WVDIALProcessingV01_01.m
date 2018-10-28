@@ -4,36 +4,22 @@
 % Modification info: Downloaded: January 17, 2017
 %                    
 %% Setting up runtime environment
-clear; close all; clc
+clear all; close all; clc
 
 %% Defining processing options
-Options = DefineOptions;
-Options.System   = 'DIAL04';
-Options.Location = 'FL1';
+Options          = DefineOptions;
+Options.System   = 'DIAL01';
+Options.Location = 'RELAMPAGO';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
-% DatesDesired = {'180801';'180802';'180803';'180804';'180805';
-%                 '180806';'180807';'180808';'180809';
-%                 '180810';'180811';'180812';'180813';'180814';'180815';
-%                 '180816';'180817';'180818';'180819';'180820';'180821';'180822'};
-DatesDesired = {'180803';'180804';'180805';
-                '180806';'180807';'180808';'180809';
-                '180810';'180811';'180812';'180813';'180814';'180815';
-                '180816';'180817';'180818';'180819';'180820';'180821';'180822'};
-% DatesDesired = {'180823'};
-
+DatesDesired = {'181026'};
 
 for m=1:1:size(DatesDesired,1)
     % Parsing the dates out for processing
     Date = DatesDesired{m,1};
     % Setting up the needed filepaths
-    Paths.Code          = pwd; % get the current path
-    Paths.Catalog       = '/pub/incoming/catalog/operations';
-    Paths.Figures       = ['/scr/eldora1/wvdial_',Options.System(6),'_processed_data/Quicklook'];
-    Paths.SaveData      = ['/scr/eldora1/wvdial_',Options.System(6),'_processed_data/Quickload'];
-    Paths.FigureType    = Options.System;
-    Paths.RawNetCDFData = ['/scr/eldora1/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+    Paths = DefinePaths(Date, Options);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%% Processing data %%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Read date of file

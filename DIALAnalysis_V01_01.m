@@ -26,9 +26,9 @@ if strcmp(Paths.FigureType,'DIAL01') || strcmp(Paths.FigureType,'DIAL03') ||  ..
     Capabilities.O2DIAL = 0;
     Capabilities.WVDIAL = 1;
     % Map in the stored cell arrays
-    Map.Channels  = {'Offline';'Online'};
-    Map.Offline   = 1;
-    Map.Online    = 2;
+    Map.Channels  = {'Online';'Offline'};
+    Map.Offline   = 2;
+    Map.Online    = 1;
     % Map to get to hardware location
     HardwareMap.ChannelName    = {'WVOffline';'WVOnline'};
     HardwareMap.Etalon         = [0;0];
@@ -52,6 +52,23 @@ elseif strcmp(Paths.FigureType,'DIAL02')
     HardwareMap.Power          = [0;6;1;1];
     HardwareMap.Etalon         = [0;0;1;1];
     HardwareMap.Laser          = [0;1;2;2];
+elseif strcmp(Paths.FigureType,'DIAL05')
+    % Capabilities
+    Capabilities.HSRL   = 1;
+    Capabilities.O2DIAL = 1;
+    Capabilities.WVDIAL = 1;
+    % Map in the stored cell arrays
+    Map.Channels  = {'Online';'Offline';'Molecular';'Combined';'O2 On';'O2 Off'};
+    Map.Combined  = 5;
+    Map.Offline   = 2;
+    Map.Online    = 1;
+    Map.Molecular = 3;
+    % Map to get to hardware location
+    HardwareMap.ChannelName    = {'WVOnline';'WVOffline';'O2OfflineMol';'O2OnlineMol';'O2OfflineComb';'O2OnlineComb'};
+    HardwareMap.PhotonCounting = [0;8;1;9;2;10];
+    HardwareMap.Power          = [0;6;1;7;1;7];
+    HardwareMap.Etalon         = [0;0;0;0;0;0];
+    HardwareMap.Laser          = [0;1;3;4;3;4];
 end
 
 DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
@@ -62,22 +79,13 @@ year      = 2000 + str2double(Paths.Date(1:2));
 Paths.FolderDate = Paths.Date;
 Paths.FolderType = 'All';
 
-%% Defining processing options
-method        = 'linear';
-extrapolation = 'extrap'; 
-
-%% Setting filepaths and loading data            
+%% Setting filepaths and loading colormap and Hitran data            
 tic;
-% Loading colormap
-cd('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/DataFiles')
-Plotting.ColorMap = importdata('NCAR_C_Map.mat');
-% Loading HITRAN data
-HitranData = dlmread('815nm_841nm_HITRAN_2008.csv',',',[1 1 1676 8]);
-cd(Paths.Code)
+Plotting.ColorMap = importdata([Paths.Colormap,'/NCAR_C_Map.mat']);
+HitranData        = dlmread([Paths.Colormap,'/815nm_841nm_HITRAN_2008.csv'],',',[1 1 1676 8]);
 
 %% Importing online and offline files from the selected date
 % Loading data
-fprintf('Loading Data\n')
 [Counts,PulseInfoNew] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths);
 
 % Determining pulse info
@@ -94,14 +102,7 @@ RB_scale = 1;
 AverageRange   = [1;round(1500/PulseInfo.BinWidth);round(2500/PulseInfo.BinWidth)];
 SpatialAverage = [150/PulseInfo.BinWidth; 300/PulseInfo.BinWidth; 600/PulseInfo.BinWidth];
 
-%% read in housekeeping station data
-PulseInfo.BenchTemperature      = PulseInfoNew.Housekeeping.Temperature;     % Thermocouple data
-PulseInfo.LaserCurrent{1,1}     = PulseInfoNew.Laser.Current{1,1};           % Offline current
-PulseInfo.LaserCurrent{2,1}     = PulseInfoNew.Laser.Current{2,1};           % Online current
-PulseInfo.LaserTemperature{1,1} = PulseInfoNew.Laser.TemperatureActual{1,1}; % offline current
-PulseInfo.LaserTemperature{2,1} = PulseInfoNew.Laser.TemperatureActual{2,1}; % online current
-PulseInfo.LaserPower            = PulseInfoNew.Laser.Power{1,1};             % transmitted average power
-
+%% Read in weather station data
 if Options.flag.WS==1
   SurfaceWeather.Temperature      = PulseInfoNew.WeatherStation.Temperature;            %temperature in C
   SurfaceWeather.Pressure         = PulseInfoNew.WeatherStation.Pressure./1013.249977;  % pressure in atm
@@ -125,38 +126,17 @@ for m=1:1:size(Counts.Raw,1)
     else
        WavelengthOffset = 0;
     end
-    PulseInfo.Lambda{m,1} = PulseInfoNew.Laser.WavelengthActual{m,1} + WavelengthOffset;
+    PulseInfoNew.Laser.WavelengthActual{m,1} = PulseInfoNew.Laser.WavelengthActual{m,1} + WavelengthOffset;
+    PulseInfoNew.Laser.WavelengthDesired{m,1} = PulseInfoNew.Laser.WavelengthDesired{m,1} + WavelengthOffset;
 end
+clear m
 
-for ii=1:size(PulseInfo.Lambda{2,1},1)
-    if ii>1&& PulseInfo.Lambda{2,1}(ii)<828
-        PulseInfo.Lambda{2,1}(ii)=PulseInfo.Lambda{2,1}(ii-1);
-    end
-    if ii>1&& PulseInfo.Lambda{1,1}(ii)<828
-        PulseInfo.Lambda{1,1}(ii)=PulseInfo.Lambda{1,1}(ii-1);
-    end
+%% Checking for multiple wavelengths
+for m=1:1:size(PulseInfoNew.Laser.WavelengthDesired,1)
+   PulseInfo.LambdaNearest{m,1} = round(PulseInfoNew.Laser.WavelengthDesired{m,1},4);
+   PulseInfo.LambdaUnique{m,1}  = unique(round(PulseInfoNew.Laser.WavelengthDesired{m,1}(...
+                                              isnan(PulseInfoNew.Laser.WavelengthDesired{m,1}) == 0),4));
 end
-clear ii
-
-%% check for multiple wavelengths
-Possible = [828.180,828.220; 
-            828.280,828.320;
-            780.220,780.260];
-for m=1:1:size(PulseInfo.Lambda,1)
-    PulseInfo.LambdaMedian{m,1} = nanmedian(PulseInfo.Lambda{m,1});
-    A = find(sum([Possible(:,1)<PulseInfo.LambdaMedian{m,1}, ...
-                  Possible(:,2)>PulseInfo.LambdaMedian{m,1}],2) == 2);
-    if isempty(A) == 0
-       [value,edges]=histcounts(round(PulseInfo.Lambda{m,1},3),Possible(A,1):.00001:Possible(A,2)); % bin rounded wavelengths
-% % %        PulseInfo.LambdaNumber{m,1}  = edges(value>=10);  % wavelength values with occurance > 10
-       PulseInfo.LambdaNumber{m,1}  = nanmean(PulseInfo.Lambda{m,1});
-       PulseInfo.LambdaNearest{m,1} = round(PulseInfo.Lambda{m,1},4);
-    else
-       PulseInfo.LambdaNumber{m,1}  = nanmean(PulseInfo.Lambda{m,1});
-       PulseInfo.LambdaNearest{m,1} = round(PulseInfo.Lambda{m,1},4);
-    end
-end
-clear A edges value Possible
   
 %% Range vector in meters
 Altitude.RangeOriginal = single(0:PulseInfo.BinWidth:(size(Counts.Raw{2,1},2)-1)*PulseInfo.BinWidth);
@@ -176,10 +156,6 @@ for m=1:1:size(Counts.Raw,1)
     if Options.flag.pileup == 1
         Counts.Parsed{m,1} = CorrectPileUp(Counts.Parsed{m,1},JSondeData.MCS,JSondeData.DeadTime);
     end
-%     %%%%%%%%%%%%%%%%%%%%%% Insert denoising here %%%%%%%%%%%%%%%%%%%%%%
-%     12  tic; Counts.Denoised = iterVSTpoisson(Counts.Parsed{m,1}); toc;
-%     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     % select last ~1200 meters to measure background
     Counts.Background1D{m,1} = mean(Counts.Parsed{m,1}(:,end-round(1200/PulseInfo.BinWidth):end),2)-0;
     % Background subtracting the parsed counts
@@ -196,18 +172,18 @@ for m=1:1:size(Counts.Raw,1)
     % Converting background to count rate (counts/sec
     Counts.Background1D{m,1}        = Counts.Background1D{m,1}/(JSondeData.MCS.bin_duration*1e-9*JSondeData.MCS.accum*JSondeData.SwitchRatio); 
     % Grid to regular gate spacing (75 m)
-    Counts.Integrated{m,1}   = interp1(Altitude.RangeActual,Counts.Integrated{m,1}',   Altitude.RangeOriginal,method,extrapolation)'; % grid on to standard range bins
+    Counts.Integrated{m,1}   = interp1(Altitude.RangeActual,Counts.Integrated{m,1}',   Altitude.RangeOriginal,Options.InterpMethod,Options.Extrapolation)'; % grid on to standard range bins
     % Regular averaging
     Counts.CountRate{m,1}    = Counts.Integrated{m,1}./JSondeData.Profiles2Average.wv./PulseInfo.DeltaRIndex;
     % Grid to regular gate spacing in time (???????make recursive???????)
-    Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeRaw, Counts.Background1D{m,1}       ,PulseInfo.DataTime,method,extrapolation);
-    Counts.Integrated{m,1}          = interp1(PulseInfo.DataTimeRaw, Counts.Integrated{m,1}         ,PulseInfo.DataTime,method,extrapolation);
-    Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeRaw, Counts.CountRate{m,1}          ,PulseInfo.DataTime,method,extrapolation);
-    Counts.ParsedFinalGrid{m,1}     = interp1(PulseInfo.DataTimeRaw, Counts.Parsed{m,1}             ,PulseInfo.DataTime,method,extrapolation);
-    Counts.RelativeBackscatter{m,1} = interp1(PulseInfo.DataTimeRaw, Counts.RelativeBackscatter{m,1},PulseInfo.DataTime,method,extrapolation);
+    Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeRaw, Counts.Background1D{m,1}       ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.Integrated{m,1}          = interp1(PulseInfo.DataTimeRaw, Counts.Integrated{m,1}         ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeRaw, Counts.CountRate{m,1}          ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.ParsedFinalGrid{m,1}     = interp1(PulseInfo.DataTimeRaw, Counts.Parsed{m,1}             ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.RelativeBackscatter{m,1} = interp1(PulseInfo.DataTimeRaw, Counts.RelativeBackscatter{m,1},PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
     % Remove the time lag from cumsum (???????make recursive???????)
-    Counts.CountRate{m,1}    = interp1(PulseInfo.DataTimeShifted, Counts.CountRate{m,1}   ,PulseInfo.DataTime,method,extrapolation);
-    Counts.Integrated{m,1}   = interp1(PulseInfo.DataTimeShifted, Counts.Integrated{m,1}  ,PulseInfo.DataTime,method,extrapolation);
+    Counts.CountRate{m,1}    = interp1(PulseInfo.DataTimeShifted, Counts.CountRate{m,1}   ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.Integrated{m,1}   = interp1(PulseInfo.DataTimeShifted, Counts.Integrated{m,1}  ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
     % Removing any negative counts 
     Counts.CountRate{m,1}(real(Counts.CountRate{m,1}) <= 0) = 0;
     Counts.RelativeBackscatter{m,1}(real(Counts.RelativeBackscatter{m,1}) <= 0) = 0;
@@ -223,10 +199,10 @@ clear blank
 
 % Recursively interpolate weather station data from collected to averaged grid
 if Options.flag.WS == 1
-    SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,method,extrapolation);
+    SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
 end
 % Recursively interpolating pulseinfo from collected time grid to averaged grid
-PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),method,extrapolation);
+PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),Options.InterpMethod,Options.Extrapolation);
 
 %% Gradient filter
 if Options.flag.gradient_filter == 1
@@ -236,17 +212,24 @@ if Options.flag.gradient_filter == 1
 end
 
 %% Spectral Line Fitting
-[DataProducts.Sigma{Map.Online,1},DataProducts.Sigma{Map.Offline,1}] =  ...
-    SpectralLineFitting(Options.flag, PulseInfo.LambdaNearest{Map.Online,1},  ...
-                                      PulseInfo.LambdaNearest{Map.Offline,1}, ...
-                                      PulseInfo.LambdaNumber{Map.Online,1},   ...
-                                      PulseInfo.LambdaNumber{Map.Offline,1},  ...
-                                      HitranData,                             ...
-                                      Counts.CountRate{Map.Offline,1},        ...
-                                      Altitude.RangeOriginal,                 ...
-                                      SurfaceWeather.Pressure,                ...
-                                      SurfaceWeather.Temperature);
-                                  
+[DataProducts.Sigma{Map.Online,1}] =  ...
+    SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Online,1},   ...
+                                       PulseInfo.LambdaNearest{Map.Online,1},  ...
+                                       HitranData,                             ...
+                                       Counts.CountRate{Map.Online,1},        ...
+                                       Altitude.RangeOriginal,                 ...
+                                       SurfaceWeather.Pressure,                ...
+                                       SurfaceWeather.Temperature);
+[DataProducts.Sigma{Map.Offline,1}] =  ...
+    SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Offline,1},  ...
+                                       PulseInfo.LambdaNearest{Map.Offline,1}, ...
+                                       HitranData,                             ...
+                                       Counts.CountRate{Map.Offline,1},        ...
+                                       Altitude.RangeOriginal,                 ...
+                                       SurfaceWeather.Pressure,                ...
+                                       SurfaceWeather.Temperature);
+     
+%                DataProducts.Sigma{Map.Offline,1}                    
 %% DIAL Equation to calculate Number Density and error
 [DataProducts.N,DataProducts.N_Error] =  ...
     DIALEquationNarrowlySpaced(Counts.CountRate{Map.Online,1},     ...
@@ -319,7 +302,7 @@ DataProducts.N_Masked(Counts.ParsedFinalGrid{1,1}./(JSondeData.MCS.bin_duration*
 Altitude.RangeShift  = PulseInfo.BinWidth/2; %
 Altitude.RangeActual = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
 % grid to regular (75 m) gate spacing
-DataProducts = RecursivelyInterpolateStructure(DataProducts,Altitude.RangeOriginal,Altitude.RangeActual,method, extrapolation);  % grid on to standard range bins
+DataProducts = RecursivelyInterpolateStructure(DataProducts,Altitude.RangeOriginal,Altitude.RangeActual,Options.InterpMethod, Options.Extrapolation);  % grid on to standard range bins
 % use the weather station to fill in the bottom gates
 if Options.flag.WS == 1 
     DataProducts.N_avg(:,1)    = SurfaceWeather.NumberDensity;  % gate 1, 0 meter
@@ -429,8 +412,7 @@ clear year date RB_scale XLim YLim
 clear const 
 clear HitranData
 clear decimate_range decimate_time
-clear SpatialAverage AverageRange
-clear method extrapolation 
+clear SpatialAverage AverageRange 
 clear m
 end
 
@@ -477,123 +459,95 @@ CorrFactor = 1./(1-(t_d.*(Counts./(MCS.bin_duration*1E-9*MCS.accum))));
 CorrCounts = Counts.*CorrFactor;
 end
 
-function [sigma_on_total,sigma_off_total] = SpectralLineFitting(flag, lambda_all_N, lambda_all_off_N, lambda_N, lambda_off_N, hitran, Online_Temp_Spatial_Avg, range, Surf_P, Surf_T)
+function [Sigma] = SpectralLineFittingWV(flag, LambdaUnique, lambda, hitran, Online_Temp_Spatial_Avg, range, Surf_P, Surf_T)
+%
+%
+%
+%
+%% Filling in wavelength gaps left by wavemeter communication
+% this is done by assuming the nearest good value for desired wavelength is
+% the same as at the bad time...note that the wavelength needs to be
+% rounded to the nearest 10th of a picometer because it can be messed up in
+% temporal interpolation
+lambda = round(lambda,4); 
+GoodMeasurements = find((isnan(lambda) == 0)==1);
+lambda = interp1(GoodMeasurements,lambda(GoodMeasurements),1:1:size(lambda,1),'nearest','extrap');
 
-%Voigt profile calculation
+%% Defining universal constants
+const.m   = 18.015E-3./6.022E23; % mass of a single water molecule
+const.k_B = 1.3806488e-23;       % (J/K)
+const.c   = 299792458;           % (m/s) (exact)
+%% Loading Hitran data
+% Finding the wavenumber bounds for the Hitran linelist
 WNmin = 1/(828+4)*1e7;  % 832.0 nm converted to wavenumber
 WNmax = 1/(828-4)*1e7;  % 824.0 nm converted to wavenumber
-
 %Find lines from WNmin to WNmax to calculate voigt profile
-line_indices = hitran(1:size(hitran,1),1)>WNmin & hitran(1:size(hitran,1),1)<WNmax;
+line         = double(hitran(hitran(1:size(hitran,1),1)>WNmin & ...
+                             hitran(1:size(hitran,1),1)<WNmax       , 1:size(hitran,2)));
+clear hitran
+% Saving the hitran linelist into an easy to read data structure
+Hitran.T00     = 296;          % HITRAN reference temperature [K]
+Hitran.P00     = 1;            % HITRAN reference pressure [atm]
+Hitran.nu0_0   = line(:,1);    % absorption line center wavenumber from HITRAN [cm^-1]
+Hitran.S0      = line(:,2);    % initial linestrength from HITRAN [cm^-1/(mol*cm^-2)]   
+Hitran.gammal0 = line(:,4);    % air-broadened halfwidth at T_ref and P_ref from HITRAN [cm^-1/atm]
+Hitran.gamma_s = line(:,5);    % self-broadened halfwidth at T_ref and P_ref from HITRAN [cm^-1/atm]
+Hitran.E       = line(:,6);    % ground state transition energy from HITRAN [cm^-1]  
+Hitran.alpha   = line(:,7);    % linewidth temperature dependence factor from HITRAN
+Hitran.delta   = line(:,8);    % pressure shift from HiTRAN [cm^-1 atm^-1]
 
-line = double(hitran(line_indices, 1:size(hitran,2)));
-
-%Calculate temperature and pressure profile
+%% Calculate temperature and pressure profile
 if flag.WS == 1
     T0 = nanmedian(Surf_T)+273.15;
     P0 = nanmedian(Surf_P);
 else
-  T0 = 273+30; % surface temperature
-  P0 = 0.83;
+    T0 = 273+30; % surface temperature
+    P0 = 0.83;
 end
+% Calculating a temperature profile assuming an moist adiabatic lapse rate
+T = T0-0.0065.*range;     % Units of Kelvin
+% Calculating a pressure profile
+P = P0.*(T0./T).^-5.5;    % units of atmospheres)
 
-T = T0-0.0065.*range; % set to match the sounding
-
-% pressure in atmospheres
-P = P0.*(T0./T).^-5.5;   % set this value to match sounding
-
-Hitran.T00 = 296;              % HITRAN reference temperature [K]
-Hitran.P00 = 1;                % HITRAN reference pressure [atm]
-Hitran.nu0_0 = line(:,1);      % absorption line center wavenumber from HITRAN [cm^-1]
-Hitran.S0 = line(:,2);         % initial linestrength from HITRAN [cm^-1/(mol*cm^-2)]   
-Hitran.gammal0 = line(:,4);    % air-broadened halfwidth at T_ref and P_ref from HITRAN [cm^-1/atm]
-Hitran.gamma_s = line(:,5);    % self-broadened halfwidth at T_ref and P_ref from HITRAN [cm^-1/atm]
-Hitran.E = line(:,6);          % ground state transition energy from HITRAN [cm^-1]  
-Hitran.alpha = line(:,7);      % linewidth temperature dependence factor from HITRAN
-Hitran.delta = line(:,8);      % pressure shift from HiTRAN [cm^-1 atm^-1]
-
-% new code to handle multiple wavelength changes during a single day
-for l=1:1%length(lambda_N)
-    
-    Hitran.nu_on = 1/(lambda_N(l))*1e7;
-    Hitran.nu_off = 1/(lambda_off_N(l))*1e7;
-        
+%% Code to handle multiple wavelength changes during a single day
+% Pre-allocating cross section array
+Sigma = nan.*zeros(size(Online_Temp_Spatial_Avg));
+% Looping over all unique desired wavelengths
+for l=1:length(LambdaUnique)
+    % Determining the desired wavelength in wavenumbers
+    Hitran.nu_on = 1/(LambdaUnique(l))*1e7;
+    % Looping over all altitudes
+    sigma_total = zeros(1,size(Online_Temp_Spatial_Avg,2));
     for i = 1:size(Online_Temp_Spatial_Avg,2) % calculate the absorption cross section at each range
-        j=rem(i,25);
-
-        Hitran.nu0 = Hitran.nu0_0+Hitran.delta.*(P(i)./Hitran.P00); % unclear if it should be Pi/P00
+        Hitran.nu0    = Hitran.nu0_0+Hitran.delta.*(P(i)./Hitran.P00);                             % unclear if it should be Pi/P00
         Hitran.gammal = Hitran.gammal0.*(P(i)./Hitran.P00).*((Hitran.T00./T(i)).^Hitran.alpha);    %Calculate Lorentz lineweidth at P(i) and T(i)
-        % revise pressure broadened halfwidth to include correction for self broadening term        
-        const.m   = 18.015E-3./6.022E23; % mass of a single water molecule
-        const.k_B = 1.3806488e-23;       % (J/K)
-        const.c   = 299792458;           % (m/s) (exact)
-        
+        % revise pressure broadened halfwidth to include correction for self broadening term
         Hitran.gammad = (Hitran.nu0).*((2.0.*const.k_B.*T(i).*log(2.0))./(const.m.*const.c^2)).^(0.5);  %Calculate HWHM Doppler linewidth at T(i)
-        
-        % term 1 in the Voigt profile
+        % Term 1 in the Voigt profile
         y = (Hitran.gammal./Hitran.gammad).*((log(2.0)).^(0.5));
-        
-        % term 2 in the Voigt profile
-        x_on = ((Hitran.nu_on-Hitran.nu0)./Hitran.gammad).*(log(2.0)).^(0.5);
-        x_off = ((Hitran.nu_off-Hitran.nu0)./Hitran.gammad).*(log(2.0)).^(0.5);
-        
-        %setting up Voigt convolution
+        % Term 2 in the Voigt profile
+        x = ((Hitran.nu_on-Hitran.nu0)./Hitran.gammad).*(log(2.0)).^(0.5);
+        % Setting up Voigt convolution
         t = (-(size(line,1))/2:1:size(line,1)/2-1); %set up the integration spectral step size
-        t = repmat(t',1,length(x_on))';
-        x_on = repmat(x_on,1,length(t));
-        x_off = repmat(x_off,1,length(t));
+        t = repmat(t',1,length(x))';
+        x = repmat(x,1,length(t));
         y = repmat(y,1,length(t));
-        f_on = (exp(-t.^2.0))./(y.^2.0+(x_on-t).^2.0);  % combined Voigt term 1 and 2
-        f_off = (exp(-t.^2.0))./(y.^2.0+(x_off-t).^2.0);
-        %Voigt integration over all of the lines at the on and offline locations
-        z_on = trapz(t(1,:),f_on,2);
-        z_off =  trapz(t(1,:),f_off,2);
-        integral_on = z_on;
-        integral_off = z_off;
-        %Calculate linestrength at temperature T
+        f = (exp(-t.^2.0))./(y.^2.0+(x-t).^2.0);  % combined Voigt term 1 and 2
+        % Voigt integration over all of the lines at the on and offline locations
+        z = trapz(t(1,:),f,2);
+        integral = z;
+        % Calculate linestrength at temperature T
         S = Hitran.S0.*((Hitran.T00./T(i)).^(1.5)).*exp(1.439.*Hitran.E.*((1./Hitran.T00)-(1./T(i))));
-
-        %Calculate the Voigt profile
-        K_on = (y(:,1)./pi).*integral_on;
-        K_off = (y(:,1)./pi).*integral_off;
-
-        %Calculate the Voigt profile absorption cross section [cm^2]
-        sigmav_on = S.*(1./Hitran.gammad).*(((log(2.0))./pi).^(0.5)).*K_on; %.*far_wing_on;
-        sigmav_off = S.*(1./Hitran.gammad).*(((log(2.0))./pi).^(0.5)).*K_off; %.*far_wing_off;
-        
-        %Sum contributions from all of the surrounding lines
-        sigma_on_total(i) = sum(sigmav_on);
-        sigma_off_total(i) = sum(sigmav_off);
-        
+        % Calculate the Voigt profile
+        K = (y(:,1)./pi).*integral;
+        % Calculate the Voigt profile absorption cross section [cm^2]
+        sigmav = S.*(1./Hitran.gammad).*(((log(2.0))./pi).^(0.5)).*K; %.*far_wing_on;
+        % Sum contributions from all of the surrounding lines
+        sigma_total(i) = sum(sigmav);
     end
-    
-    sigma_on_total = repmat(sigma_on_total,size(Online_Temp_Spatial_Avg,1),1);
-    sigma_off_total = repmat(sigma_off_total,size(Online_Temp_Spatial_Avg,1),1);
-    
-    % new lines to handle multiple wavelengths during the day
-    S_on_N(:,:,l) = sigma_on_total;
-    S_off_N(:,:,l) = sigma_off_total;
-    
-% % % %     clear sigma_on_total sigma_off_total sigmav_on sigmav_off
+    Columns2Fill = (lambda == LambdaUnique(l));
+    Sigma(Columns2Fill,:) = repmat(sigma_total,sum(Columns2Fill),1);
 end
-
-% % % % combine the multiwavelenth into a single cross section matrix
-% % % sigma_on_total=zeros(size(S_on_N,1),size(S_on_N,2));
-% % % sigma_off_total=zeros(size(S_on_N,1),size(S_on_N,2));
-
-sigma_on_total = squeeze(S_on_N);
-sigma_off_total = squeeze(S_off_N);
-
-% % % for l=1:length(lambda_N)
-% % %     for i = 1:size(Online_Temp_Spatial_Avg,1)
-% % %         if single(lambda_all_N(i))==single(lambda_N(l))
-% % %             sigma_on_total(i,:)= S_on_N(i,:,l);
-% % %         end
-% % %         if single(lambda_all_off_N(i))==single(lambda_off_N(l))
-% % %             sigma_off_total(i,:)= S_off_N(i,:,l);
-% % %         end
-% % %     end
-% % % end
 end
 
 function WriteNetCDFData (lambda,lambda_off,N_avg,N_error,Offline_Temp_Spatial_Avg,Online_Temp_Spatial_Avg,P,RB,range,T,time_new)
@@ -699,52 +653,39 @@ function [Counts,PulseInfoNew] = RawNetCDFDataRead(DataTypes,HardwareMap,Paths)
 %
 %
 %
+%% Printing status to the command window
+fprintf('Loading Data\n')
+
 %%
 cd(Paths.RawNetCDFData)
 
-%% Hardware types
+%% Possible hardware types
 EtalonTypes = {'WVEtalon','HSRLEtalon','O2Etalon'};
 LaserTypes  = {'WVOnline','WVOffline','HSRL','O2Online','O2Offline'};
 
 %% Pre-allocating data
-Etalon.TemperatureActual  = [];
-Etalon.TemperatureDesired = [];
-Etalon.TimeStamp          = [];
-Etalon.Type               = [];
+Etalon.TemperatureActual  = []; Etalon.TemperatureDesired = [];
+Etalon.TimeStamp          = []; Etalon.Type               = [];
 
-Thermocouple.TimeStamp    = [];
-Thermocouple.Temperature  = [];
+Thermocouple.TimeStamp    = []; Thermocouple.Temperature  = [];
 
-Laser.Current             = [];
-Laser.Locked              = [];
-Laser.TemperatureActual   = [];
-Laser.TemperatureDesired  = [];
-Laser.TimeStamp           = [];
-Laser.Type                = [];
-Laser.WavelengthActual    = [];
-Laser.WavelengthDesired   = [];
+Laser.Current             = []; Laser.Locked              = [];
+Laser.TemperatureActual   = []; Laser.TemperatureDesired  = [];
+Laser.TimeStamp           = []; Laser.Type                = [];
+Laser.WavelengthActual    = []; Laser.WavelengthDesired   = [];
 
-MCS.Channel               = [];
-% MCS.ChannelAssignment     = []; % Not coming through
-MCS.Data                  = [];
-MCS.ProfilesPerHistogram  = [];
-MCS.RangeResolution       = [];
+MCS.Channel               = []; MCS.Data                  = [];
+MCS.ProfilesPerHistogram  = []; MCS.RangeResolution       = []; 
 MCS.TimeStamp             = [];
          
-Power.LaserPower          = [];
-Power.TimeStamp           = [];
+Power.LaserPower          = []; Power.TimeStamp           = [];
 
-UPS.BatteryCapacity       = [];
-UPS.BatteryHours          = [];
-UPS.BatteryInUse          = [];
-UPS.BatteryNominal        = [];
-UPS.Temperature           = [];
-UPS.TimeStamp             = [];
+UPS.BatteryCapacity       = []; UPS.BatteryHours          = [];
+UPS.BatteryInUse          = []; UPS.BatteryNominal        = [];
+UPS.Temperature           = []; UPS.TimeStamp             = [];
 
-WStation.AbsoluteHumidity = [];
-WStation.Pressure         = [];
-WStation.RelativeHumidity = [];
-WStation.Temperature      = [];
+WStation.AbsoluteHumidity = []; WStation.Pressure         = [];
+WStation.RelativeHumidity = []; WStation.Temperature      = [];
 WStation.TimeStamp        = [];
 
 %% Loading data
@@ -845,7 +786,7 @@ end
 clear m n s A Filename
 % Converting differences to actual desired numbers
 Etalon.TemperatureDesired = Etalon.TemperatureActual - Etalon.TemperatureDesired;
-Laser.WavelengthDesired   = Laser.WavelengthActual   - Laser.WavelengthDesired;
+Laser.WavelengthDesired   = Laser.WavelengthActual - Laser.WavelengthDesired;
 
 %% Changing back to the coding directory
 cd(Paths.Code)
@@ -924,6 +865,11 @@ if isempty(UPS.TimeStamp)
    UPS.BatteryNominal        = TimeBounds.*nan;
    UPS.Temperature           = TimeBounds.*nan;
 end
+
+%% Just making sure to get rid of laser power off data or error returns 
+% Especially DIAL01 seems to return current = 0 often...just remove data
+% and move on
+Laser.Current(Laser.Current == 0) = nan;
 
 %% Marking time gaps
 Laser        = PaddingDataStructureTimeSeries(Laser,5,0);
@@ -1292,4 +1238,3 @@ end
 MCS = cell2struct(NewCell,FieldNames);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-

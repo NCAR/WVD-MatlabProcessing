@@ -1,5 +1,4 @@
-addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/Calibration')
-addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/JSon')
+
 dat=loadjson('dial2_calvals.json','SimplifyCell',1);
 
 %t_date = '11-Jun-2017'

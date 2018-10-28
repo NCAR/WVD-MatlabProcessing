@@ -29,10 +29,6 @@ plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
      PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b--',...
      PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
 xlim([0,24]); % ylim([10,40]);
-XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
-YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
-text(XLoc,YLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple', ...
-     'Fontsize',FontSize)
 title([Options.System, ' Housekeeping Parameters (20',Paths.Date,')'])
 grid on;
 set(gca,'xticklabel',{})
@@ -42,6 +38,10 @@ YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
+XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
+YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
+text(XLoc,YLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple', ...
+     'Fontsize',FontSize)
 
 %% Plotting other weather station data (Pressure, Relative humidity)
 subplot(24,1,5:8)
@@ -99,9 +99,6 @@ for m=1:1:size(PulseInfoNew.Laser.Current,1)
 end
 hold off
 xlim([0,24]); 
-XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
-YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
-text(XLoc,YLoc,'Laser Current [mA]','Fontsize',FontSize)
 grid on;
 set(gca,'xticklabel',{},'yaxislocation','right')
 box on;
@@ -111,6 +108,9 @@ YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
+XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
+YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
+text(XLoc,YLoc,'Laser Current [mA]','Fontsize',FontSize)
 
 %% Plotting Laser Power
 subplot(24,1,17:20); hold on;
@@ -134,9 +134,6 @@ for m=1:1:size(PulseInfoNew.Etalon.TemperatureActual,1)
 end
 hold off
 xlim([0,24]); 
-XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
-YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
-text(XLoc,YLoc,'Etalon Temperature Deviations [^\circC]','Fontsize',FontSize)
 xlabel('Data Time [UTC]') 
 set(gca,'yaxislocation','right');
 grid on;
@@ -146,6 +143,9 @@ YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
+XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
+YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
+text(XLoc,YLoc,'Etalon Temperature Deviations [^\circC]','Fontsize',FontSize)
 
 
 %% Saving plot

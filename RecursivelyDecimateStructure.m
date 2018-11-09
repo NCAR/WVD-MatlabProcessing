@@ -2,7 +2,7 @@
 % Written for: NCAR
 % Modificication Info: Created March 23, 2018
 
-function [ReturnDataStructure] = RecursivelyDecimateStructure2D(OriginalDataStructure,DecimateTime,OriginalSizeTime,DecimateSpace,OriginalSizeSpace)
+function [ReturnDataStructure] = RecursivelyDecimateStructure(OriginalDataStructure,DecimateTime,OriginalSizeTime,DecimateSpace,OriginalSizeSpace)
 %
 %
 %
@@ -58,11 +58,20 @@ for m=1:1:size(CellData,1)
    else
        % At the bottom of the cell tree so fill data if it is not just a
        % single number
-       if size(CellData{m,1},1) == OriginalSizeTime && size(CellData{m,1},2) == OriginalSizeSpace
-           CellData{m,1}    = CellData{m,1}(1:DecimateTime:end,1:DecimateSpace:end);          %%%%%%%% Command from Scott %%%%%%%%
-           CellDataNew{m,1} = CellData{m,1};
+       if isempty(DecimateSpace)
+           if size(CellData{m,1},1) == OriginalSizeTime 
+               CellData{m,1}    = CellData{m,1}(1:DecimateTime:end);          %%%%%%%% Command from Scott %%%%%%%%
+               CellDataNew{m,1} = CellData{m,1};
+           else
+               CellDataNew{m,1} = CellData{m,1};
+           end
        else
-           CellDataNew{m,1} = CellData{m,1};
+           if size(CellData{m,1},1) == OriginalSizeTime && size(CellData{m,1},2) == OriginalSizeSpace
+               CellData{m,1}    = CellData{m,1}(1:DecimateTime:end,1:DecimateSpace:end);          %%%%%%%% Command from Scott %%%%%%%%
+               CellDataNew{m,1} = CellData{m,1};
+           else
+               CellDataNew{m,1} = CellData{m,1};
+           end
        end
    end
 end

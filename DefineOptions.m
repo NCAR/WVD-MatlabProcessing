@@ -10,7 +10,7 @@ function [Options] = DefineOptions
 %                   options
 %
 %%
-Options.flag.save_quicklook = 1;  % save quicklook to local directory
+Options.flag.save_quicklook = 0;  % save quicklook to local directory
 Options.flag.save_data = 0;       % save files in matlab format
 Options.flag.save_netCDF = 0;     % save files netCDF format
 Options.flag.save_catalog = 0;    % upload quicklook (and data) to field catalog

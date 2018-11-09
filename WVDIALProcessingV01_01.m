@@ -13,7 +13,7 @@ Options.Location = 'RELAMPAGO';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
-DatesDesired = {'181026'};
+DatesDesired = {'181028'};
 
 for m=1:1:size(DatesDesired,1)
     % Parsing the dates out for processing

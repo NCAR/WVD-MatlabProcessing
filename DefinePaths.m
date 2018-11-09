@@ -21,6 +21,15 @@ Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/
 Paths.FigureType    = Options.System;
 Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
 
+% Paths.Code          = pwd;
+% Paths.Colormap      = [Paths.Code,'/DataFiles'];
+% Paths.Catalog       = '/pub/incoming/catalog/relampago';
+% Paths.Figures       = [Paths.Base,'/DIALProcessed/wvdial_',Options.System(6),'_processed_data/Quicklook'];
+% Paths.SaveData      = [Paths.Base,'/DIALProcessed/wvdial_',Options.System(6),'_processed_data/Quickload'];
+% Paths.FigureType    = Options.System;
+% Paths.RawNetCDFData = [Paths.Base,'/DIALData/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+
+
 %% Adding paths to current path to run JSon file readers
 addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/Calibration')
 addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/JSon')

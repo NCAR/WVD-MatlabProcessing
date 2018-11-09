@@ -190,6 +190,13 @@ for m=1:1:size(Counts.Raw,1)
 end
 clear m Temp i j
 
+%% Determining optical depth
+% OD is - ln(I/I.o), since offline is not the same as online it needs to
+% scaled by the first few good gates -- choose 300 m to 450 m
+PulseInfo.ScaleOn2Off     = nanmean(Counts.CountRate{Map.Online,1}(:,floor(300/PulseInfo.BinWidth):floor(450/PulseInfo.BinWidth)),2)./...
+                            nanmean(Counts.CountRate{Map.Offline,1}(:,floor(300/PulseInfo.BinWidth):floor(450/PulseInfo.BinWidth)),2);
+DataProducts.OpticalDepth = -(log(Counts.CountRate{Map.Online,1}./bsxfun(@times, Counts.CountRate{Map.Offline,1}, PulseInfo.ScaleOn2Off))); % calculate column optical depth
+
 %% temporal and spatial averaging 
 % blank lowest gates...not needed on HSRL
 blank = nan.*ones(size(Counts.Integrated{1,1}(:,1:JSondeData.BlankRange/PulseInfo.BinWidth)));
@@ -212,24 +219,22 @@ if Options.flag.gradient_filter == 1
 end
 
 %% Spectral Line Fitting
-[DataProducts.Sigma{Map.Online,1}] =  ...
-    SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Online,1},   ...
-                                       PulseInfo.LambdaNearest{Map.Online,1},  ...
+for m=1:1:2
+    switch m
+        case 1; Type = Map.Online;
+        case 2; Type = Map.Offline;
+    end
+[DataProducts.Sigma{Type,1}] =  ...
+    SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Type,1},   ...
+                                       PulseInfo.LambdaNearest{Type,1},  ...
                                        HitranData,                             ...
-                                       Counts.CountRate{Map.Online,1},        ...
+                                       Counts.CountRate{Type,1},        ...
                                        Altitude.RangeOriginal,                 ...
                                        SurfaceWeather.Pressure,                ...
                                        SurfaceWeather.Temperature);
-[DataProducts.Sigma{Map.Offline,1}] =  ...
-    SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Offline,1},  ...
-                                       PulseInfo.LambdaNearest{Map.Offline,1}, ...
-                                       HitranData,                             ...
-                                       Counts.CountRate{Map.Offline,1},        ...
-                                       Altitude.RangeOriginal,                 ...
-                                       SurfaceWeather.Pressure,                ...
-                                       SurfaceWeather.Temperature);
-     
-%                DataProducts.Sigma{Map.Offline,1}                    
+end
+
+                 
 %% DIAL Equation to calculate Number Density and error
 [DataProducts.N,DataProducts.N_Error] =  ...
     DIALEquationNarrowlySpaced(Counts.CountRate{Map.Online,1},     ...
@@ -298,6 +303,7 @@ DataProducts.N_Masked = DataProducts.N_avg;
 DataProducts.N_Masked(DataProducts.N_avg < 0) = nan; % remove non-pysical (negative) wv regions
 DataProducts.N_Masked(abs(DataProducts.N_Error./DataProducts.N_avg) > 2.00) = nan; % remove high error regions
 DataProducts.N_Masked(Counts.ParsedFinalGrid{1,1}./(JSondeData.MCS.bin_duration*1e-9*JSondeData.MCS.accum) > 5E6) = nan; % remove raw counts above linear count threshold (5MC/s)
+DataProducts.OpticalDepth(isnan(DataProducts.N_Masked)) = nan;
 % calcuate the range lag for number density (to center in range bin)
 Altitude.RangeShift  = PulseInfo.BinWidth/2; %
 Altitude.RangeActual = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
@@ -314,14 +320,9 @@ if Options.flag.mask_data == 1
   DataProducts.N_avg = DataProducts.N_Masked;
 end
   
-%% Finding optical depth and plotting information
+%% Finding plotting information
 PulseInfo.DataTimeDateNumFormat = datenum(year,1,0)+double(PulseInfo.DataTime);
 date     = datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'dd mmm yyyy');
-
-% OD is - ln(I/I.o), since offline is not the same as online it needs to
-% scaled by the first few good gates -- choose 300 m to 450 m
-PulseInfo.ScaleOn2Off     = nanmean(Counts.CountRate{2,1}(:,300/PulseInfo.BinWidth:450/PulseInfo.BinWidth),2)./nanmean(Counts.CountRate{1,1}(:,300/PulseInfo.BinWidth:450/PulseInfo.BinWidth),2);
-DataProducts.OpticalDepth = -(log(Counts.CountRate{2,1}./bsxfun(@times, Counts.CountRate{1,1}, PulseInfo.ScaleOn2Off))); % calculate column optical depth
   
 %% Decimate data in time to final array size
 if Options.flag.decimate == 1
@@ -403,7 +404,7 @@ PlottingMainPlots(Counts,RB_scale,PulseInfo,date,DataProducts,Options,Paths,Plot
 toc
 cd(Paths.Code) % point back to original directory
 
-PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
+PlotHousekeepingData(DataProducts,PulseInfoNew,Options,Paths,Plotting,PulseInfo)
 
 %% Trying to get my arms around the variables
 % Variables used only for plotting

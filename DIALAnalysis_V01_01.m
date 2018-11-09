@@ -8,7 +8,7 @@
 % Modified by Stillwell in Oct-Nov 2018    
         % Compartmentalized all retrievals
         % Renewed ability to run multiple wavelengths per day
-        
+        % Reorganizing code into subfunctions more rigidly 
         
 function DIALAnalysis_V01_01(JSondeData, Options, Paths)
 %
@@ -27,7 +27,8 @@ fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 %% Reading Jsond file information
 [Capabilities,Iterations,HardwareMap,Map] = ReadFakeJSondFile(Paths);
 
-DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
+DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';
+             'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
 
 %% Pulling information out of the file names and paths
 DayOfYear        = day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');         
@@ -35,10 +36,7 @@ year             = 2000 + str2double(Paths.Date(1:2));
 Paths.FolderDate = Paths.Date;
 Paths.FolderType = 'All';
 
-%% Setting filepaths and loading colormap and Hitran data            
-Plotting.ColorMap = importdata([Paths.Colormap,'/NCAR_C_Map.mat']);
-
-%% Importing online and offline files from the selected date
+%% Importing all netcdf data files from the selected date
 % Loading data
 [Counts,PulseInfoNew] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths);
 
@@ -56,7 +54,7 @@ RB_scale = 1;
 AverageRange   = [1;round(1500/PulseInfo.BinWidth);round(2500/PulseInfo.BinWidth)];
 SpatialAverage = [150/PulseInfo.BinWidth; 300/PulseInfo.BinWidth; 600/PulseInfo.BinWidth];
 
-%% Read in weather station data
+%% Recast weather station data
 if Options.flag.WS==1
   SurfaceWeather.Temperature      = PulseInfoNew.WeatherStation.Temperature;            %temperature in C
   SurfaceWeather.Pressure         = PulseInfoNew.WeatherStation.Pressure./1013.249977;  % pressure in atm
@@ -91,7 +89,7 @@ for m=1:1:size(PulseInfoNew.Laser.WavelengthDesired,1)
 end
   
 %% Range vector in meters
-Altitude.RangeOriginal = single(0:PulseInfo.BinWidth:(size(Counts.Raw{2,1},2)-1)*PulseInfo.BinWidth);
+Altitude.RangeOriginal = single(0:PulseInfo.BinWidth:(size(Counts.Raw{1,1},2)-1)*PulseInfo.BinWidth);
 Altitude.RangeSquared  = (Altitude.RangeOriginal).^2./((JSondeData.MCS.bin_duration*JSondeData.MCS.accum*(1-JSondeData.SwitchRatio)));  % in units of km^2 C/ns
 Altitude.RangeShift    = (PulseInfo.DeltaRIndex-1)/2*PulseInfo.BinWidth + JSondeData.RangeCorrection; %
 Altitude.RangeActual   = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
@@ -143,7 +141,7 @@ for m=1:1:size(Counts.Raw,1)
 end
 clear m Temp i j
 
-%% Temporal and spatial averaging
+%% Temporal averaging of point data
 % Recursively interpolate weather station data from collected to averaged grid
 if Options.flag.WS == 1
     SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
@@ -151,38 +149,34 @@ end
 % Recursively interpolating pulseinfo from collected time grid to averaged grid
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),Options.InterpMethod,Options.Extrapolation);
 
-%% Gradient filter
+%% Gradient filter for the WV data
 if Options.flag.gradient_filter == 1
     [FX,~] = gradient(Counts.CountRate{Map.Offline,1});
     Counts.CountRate{Map.Offline,1}(FX<-1000 | FX> 1000) = nan; % remove falling (leading) edge of clouds
     clear FX
 end
 
-%% Pre-allocating retrieval info 
-DataProducts = [];
-
 %% Performing data retrievals
+DataProducts = []; % Pre-allocating retrieval info 
 for m=1:1:Iterations
     fprintf('   Retrieval Iteration %0.0f\n',m)
     % Performing the water vapor retrievals
     if Capabilities.WVDIAL == 1
-        [Counts,DataProducts] = RetrievalsH2O(Altitude,       Counts,         ...
-                                              DataProducts,   JSondeData,     ...
-                                              Map,            Options,        ...
-                                              Paths,          PulseInfo,      ...
-                                              SpatialAverage, SurfaceWeather, ...
-                                              AverageRange);
+        [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts, ...
+                                              JSondeData,Map,Options,Paths, ...
+                                              PulseInfo,SpatialAverage,     ...
+                                              SurfaceWeather,AverageRange);
     end
     % Performing the HSRL retrievals
     if Capabilities.HSRL == 1 || Capabilities.O2HSRL == 1
-        RetrievalsHSRL(Altitude, Capabilities, DataProducts, Map, Options, PulseInfo, SurfaceWeather);
+        RetrievalsHSRL(Altitude,Capabilities,DataProducts,Map,Options,PulseInfo,SurfaceWeather);
     end
     % Performing perterbative temperature retrievals
+    
 end
   
 %% Finding plotting information
 PulseInfo.DataTimeDateNumFormat = datenum(year,1,0)+double(PulseInfo.DataTime);
-% % % date     = datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'dd mmm yyyy');
 
 %% Decimate data in time to final array size
 if Options.flag.decimate == 1
@@ -201,7 +195,7 @@ if Options.flag.decimate == 1
     Altitude.RangeOriginal          = Altitude.RangeOriginal(1:decimate_range:end);
     % Decimate data products in space and time
     DataProducts = RecursivelyDecimateStructure(DataProducts,decimate_time ,size(DataProducts.OpticalDepth,1), ...
-                                                               decimate_range,size(DataProducts.OpticalDepth,2));    
+                                                             decimate_range,size(DataProducts.OpticalDepth,2));    
     % Decimating pulse info time series data in time
     PulseInfo = RecursivelyDecimateStructure(PulseInfo,decimate_time,size(PulseInfo.DataTime,1),[],[]);        
     % Decimating surface weather time series data in time
@@ -209,7 +203,6 @@ if Options.flag.decimate == 1
         SurfaceWeather = RecursivelyDecimateStructure(SurfaceWeather,decimate_time,size(SurfaceWeather.AbsoluteHumidity,1),[],[]);        
     end
 end
-
 
 %% Save Data
 fprintf('Saving Data\n')
@@ -226,35 +219,19 @@ if Options.flag.save_netCDF == 1  % save the data as an nc file
 end
 
 %% Plot Data
-fprintf('Plotting Data\n')
-Plotting.ScreenSize = get(0,'ScreenSize');
-Plotting.FontSize   = 14;
-Plotting.PlotSize1  = [Plotting.ScreenSize(4)/1.5 Plotting.ScreenSize(4)/10 Plotting.ScreenSize(3)/1.5 Plotting.ScreenSize(4)/3];
-Plotting.PlotSize2  = [1 Plotting.ScreenSize(4)/2 Plotting.ScreenSize(3)/2 Plotting.ScreenSize(4)/2];
-Plotting.x          = (PulseInfo.DataTimeDateNumFormat)';
-Plotting.xdata      = linspace(fix(min(PulseInfo.DataTimeDateNumFormat)),...
-                              ceil(max(PulseInfo.DataTimeDateNumFormat)), 25);
-Plotting.y          = (Altitude.RangeOriginal./1e3);
+PlotData(Altitude, Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,RB_scale,SurfaceWeather)
 
-PlottingMainPlots(Counts,RB_scale,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
- 
-cd(Paths.Code) % point back to original directory
-
-PlotHousekeepingData(PulseInfoNew,Options,Paths,PulseInfo)
-
-toc
-
-%% Trying to get my arms around the variables
+%% Cleaning the workspace variables that are unneeded
 % Variables used only for plotting
-clear year date RB_scale XLim YLim 
+clear year RB_scale 
 % Temperary variables used in processing that need not be saved
 clear decimate_range decimate_time
-clear SpatialAverage AverageRange 
+clear AverageRange SpatialAverage 
 clear m
+toc
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 function [Surf_AH,Surf_N] = ConvertWeatherStationValues(Surf_RH,Surf_T) 
 %
 % Inputs: Surf_RH:  Surface relative humidity time series     [Units: %]
@@ -389,3 +366,4 @@ netcdf.putVar(ncid,myvarID11,lambda);
 netcdf.putVar(ncid,myvarID12,lambda_off);
 netcdf.close(ncid);
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

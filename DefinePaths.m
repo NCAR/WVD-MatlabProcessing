@@ -9,31 +9,31 @@ function [Paths] = DefinePaths(Date, Options)
 % Outputs: 
 %
 %% Base path to change for each different platform
-% Paths.Base       = '/scr/eldora1';
-Paths.Base       = '/Volumes/StillwellData01/DIAL/TDIAL';
-% Paths.Base         = '/Volumes/StillwellData01/DIAL/WVDIAL';
+Paths.Base       = '/scr/eldora1';
+% Paths.Base       = '/Volumes/StillwellData01/DIAL/TDIAL';
+% Paths.Base       = '/Volumes/StillwellData01/DIAL/WVDIAL';
 
 %% Other paths 
-Paths.Code          = '/Volumes/StillwellData01/Code/DIALAutoProcessingCode/MatlabV2';
-Paths.Colormap      = [Paths.Code,'/DataFiles'];
-% Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Figures       = [Paths.Base,'/Quicklook'];
-Paths.SaveData      = [Paths.Base,'/Quickload'];
-Paths.FigureType    = Options.System;
-Paths.RawNetCDFData = [Paths.Base,'/RawData/20',Date];
-% Paths.RawNetCDFData = [Paths.Base,'/RawData/DIAL3_NewLabview/20',Date];
+% % % Paths.Code          = '/Volumes/StillwellData01/Code/DIALAutoProcessingCode/MatlabV2';
+% % % Paths.Colormap      = [Paths.Code,'/DataFiles'];
+% % % % Paths.Catalog       = '/pub/incoming/catalog/operations';
+% % % Paths.Figures       = [Paths.Base,'/Quicklook'];
+% % % Paths.SaveData      = [Paths.Base,'/Quickload'];
+% % % Paths.FigureType    = Options.System;
+% % % Paths.RawNetCDFData = [Paths.Base,'/RawData/20',Date];
+% % % % Paths.RawNetCDFData = [Paths.Base,'/RawData/DIAL3_NewLabview/20',Date];
 
-% Paths.Code          = '/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2'; % get the current path
-% Paths.Colormap      = [Paths.Code,'/DataFiles'];
-% Paths.Catalog       = '/pub/incoming/catalog/relampago';
-% Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
-% Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
-% Paths.FigureType    = Options.System;
-% Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+Paths.Code          = '/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/Testing'; % get the current path
+Paths.Colormap      = [Paths.Code,'/DataFiles'];
+Paths.Catalog       = '/pub/incoming/catalog/operations';
+Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
+Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
+Paths.FigureType    = Options.System;
+Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
 
 %% Adding paths to current path to run JSon file readers
-% addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/Calibration')
-% addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/MatlabV2/JSon')
-addpath([pwd,'/Calibration'])
-addpath([pwd,'/JSon'])
+addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/Testing/Calibration')
+addpath('/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/Testing/JSon')
+% addpath([pwd,'/Calibration'])
+% addpath([pwd,'/JSon'])
 end

@@ -1,19 +1,18 @@
 % Written by: Scott Spuler
+% Written for: National Center For Atmospheric Research
 % Modified by: Robert Stillwell
-% Modified for: National Center For Atmospheric Research
-% Modification info: Downloaded: January 17, 2017
-%                    
+%                 
 %% Setting up runtime environment
-clear all; close all; clc
+clear; close all; clc
 
 %% Defining processing options
 Options          = DefineOptions;
-Options.System   = 'DIAL01';
-Options.Location = 'RELAMPAGO';
+Options.System   = 'DIAL05';
+Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
-DatesDesired = {'181028'};
+DatesDesired = {'181101'};
 
 for m=1:1:size(DatesDesired,1)
     % Parsing the dates out for processing

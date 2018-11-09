@@ -1,6 +1,140 @@
 
 
 
+function PlotData(Altitude, Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,RB_scale,SurfaceWeather)
+%
+%
+%
+%
+%
+%
+%% Loading colormap           
+Plotting.ColorMap = importdata([Paths.Colormap,'/NCAR_C_Map.mat']);
+
+%%
+fprintf('Plotting Data\n')
+Plotting.ScreenSize = get(0,'ScreenSize');
+Plotting.FontSize   = 14;
+Plotting.PlotSize1  = [Plotting.ScreenSize(4)/1.5 Plotting.ScreenSize(4)/10 Plotting.ScreenSize(3)/1.5 Plotting.ScreenSize(4)/3];
+Plotting.PlotSize2  = [1 Plotting.ScreenSize(4)/2 Plotting.ScreenSize(3)/2 Plotting.ScreenSize(4)/2];
+Plotting.x          = (PulseInfo.DataTimeDateNumFormat)';
+Plotting.xdata      = linspace(fix(min(PulseInfo.DataTimeDateNumFormat)),...
+                              ceil(max(PulseInfo.DataTimeDateNumFormat)), 25);
+Plotting.y          = (Altitude.RangeOriginal./1e3);
+
+PlottingMainPlots(Counts,RB_scale,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
+ 
+cd(Paths.Code) % point back to original directory
+
+PlotHousekeepingData(DataProducts,PulseInfoNew,Options,Paths,Plotting,PulseInfo)
+
+end
+
+
+
+function PlottingMainPlots(Counts,RB_scale,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
+%
+%
+%
+%
+%
+%
+%
+%% Final information needed before plotting
+date = datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'dd mmm yyyy');
+%% Plotting relative backscatter
+figure1 = figure('visible', 'off','Position',[Plotting.ScreenSize(4)/1.5 Plotting.ScreenSize(4)/10 Plotting.ScreenSize(3)/1.5 Plotting.ScreenSize(4)/1.5]);
+set(figure1, 'visible', 'off', 'PaperUnits', 'points', 'PaperPosition', [0 0 1280 800]);
+if Options.flag.plot_data == 1
+    set(figure1, 'visible', 'on');
+end
+subplot1=subplot(2,1,1,'Parent',figure1);
+box(subplot1,'on');
+set(gcf,'renderer','zbuffer');
+Z = double(log10((real(Counts.RelativeBackscatter{Map.Offline,1}')./RB_scale)));
+h = pcolor(Plotting.x,Plotting.y,Z);
+set(h, 'EdgeColor', 'none');
+set(gca,'TickDir','out');
+set(gca,'TickLength',[0.005; 0.0025]);
+set(gca, 'XTick',  Plotting.xdata)
+colorbar('EastOutside');
+axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 12])
+caxis([1 6]);
+datetick('x','HH','keeplimits', 'keepticks');
+colormap(Plotting.ColorMap)
+%shading interp
+hh = title({[date,'  Relative Backscatter (C/ns km^2)']},'fontweight','b','fontsize',Plotting.FontSize);
+P_t = get(hh, 'Position');
+set(hh,'Position', [P_t(1) P_t(2)+0.2 P_t(3)])
+xlabel('Time (UTC)','fontweight','b','fontsize',Plotting.FontSize);
+ylabel('Height (km, AGL)','fontweight','b','fontsize',Plotting.FontSize);
+set(gca,'Fontsize',Plotting.FontSize,'Fontweight','b');
+
+%% Plot water vapor in g/m^3
+subplot1=subplot(2,1,2,'Parent',figure1);
+box(subplot1,'on'); %(number density in mol/cm3)(1e6 cm3/m3)/(N_A mol/mole)*(18g/mole)
+set(gcf,'renderer','zbuffer');
+Z = double(real(DataProducts.N_avg'.*1e6./6.022E23.*18.015));
+h = pcolor(Plotting.x,Plotting.y,Z);
+set(h, 'EdgeColor', 'none');
+set(gca, 'XTick',  Plotting.xdata)
+set(gca,'TickDir','out');
+set(gca,'TickLength',[0.005; 0.0025]);
+colorbar('EastOutside');
+axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 6])
+if strcmp(Options.System,'DIAL01')
+caxis([0,20]);
+else
+caxis([0 10]);
+end
+datetick('x','HH','keeplimits', 'keepticks');
+colormap(Plotting.ColorMap)
+%shading interp
+hh = title({[date,'  Water Vapor (g/m^{3})']},'fontweight','b','fontsize',Plotting.FontSize);
+P_t = get(hh, 'Position');
+set(hh,'Position', [P_t(1) P_t(2)+0.2 P_t(3)])
+xlabel('Time (UTC)','fontweight','b','fontsize',Plotting.FontSize);
+ylabel('Height (km, AGL)','fontweight','b','fontsize',Plotting.FontSize);
+set(gca,'Fontsize',Plotting.FontSize,'Fontweight','b');
+
+%% Saving the quickloook plot
+if Options.flag.save_quicklook == 1
+    fprintf('Making Quicklook and Uploading to Field Catalog\n')
+    cd(Paths.Figures) % point to the directory where data is stored
+    date=datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'yyyymmdd');
+    % save the image as a PNG to the local data folder
+    name=strcat('lidar.NCAR-WV-',Options.System,'_',Options.Location,'.20',Paths.Date, '0000.Backscatter_WV.png');
+    print(figure1, name, '-dpng', '-r300') % set the resolution as 300 dpi
+    if Options.flag.save_catalog == 1 % upload figure to the field catalog
+        test=ftp('catalog.eol.ucar.edu', 'anonymous', 'spuler@ucar.edu');
+        cd(test, Paths.Catalog);
+        mput(test, name);
+        cd(test);
+        dir(test,'lidar*')
+        close(test);
+    end
+    cd(Paths.Code)
+end
+
+    
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Data2Save.WavelengthX   = PulseInfo.DataTimeDateNumFormat;
+% Data2Save.WavelengthOn  = PulseInfo.Lambda{1,1};
+% Data2Save.WavelengthOff = PulseInfo.Lambda{2,1};
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CurrentPath = pwd;
+% MeasurementsTotal = size(Counts.Raw{1,1},1);
+% cd(Paths.SaveData)
+% ExtraSave = [Paths.FigureType,'NewDataProcessing20',num2str(Paths.FolderDate),'.mat'];
+% save(ExtraSave,'Data2Save','MeasurementsTotal');
+% cd(CurrentPath)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+   
+end
+
 function PlotHousekeepingData(DataProducts,PulseInfoNew,Options,Paths,Plotting,PulseInfo)
 %
 %
@@ -169,7 +303,6 @@ end
 end
 
 function AddPlotText(TextXLoc,TextYLoc,Text,FontSize)
-
 XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
 YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
 text(XLoc,YLoc,Text,'Fontsize',FontSize)

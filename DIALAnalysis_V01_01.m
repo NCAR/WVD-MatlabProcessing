@@ -9,18 +9,20 @@
         % Compartmentalized all retrievals
         % Renewed ability to run multiple wavelengths per day
         % Reorganizing code into subfunctions more rigidly 
+        % Commenting code more thoroughly for other users
         
 function DIALAnalysis_V01_01(JSondeData, Options, Paths)
 %
+% Inputs: JSondeData: A structure containing all of the loaded calibration
+%                     data from the JSonde files
+%         Options:    A structure containing all of the user defined
+%                     processing options
+%         Paths:      A structure containing all of the relevant file path
+%                     information 
 %
+% Outputs: none
 %
-%
-%
-%
-%
-%
-%
-%%
+%% 
 tic;
 fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 
@@ -30,37 +32,27 @@ fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';
              'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
 
-%% Pulling information out of the file names and paths
-DayOfYear        = day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');         
-year             = 2000 + str2double(Paths.Date(1:2)); 
-Paths.FolderDate = Paths.Date;
-Paths.FolderType = 'All';
-
 %% Importing all netcdf data files from the selected date
 % Loading data
 [Counts,PulseInfoNew] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths);
-
 % Determining pulse info
 PulseInfo.BinWidth    = round((double(nanmean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
-PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + DayOfYear;
+PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + ...
+                        day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');
 PulseInfo.DeltaRIndex = 150/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing 
 PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
-clear DayOfYear DataTypes
+clear DataTypes
 
-%% Defining constants 
-% use to keep the arbitrary units of RB scale the same before
-RB_scale = 1; 
-% Defining arrays used to smooth the data
+%% Defining arrays used to smooth the data
 AverageRange   = [1;round(1500/PulseInfo.BinWidth);round(2500/PulseInfo.BinWidth)];
 SpatialAverage = [150/PulseInfo.BinWidth; 300/PulseInfo.BinWidth; 600/PulseInfo.BinWidth];
 
 %% Recast weather station data
 if Options.flag.WS==1
-  SurfaceWeather.Temperature      = PulseInfoNew.WeatherStation.Temperature;            %temperature in C
-  SurfaceWeather.Pressure         = PulseInfoNew.WeatherStation.Pressure./1013.249977;  % pressure in atm
-  SurfaceWeather.RelativeHumidity = PulseInfoNew.WeatherStation.RelHumidity;
+  SurfaceWeather          = PulseInfoNew.WeatherStation;
+  SurfaceWeather.Pressure = SurfaceWeather.Pressure./1013.249977;  % pressure in atm
   % Calculate surface parameters from weatherstation data
-  [SurfaceWeather.AbsoluteHumidity,SurfaceWeather.NumberDensity] = ConvertWeatherStationValues(SurfaceWeather.RelativeHumidity,SurfaceWeather.Temperature);
+  [~,SurfaceWeather.NumberDensity] = ConvertWeatherStationValues(SurfaceWeather.RelativeHumidity,SurfaceWeather.Temperature);
 end
 
 %% Initial data preparation
@@ -68,7 +60,7 @@ fprintf('Processing Data\n')
 % grid data in time to final array size
 PulseInfo.DataTime = (floor(min(PulseInfo.DataTimeRaw)):1/24/60*(Options.ave_time.gr):(floor(min(PulseInfo.DataTimeRaw))+1))';
 % remove the time lag from cumsum
-PulseInfo.DataTimeShifted    = PulseInfo.DataTime -(1/24/60*((Options.ave_time.wv-1)/2));
+PulseInfo.DataTimeShifted = PulseInfo.DataTime -(1/24/60*((Options.ave_time.wv-1)/2));
 %Calculating average wavelength
 for m=1:1:size(Counts.Raw,1)
     if strcmp(Options.System,'DIAL01')
@@ -141,12 +133,10 @@ for m=1:1:size(Counts.Raw,1)
 end
 clear m Temp i j
 
-%% Temporal averaging of point data
-% Recursively interpolate weather station data from collected to averaged grid
+%% Recursively interpolate data from collected to averaged grid
 if Options.flag.WS == 1
     SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
 end
-% Recursively interpolating pulseinfo from collected time grid to averaged grid
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),Options.InterpMethod,Options.Extrapolation);
 
 %% Gradient filter for the WV data
@@ -160,23 +150,25 @@ end
 DataProducts = []; % Pre-allocating retrieval info 
 for m=1:1:Iterations
     fprintf('   Retrieval Iteration %0.0f\n',m)
-    % Performing the water vapor retrievals
+    %%%%%%%%%%% Performing the water vapor retrievals %%%%%%%%%%%
     if Capabilities.WVDIAL == 1
         [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts, ...
                                               JSondeData,Map,Options,Paths, ...
                                               PulseInfo,SpatialAverage,     ...
                                               SurfaceWeather,AverageRange);
     end
-    % Performing the HSRL retrievals
+    %%%%%%%%%%% Performing the HSRL retrievals %%%%%%%%%%%
     if Capabilities.HSRL == 1 || Capabilities.O2HSRL == 1
         RetrievalsHSRL(Altitude,Capabilities,DataProducts,Map,Options,PulseInfo,SurfaceWeather);
     end
-    % Performing perterbative temperature retrievals
-    
+    %%%%%%%%%%% Performing perterbative temperature retrievals %%%%%%%%%%%
+    if Capabilities.O2DIAL == 1
+        
+    end
 end
   
 %% Finding plotting information
-PulseInfo.DataTimeDateNumFormat = datenum(year,1,0)+double(PulseInfo.DataTime);
+PulseInfo.DataTimeDateNumFormat = datenum(2000+str2double(Paths.Date(1:2)),1,0)+ double(PulseInfo.DataTime);
 
 %% Decimate data in time to final array size
 if Options.flag.decimate == 1
@@ -192,13 +184,12 @@ if Options.flag.decimate == 1
         Counts.CountRate{m,1}           = Counts.CountRate{m,1}(          1:decimate_time:end, 1:decimate_range:end);
     end
     % Decimating altitude to the final grid spacing
-    Altitude.RangeOriginal          = Altitude.RangeOriginal(1:decimate_range:end);
+    Altitude.RangeOriginal = Altitude.RangeOriginal(1:decimate_range:end);
     % Decimate data products in space and time
     DataProducts = RecursivelyDecimateStructure(DataProducts,decimate_time ,size(DataProducts.OpticalDepth,1), ...
                                                              decimate_range,size(DataProducts.OpticalDepth,2));    
-    % Decimating pulse info time series data in time
+    % Decimating pulseinfo and surface weather time series data in time
     PulseInfo = RecursivelyDecimateStructure(PulseInfo,decimate_time,size(PulseInfo.DataTime,1),[],[]);        
-    % Decimating surface weather time series data in time
     if Options.flag.WS ==1
         SurfaceWeather = RecursivelyDecimateStructure(SurfaceWeather,decimate_time,size(SurfaceWeather.AbsoluteHumidity,1),[],[]);        
     end
@@ -208,7 +199,7 @@ end
 fprintf('Saving Data\n')
 if Options.flag.save_data == 1
     cd(Paths.SaveData)
-    Paths.FileName = ['ProcessedDIALData_DIAL0',Options.System(6),'_20',num2str(Paths.FolderDate),'.mat'];
+    Paths.FileName = ['ProcessedDIALData_DIAL0',Options.System(6),'_20',num2str(Paths.Date),'.mat'];
     save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','PulseInfoNew','SurfaceWeather')
     cd(Paths.Code)
 end
@@ -222,9 +213,6 @@ end
 PlotData(Altitude, Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,RB_scale,SurfaceWeather)
 
 %% Cleaning the workspace variables that are unneeded
-% Variables used only for plotting
-clear year RB_scale 
-% Temperary variables used in processing that need not be saved
 clear decimate_range decimate_time
 clear AverageRange SpatialAverage 
 clear m
@@ -234,15 +222,15 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Surf_AH,Surf_N] = ConvertWeatherStationValues(Surf_RH,Surf_T) 
 %
-% Inputs: Surf_RH:  Surface relative humidity time series     [Units: %]
-%         Surf_T:   Surface temperature time series           [Units: ]
+% Inputs: Surf_RH:  Surface relative humidity time series   [Units: %]
+%         Surf_T:   Surface temperature time series         [Units: C]
 %                   
-% Outputs: Surf_AH: Surface absolute humiditiy time series    [Units: g/kg]
-%          Surf_N:  Surface number density time series        [Units: ]
+% Outputs: Surf_AH: Surface absolute humiditiy time series  [Units: g/kg]
+%          Surf_N:  Surface number density time series      [Units: 1/cm^3]
 %
 %% Defining universal constants
-R   = 8.31447215;   %J mol^-1 K^-1
-N_A = 6.0221415E23; %mol^-1
+[Constants,Conversions] = DefineConstants;
+
 %% Defining conversion constants for Clausius Clapeyron Equation
 a0 = 6.107799961;
 a1 = 4.436518521E-1;
@@ -254,14 +242,15 @@ a6 = 6.136820929E-11;
 %% Calculating vapor pressure of water
 e=((a0+Surf_T.*(a1+Surf_T.*(a2+Surf_T.*(a3+Surf_T.*(a4+Surf_T.*(a5+Surf_T.*a6))))))./1); %vapor pressure in hPa
 %% Convert RH to number density and absolute humidity
-Surf_N  = 1.*(Surf_RH.*(1).*e./(R.*(Surf_T+273).*(1))).*N_A*1e-6;  %cm^3
-Surf_AH = Surf_N.*1e6./6.022E23.*18.015;
+Surf_N  = (Surf_RH.*e./(Constants.R.*Conversions.CelciusToKelvin(Surf_T))).*Constants.N_A*1e-6; %cm^-3
+Surf_AH = Surf_N.*Constants.m.*1e9;   % g/m^3  
 end
 
 function [CorrCounts] = CorrectPileUp(Counts, MCS, t_d)
 %
 % Inputs: Counts:      
-%         MCS:              
+%         MCS: 
+%         t_d
 %                      
 % Outputs: CorrCounts: 
 %

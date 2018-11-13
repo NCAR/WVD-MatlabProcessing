@@ -1,6 +1,8 @@
-
-
-
+% Written by: Robert Stillwell
+% Written for: National Center For Atmospheric Research
+% This function processes all the High Spectral Resolution lidar retrievals 
+% from the MPD system. It also filters and averages the data.
+% Modification info: Created: November 13, 2018
 
 function [] = RetrievalsHSRL(Altitude, Capabilities, DataProducts, Map, Options, PulseInfo, SurfaceWeather)
 %

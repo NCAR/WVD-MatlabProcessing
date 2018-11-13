@@ -286,10 +286,10 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     PulseInfo.UPS.BatteryNominal  = UPS.BatteryNominal;
     PulseInfo.UPS.Temperature     = UPS.Temperature;
     % Parsing out the weather station
-    PulseInfo.WeatherStation.AbsHumidity    = WStation.AbsoluteHumidity;
-    PulseInfo.WeatherStation.Pressure       = WStation.Pressure;
-    PulseInfo.WeatherStation.RelHumidity    = WStation.RelativeHumidity;
-    PulseInfo.WeatherStation.Temperature    = WStation.Temperature;
+    PulseInfo.WeatherStation.AbsoluteHumidity  = WStation.AbsoluteHumidity;
+    PulseInfo.WeatherStation.Pressure          = WStation.Pressure;
+    PulseInfo.WeatherStation.RelativeHumidity  = WStation.RelativeHumidity;
+    PulseInfo.WeatherStation.Temperature       = WStation.Temperature;
 end
 end
 

@@ -1,17 +1,33 @@
+% Written by: Robert Stillwell
+% Written for: National Center For Atmospheric Research
+% This function calls the subfunctions that plot the MPD housekeeping and
+% data figures. 
+% Modification info: Created: November 13, 2018
 
-
-
-function PlotData(Altitude, Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,RB_scale,SurfaceWeather)
+function PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
 %
+% Inputs: Altitude:       Structure containing all altitude arrays 
+%         Counts:         Structure containing the observed photon counts
+%                         and all arrays at verious stages of data 
+%                         processing 
+%         DataProducts:   A
+%         Map:            
+%         Options:        Structure containing all of the user defined 
+%                         processing options
+%         Paths:          A named structure containing all of the file path
+%                         information needed for finding raw data and 
+%                         saving processed data and figures
+%         PulseInfo:      A
+%         PulseInfoNew:   A
+%         SurfaceWeather: Structure containing all time series information
+%                         from the MPD weather stations
 %
-%
-%
-%
+% Outputs: none
 %
 %% Loading colormap           
 Plotting.ColorMap = importdata([Paths.Colormap,'/NCAR_C_Map.mat']);
 
-%%
+%% 
 fprintf('Plotting Data\n')
 Plotting.ScreenSize = get(0,'ScreenSize');
 Plotting.FontSize   = 14;
@@ -22,7 +38,8 @@ Plotting.xdata      = linspace(fix(min(PulseInfo.DataTimeDateNumFormat)),...
                               ceil(max(PulseInfo.DataTimeDateNumFormat)), 25);
 Plotting.y          = (Altitude.RangeOriginal./1e3);
 
-PlottingMainPlots(Counts,RB_scale,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
+%%
+PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
  
 cd(Paths.Code) % point back to original directory
 
@@ -32,7 +49,7 @@ end
 
 
 
-function PlottingMainPlots(Counts,RB_scale,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
+function PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
 %
 %
 %
@@ -51,7 +68,7 @@ end
 subplot1=subplot(2,1,1,'Parent',figure1);
 box(subplot1,'on');
 set(gcf,'renderer','zbuffer');
-Z = double(log10((real(Counts.RelativeBackscatter{Map.Offline,1}')./RB_scale)));
+Z = double(log10((real(Counts.RelativeBackscatter{Map.Offline,1}'))));
 h = pcolor(Plotting.x,Plotting.y,Z);
 set(h, 'EdgeColor', 'none');
 set(gca,'TickDir','out');
@@ -177,7 +194,7 @@ AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black
 %% Plotting other weather station data (Pressure, Relative humidity)
 subplot(28,1,5:8)
 [Ax, ~, ~] = plotyy(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,...
-                    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.RelHumidity);
+                    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.RelativeHumidity);
 ylabel(Ax(1),'Press. [mbar]'); ylabel(Ax(2),'R.H. [%]')
 xlim(Ax(1),[0,24]); xlim(Ax(2),[0,24]); 
 grid on; box on;

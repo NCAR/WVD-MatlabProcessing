@@ -1,12 +1,26 @@
-
-
-
-
+% Written by: Robert Stillwell
+% Written for: National Center For Atmospheric Research
+% This function processes all the Water Vapor DIAL retrievals from the MPD
+% system. It also filters and averages the data.
+% Modification info: Created: November 13, 2018
 
 function [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts,JSondeData,Map,Options,Paths,PulseInfo,SpatialAverage,SurfaceWeather,AverageRange)
-
+%
+%
+%
+%
+%
+%
+%
 %% Loading Hitran Data
 HitranData = dlmread([Paths.Colormap,'/815nm_841nm_HITRAN_2008.csv'],',',[1 1 1676 8]);
+
+%% Finding optical depth
+% OD is - ln(I/I.o), since offline is not the same as online it needs to
+% scaled by the first few good gates -- choose 300 m to 450 m
+PulseInfo.ScaleOn2Off     = nanmean(Counts.CountRate{Map.Online,1}(:,floor(450/PulseInfo.BinWidth):floor(600/PulseInfo.BinWidth)),2)./...
+                            nanmean(Counts.CountRate{Map.Offline,1}(:,floor(450/PulseInfo.BinWidth):floor(600/PulseInfo.BinWidth)),2);
+DataProducts.OpticalDepth = -(log(Counts.CountRate{Map.Online,1}./bsxfun(@times, Counts.CountRate{Map.Offline,1}, PulseInfo.ScaleOn2Off))); % calculate column optical depth
 
 %% Blanking lowest range bins
 % blank lowest gates...not needed on HSRL
@@ -84,6 +98,7 @@ DataProducts.N_Masked = DataProducts.N_avg;
 DataProducts.N_Masked(DataProducts.N_avg < 0) = nan; % remove non-pysical (negative) wv regions
 DataProducts.N_Masked(abs(DataProducts.N_Error./DataProducts.N_avg) > 2.00) = nan; % remove high error regions
 DataProducts.N_Masked(Counts.ParsedFinalGrid{1,1}./(JSondeData.MCS.bin_duration*1e-9*JSondeData.MCS.accum) > 5E6) = nan; % remove raw counts above linear count threshold (5MC/s)
+DataProducts.OpticalDepth(isnan(DataProducts.N_Masked)) = nan;
 % calcuate the range lag for number density (to center in range bin)
 Altitude.RangeShift  = PulseInfo.BinWidth/2; %
 Altitude.RangeActual = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
@@ -99,13 +114,7 @@ end
 if Options.flag.mask_data == 1
   DataProducts.N_avg = DataProducts.N_Masked;
 end
-
-%% Finding optical depth
-% OD is - ln(I/I.o), since offline is not the same as online it needs to
-% scaled by the first few good gates -- choose 300 m to 450 m
-PulseInfo.ScaleOn2Off     = nanmean(Counts.CountRate{2,1}(:,300/PulseInfo.BinWidth:450/PulseInfo.BinWidth),2)./nanmean(Counts.CountRate{1,1}(:,300/PulseInfo.BinWidth:450/PulseInfo.BinWidth),2);
-DataProducts.OpticalDepth = -(log(Counts.CountRate{2,1}./bsxfun(@times, Counts.CountRate{1,1}, PulseInfo.ScaleOn2Off))); % calculate column optical depth
-  
+ 
 end
 
 

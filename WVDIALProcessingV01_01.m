@@ -7,14 +7,14 @@ clear; close all; clc
 
 %% Defining processing options
 Options          = DefineOptions;
-Options.System   = 'DIAL01';
-Options.Location = 'RELAMPAGO';
+Options.System   = 'DIAL05';
+Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
 % DatesDesired = {'181101';'181102';'181103';'181104';'181105'; 
 %                 '181106';'181107';'181108'};
-DatesDesired = {'181112'};
+DatesDesired = {'181115'};
 
 for m=1:1:size(DatesDesired,1)
     % Parsing the dates out for processing

@@ -35,9 +35,9 @@ Date = DatesDesired;
 Paths = DefinePaths(Date,Options);
 Paths.Code          = pwd; % get the current path
 if strcmp(node,'DIAL01')
-Paths.Catalog       = '/pub/incoming/catalog/relampago';
+    Paths.Catalog       = '/pub/incoming/catalog/relampago';
 else
-Paths.Catalog       = '/pub/incoming/catalog/operations';
+    Paths.Catalog       = '/pub/incoming/catalog/operations';
 end
 Paths.Figures       = ['/scr/eldora1/wvdial_',Options.System(6),'_processed_data/Quicklook'];
 Paths.FigureType    = Options.System;
@@ -53,6 +53,12 @@ else
     read_dial2_calvals
     JSondeData.MCS.accum = 14000;
     JSondeData.BlankRange = 450;
+    if strcmp(node,'DIAL01')
+        JSondeData.MCS.bins = 280;
+        JSondeData.MCS.bin_duration = 500;
+        JSondeData.MCS.accum = 32000;
+    end
+
     DIALAnalysis_V01_01(JSondeData, Options, Paths)
 end
 end

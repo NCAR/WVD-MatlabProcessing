@@ -107,6 +107,7 @@ for m=1:1:size(Counts.Raw,1)
     Counts.RelativeBackscatter{m,1} = movmean(Counts.BackgroundSubtracted{m,1},JSondeData.Profiles2Average.rb.*2,1,'omitnan');
     % Range correcting relative backscatter
     Counts.RelativeBackscatter{m,1} = bsxfun(@times,  Counts.RelativeBackscatter{m,1}, Altitude.RangeSquared);
+    Counts.RelativeBackscatter{m,1} = Counts.RelativeBackscatter{m,1}./(JSondeData.MCS.accum./14000*JSondeData.MCS.bin_duration./250);
     Counts.RelativeBackscatter{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Integrating photon counts in time and space
     Temp                            = cumsum(Counts.BackgroundSubtracted{m,1},1,'omitnan')-[zeros(JSondeData.Profiles2Average.wv,j); cumsum(Counts.BackgroundSubtracted{m,1}(1:i-JSondeData.Profiles2Average.wv,:),1,'omitnan')];  %rolling average of rows or time
@@ -141,8 +142,10 @@ PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeR
 
 %% Gradient filter for the WV data
 if Options.flag.gradient_filter == 1
+    Limit = (JSondeData.MCS.accum./14000*JSondeData.MCS.bin_duration./250).*1000;
+    
     [FX,~] = gradient(Counts.CountRate{Map.Offline,1});
-    Counts.CountRate{Map.Offline,1}(FX<-1000 | FX> 1000) = nan; % remove falling (leading) edge of clouds
+    Counts.CountRate{Map.Offline,1}(FX<-Limit | FX> Limit) = nan; % remove falling (leading) edge of clouds
     clear FX
 end
 
@@ -210,7 +213,7 @@ if Options.flag.save_netCDF == 1  % save the data as an nc file
 end
 
 %% Plot Data
-PlotData(Altitude, Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,RB_scale,SurfaceWeather)
+PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
 
 %% Cleaning the workspace variables that are unneeded
 clear decimate_range decimate_time

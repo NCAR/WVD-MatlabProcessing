@@ -153,7 +153,7 @@ A = find(diff(Power.TimeStamp) == 0);
 Counter = 0;
 while ~isempty(A)
     Counter = Counter + 1;
-    Power.TimeStamp(diff(Power.TimeStamp) == 0) = Power.TimeStamp(diff(Power.TimeStamp) == 0) + 1e-9;
+    Power.TimeStamp(diff([0;Power.TimeStamp(1:end-1)]) == 0) = Power.TimeStamp(diff([0;Power.TimeStamp(1:end-1)]) == 0) + 1e-9;
     A = find(diff(Power.TimeStamp) == 0);
     if Counter == 300
         fprintf('More than 300 power time stamps were identical.\n')
@@ -176,15 +176,21 @@ if MCSLast ~= size(MCS.Channel,1)
 end
 clear MCSFirst MCSLast
 % Removing incomplete scan in the middle of the day
-MCS = RemoveIncompleteMCSScans(MCS);
+MCS = RemoveIncompleteMCSScans(MCS,1);
 
 %% Downsampling power data to roughly MCS timegrid
 % Determining how many data points to average
 PowerMeasurementsPerData = ceil(size(Power.TimeStamp,1)./ ...
                                 size(MCS.TimeStamp(MCS.Channel == MCS.Channel(1)),1));
 % Downsampling the data by averaging then taking the center values
-Power  = RecursivelyDownSample(Power,PowerMeasurementsPerData,size(Power.TimeStamp,1));
-                         
+if size(Power.TimeStamp,1) > 0
+%Power  = RecursivelyDownSample(Power,PowerMeasurementsPerData,size(Power.TimeStamp,1));
+else
+TimeBounds = linspace(0,24,100)';
+Power.LaserPower = nan.*TimeBounds;
+Power.TimeStamp  = TimeBounds;
+end     
+
 %% Removing bad laser scans
 BadData = find(Laser.WavelengthActual <= -1);
 if isempty(BadData) == 0
@@ -424,7 +430,7 @@ end
 % any sets of data thclose aat are incomplete. This can happen when the system is
 % turned on or off in the middle of the transmission of a set of MCS
 % data-grams or when the set is interupted by the start or end of a day
-function [MCS] = RemoveIncompleteMCSScans(MCS)
+function [MCS] = RemoveIncompleteMCSScans(MCS,Depth)
 %
 %
 %
@@ -465,6 +471,15 @@ for m=1:1:size(CellArray)
 end
 %% Converting back to a named structure
 MCS = cell2struct(CellArray,FieldNames);
+
+%% Recursively checking for extra incomplete scans
+if Depth < 10 && isempty(BadData) == 0
+    % Removing more incomplete scans
+    MCS = RemoveIncompleteMCSScans(MCS,Depth + 1);
+elseif Depth > 10 && isempty(BadData) == 0
+    % Notifying the user that the MCS scans are really really incomplete
+    fprintf('More than 10 sets of incomplete scans were observed. Thats a problem.\n')
+end
 end
 
 % This function specifically pads MCS data with bad values to remove any

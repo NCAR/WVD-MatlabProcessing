@@ -13,7 +13,12 @@ function [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts,JSon
 %
 %
 %% Loading Hitran Data
-HitranData = dlmread([Paths.Colormap,'/815nm_841nm_HITRAN_2008.csv'],',',[1 1 1676 8]);
+if Options.Process.WVPCA == 1
+    H2OPCATrainingSet = load([Paths.Colormap,'/H2O80GHzPCA.mat']);
+else
+    HitranData = dlmread([Paths.Colormap,'/815nm_841nm_HITRAN_2008.csv'],',',[1 1 1676 8]);
+end
+
 
 %% Finding optical depth
 % OD is - ln(I/I.o), since offline is not the same as online it needs to
@@ -31,11 +36,29 @@ clear blank
 
 %% Spectral Line Fitting
 fprintf('      H2O Retrieval: Calculating Cross Section\n')
+if Options.Process.WVPCA == 1
+[DataProducts.Sigma{Map.Online,1}] =  ...
+ PCASpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Online,1},   ...
+                                       PulseInfo.LambdaNearest{Map.Online,1},  ...
+                                       H2OPCATrainingSet,                      ...
+                                       Counts.CountRate{Map.Online,1},         ...
+                                       Altitude.RangeOriginal,                 ...
+                                       SurfaceWeather.Pressure,                ...
+                                       SurfaceWeather.Temperature);
+[DataProducts.Sigma{Map.Offline,1}] =  ...
+ PCASpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Offline,1},  ...
+                                       PulseInfo.LambdaNearest{Map.Offline,1}, ...
+                                       H2OPCATrainingSet,                      ...
+                                       Counts.CountRate{Map.Offline,1},        ...
+                                       Altitude.RangeOriginal,                 ...
+                                       SurfaceWeather.Pressure,                ...
+                                       SurfaceWeather.Temperature);
+else
 [DataProducts.Sigma{Map.Online,1}] =  ...
     SpectralLineFittingWV(Options.flag,PulseInfo.LambdaUnique{Map.Online,1},   ...
                                        PulseInfo.LambdaNearest{Map.Online,1},  ...
                                        HitranData,                             ...
-                                       Counts.CountRate{Map.Online,1},        ...
+                                       Counts.CountRate{Map.Online,1},         ...
                                        Altitude.RangeOriginal,                 ...
                                        SurfaceWeather.Pressure,                ...
                                        SurfaceWeather.Temperature);
@@ -47,6 +70,8 @@ fprintf('      H2O Retrieval: Calculating Cross Section\n')
                                        Altitude.RangeOriginal,                 ...
                                        SurfaceWeather.Pressure,                ...
                                        SurfaceWeather.Temperature);
+end
+                                   
                                    
 %% DIAL Equation to calculate Number Density and error
 fprintf('      H2O Retrieval: DIAL Retrievals\n')
@@ -117,7 +142,7 @@ end
  
 end
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Subfunctions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Sigma] = SpectralLineFittingWV(flag, LambdaUnique, lambda, hitran, Online_Temp_Spatial_Avg, range, Surf_P, Surf_T)
 %
 %
@@ -229,4 +254,178 @@ NError = (1/2./(SigmaOn -SigmaOff )./(BinWidth*100)...
            (OfflineInt+OfflineBG)./OfflineInt.^2 + (circshift(OfflineInt, [0, -1])+OfflineBG)./circshift(OfflineInt, [0, -1]).^2));
 end
 
+function [Sigma] = PCASpectralLineFittingWV(flag, LambdaUnique, lambda, H2OTrainingSet, Online_Temp_Spatial_Avg, range, Surf_P, Surf_T)
+%
+%
+%
+%
+%% Filling in wavelength gaps left by wavemeter communication
+% this is done by assuming the nearest good value for desired wavelength is
+% the same as at the bad time...note that the wavelength needs to be
+% rounded to the nearest 10th of a picometer because it can be messed up in
+% temporal interpolation
+lambda = round(lambda,4); 
+GoodMeasurements = find((isnan(lambda) == 0)==1);
+lambda = interp1(GoodMeasurements,lambda(GoodMeasurements),1:1:size(lambda,1),'nearest','extrap');
+
+%% Calculate temperature and pressure profile
+if flag.WS == 1
+    T0 = nanmedian(Surf_T)+273.15;
+    P0 = nanmedian(Surf_P);
+else
+    T0 = 273+30; % surface temperature
+    P0 = 0.83;
+end
+% Calculating a temperature profile assuming an moist adiabatic lapse rate
+T = T0-0.0065.*range;     % Units of Kelvin
+% Calculating a pressure profile
+P = P0.*(T0./T).^-5.5;    % units of atmospheres)
+
+%% Code to handle multiple wavelength changes during a single day
+% Pre-allocating cross section array
+Sigma = nan.*zeros(size(Online_Temp_Spatial_Avg));
+% Principle component reconstruction of cross sections
+[CrossSection,~] = PCALineFitting(H2OTrainingSet,P',T',LambdaUnique');
+% Inserting cross section into array
+for l=1:length(LambdaUnique)
+    Columns2Fill = (lambda == LambdaUnique(l));
+    Sigma(Columns2Fill,:) = repmat(CrossSection(:,l)',sum(Columns2Fill),1);
+end
+end
+
+
+function [CrossSection,A] = PCALineFitting(H2OTrainingSet,PressRebuild,TempRebuild,WavelengthsDesired)
+%
+% Inputs: H2OTrainingSet:     A structure containing all of the information
+%                             needed to rebuild the water vapor absorption
+%                             spectrum from the training set
+%         PressRebuild:       A column array of pressures at which the
+%                             spectrum of interest is to be rebuilt        
+%         TempRebuild:        A column array of temperatures at which the
+%                             spectrum of interest is to be rebuilt
+%         WavelengthsDesired: A row vector of the exact wavelengths at
+%                             which to calculate the absorption cross
+%                             section
+%
+% Outputs: CrossSection:      
+%
+%% Rebuilding full spectrum for each desired temperature and pressure
+A = Rebuild(H2OTrainingSet.MeanSpectrum, ...
+            H2OTrainingSet.PolyFitParams,...
+            H2OTrainingSet.PrincipleComponents, ...
+            PressRebuild ,H2OTrainingSet.MeanP ,H2OTrainingSet.SigmaP , ...
+            TempRebuild  ,H2OTrainingSet.MeanT ,H2OTrainingSet.SigmaT);
+
+%% Linearly interpolating H2O absorption at exact pt(s)
+% WavelengthsDesired = [828.188,828.3];
+CrossSection = zeros(size(A,2),size(WavelengthsDesired,2));
+for m=1:1:size(PressRebuild,1)
+    CrossSection(m,:) = interp1(H2OTrainingSet.Lambda,A(:,m),WavelengthsDesired);
+end
+
+end
+
+% This function rebuilds spectra using a trained principle component
+% analysis method. Principle components are calculated from a broad
+% training set. Weights for those principle components are calculated as a
+% function of temperature and pressure then surface polynomials are fit to
+% the weight contours. Here rebuilding is done using those polynomial
+% contours and the training set information. Note multiple temperatures are
+% pressures can be fit at once but they must be passed as a column vector.
+function [RebuildPoly] = Rebuild(MeanSpectrum,PolyFitParams,PrincipleComponents,PressRebuild,MeanP,SigmaP,TempRebuild,MeanT,SigmaT)
+%
+% Inputs: MeanSpectrum:        The mean spectrum of the entire training set
+%                              of values at each wavelength
+%         PolyFitParams:       An array of structures containing the
+%                              coefficients needed by the polyvaln function
+%                              to recreate the polynomial cotours
+%         PrincipleComponents: An array of principle components from the
+%                              training set at the same wavelengths and
+%                              resolutions as the mean spectrum
+%         PressRebuild:        A column array of pressures at which the
+%                              spectrum of interest is to be rebuilt
+%         MeanP:               The mean pressure of the training set
+%         SigmaP:              The standard deviation of the pressures of
+%                              the training set 
+%         TempRebuild:         A column array of temperatures at which the
+%                              spectrum of interest is to be rebuilt
+%         MeanT:               The mean temperature of the training set
+%         SigmaT:              The standard deviation of the temperatures
+%                              of the training set 
+%
+% Outputs: RebuildPoly:        An array of rebuilt spectra. The rows are at
+%                              the same resolution as the mean spectrum of
+%                              the training set and the columns will
+%                              correspond to the size of the temperature
+%                              and pressure arrays
+%
+%% Constants (number of principle components used to rebuild spectrum)
+PC2Use       = 45;
+%% Function handles needed
+NormalizePolyInputs   = @(T1,Tm,Sigma) (T1-Tm)./Sigma;
+%% Rebuilding spectrum from trained polynomials
+PolyWeights2 = zeros(PC2Use,size(TempRebuild,1)); % Pre-allocating memory
+for m=1:1:PC2Use
+    % Rebuilding absorption spectrum weights with polynomial fits
+    PolyWeights2(m,:) = polyvaln(PolyFitParams{m,1},[NormalizePolyInputs(TempRebuild,MeanT,SigmaT),NormalizePolyInputs(PressRebuild,MeanP,SigmaP)]);
+end
+% Multiplying principle components by the weights
+RebuildPoly = PrincipleComponents(:,1:PC2Use)*PolyWeights2(1:PC2Use,:);
+% Adding the mean spectrum back in to rebuild the full spectrum
+RebuildPoly = RebuildPoly+ MeanSpectrum';
+end
+
+function ypred = polyvaln(polymodel,indepvar)
+% polyvaln: evaluates a polynomial model as a function of its variables
+% usage: ypred = polyvaln(polymodel,indepvar)
+%
+% arguments: (input)
+%  indepvar - (n x p) array of independent variables as columns
+%        n is the number of data points to evaluate
+%        p is the dimension of the independent variable space
+%
+%        IF n == 1, then I will assume there is only a
+%        single independent variable.
+%
+%  polymodel - A structure containing a regression model from polyfitn
+%        polymodel.ModelTerms = list of terms in the model
+%        polymodel.Coefficients = regression coefficients
+%  
+%        Note: A polymodel can be evaluated for any set of
+%        values with the function polyvaln. However, if you
+%        wish to manipulate the result symbolically using my
+%        own sympoly tools, this structure should be converted
+%        to a sympoly using the function polyn2sympoly.
+%
+% Arguments: (output)
+%  ypred - nx1 vector of predictions through the model.
+%
+%
+% See also: polyfitn, polyfit, polyval, polyn2sympoly, sympoly
+%
+% Author: John D'Errico
+% Release: 1.0
+% Release date: 2/19/06
+
+% get the size of indepvar
+[n,p] = size(indepvar);
+if (n == 1) && (size(polymodel.ModelTerms,2)==1)
+  indepvar = indepvar';
+  [n,p] = size(indepvar);
+elseif (size(polymodel.ModelTerms,2)~=p)
+  error 'Size of indepvar array and this model are inconsistent.'
+end
+
+% Evaluate the model
+nt = size(polymodel.ModelTerms,1);
+ypred = zeros(n,1);
+for i = 1:nt
+  t = ones(n,1);
+  for j = 1:p
+    t = t.*indepvar(:,j).^polymodel.ModelTerms(i,j);
+  end
+  ypred = ypred + t*polymodel.Coefficients(i);
+end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

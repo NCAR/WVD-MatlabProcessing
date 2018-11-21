@@ -3,7 +3,7 @@
 % Modification info: Created: November 8, 2017
 
 
-function [Counts,PulseInfoNew] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths)
+function [Counts,PulseInfoNew,Uptime] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths)
 %
 %
 %
@@ -187,7 +187,7 @@ if size(Power.TimeStamp,1) > 0
 %Power  = RecursivelyDownSample(Power,PowerMeasurementsPerData,size(Power.TimeStamp,1));
 else
 TimeBounds = linspace(0,24,100)';
-Power.LaserPower = nan.*TimeBounds;
+Power.LaserPower = nan.*repmat(TimeBounds,1,12);
 Power.TimeStamp  = TimeBounds;
 end     
 
@@ -241,7 +241,7 @@ Etalon       = PaddingDataStructureTimeSeries(Etalon,5,1);
 WStation     = PaddingDataStructureTimeSeries(WStation,5,0);
 UPS          = PaddingDataStructureTimeSeries(UPS,5,0);
 Power        = PaddingDataStructureTimeSeries(Power,5,0);
-MCS          = PaddingDataStructureMCS(MCS,5,7043);
+[MCS,Uptime] = PaddingDataStructureMCS(MCS,5,7043);
 
 %% Parsing data
 [Counts,PulseInfoNew] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap);
@@ -486,7 +486,7 @@ end
 % data breaks. This is different from the general function as it must
 % handle 2d data and also must fill the channel type correctly otherwise
 % the inserted data is not later understood
-function [MCS] = PaddingDataStructureMCS(MCS,MedianWidths2Flag,LaserRepRate)
+function [MCS,Uptime] = PaddingDataStructureMCS(MCS,MedianWidths2Flag,LaserRepRate)
 %
 %
 %
@@ -525,8 +525,9 @@ for m=1:1:size(DataBreakIndices)
     
 end
 
-% Making sure to only include complete scans
-DataWidth = round(DataWidth./size(A,1)).*size(A,1);
+% Making sure to include complete scans
+% DataWidth = round(DataWidth./size(A,1)).*size(A,1);
+DataWidth = round(DataWidth).*size(A,1);
               
 %% Converting the names structure to a cell array
 CellArray  = struct2cell(MCS);
@@ -608,4 +609,9 @@ else
 end
 %% Converting back to a named structure
 MCS = cell2struct(NewCell,FieldNames);
+
+%% Uptime
+Uptime = (size(MCS.TimeStamp,1)-sum(DataWidth))./size(MCS.TimeStamp,1);
+fprintf('Instrument uptime = %0.2f percent.\n',Uptime*100)
+
 end

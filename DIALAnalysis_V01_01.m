@@ -11,7 +11,7 @@
         % Reorganizing code into subfunctions more rigidly 
         % Commenting code more thoroughly for other users
         
-function DIALAnalysis_V01_01(JSondeData, Options, Paths)
+function [Uptime] = DIALAnalysis_V01_01(JSondeData, Options, Paths)
 %
 % Inputs: JSondeData: A structure containing all of the loaded calibration
 %                     data from the JSonde files
@@ -34,7 +34,8 @@ DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';
 
 %% Importing all netcdf data files from the selected date
 % Loading data
-[Counts,PulseInfoNew] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths);
+[Counts,PulseInfoNew,PulseInfo.Uptime] = ReadRawNetCDFData(DataTypes,HardwareMap,Paths);
+Uptime = PulseInfo.Uptime;
 % Determining pulse info
 PulseInfo.BinWidth    = round((double(nanmean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
 PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + ...
@@ -93,11 +94,11 @@ j = size(Altitude.RangeOriginal, 2);  % Number of altitude bins
 % Looping over channels and performing operations on photon counting data
 for m=1:1:size(Counts.Raw,1)
     fprintf(['Processing ',Map.Channels{m},' count arrays\n'])
-    % Parsing photon counts from raw data
-    Counts.Parsed{m,1} = single(Counts.Raw{m,1});
     % Applying saturation correction
     if Options.flag.pileup == 1
-        Counts.Parsed{m,1} = CorrectPileUp(Counts.Parsed{m,1},JSondeData.MCS,JSondeData.DeadTime);
+        Counts.Parsed{m,1} = CorrectPileUp(single(Counts.Raw{m,1}),JSondeData.MCS,JSondeData.DeadTime);
+    else
+        Counts.Parsed{m,1} = single(Counts.Raw{m,1});
     end
     % select last ~1200 meters to measure background
     Counts.Background1D{m,1} = mean(Counts.Parsed{m,1}(:,end-round(1200/PulseInfo.BinWidth):end),2)-0;
@@ -213,12 +214,11 @@ if Options.flag.save_netCDF == 1  % save the data as an nc file
 end
 
 %% Plot Data
+if Options.flag.plot_data == 1
 PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
-
+end
 %% Cleaning the workspace variables that are unneeded
-clear decimate_range decimate_time
-clear AverageRange SpatialAverage 
-clear m
+clear decimate_range decimate_time AverageRange SpatialAverage m
 toc
 end
 

@@ -7,7 +7,7 @@ function WVDIALProcessingV01_01_function(files, save_quicklook, save_data, save_
 %
 %
 %
-%% Closing all figuers
+%% Closing all figures
 close all; 
 
 %% Defining processing options
@@ -25,7 +25,6 @@ Options.flag.save_data      = save_data;
 Options.flag.save_netCDF    = save_netCDF;
 Options.flag.save_catalog   = save_catalog;
 Options.System              = node;
-
 DatesDesired                = num2str(files);
 
 %% Defining all file paths
@@ -51,14 +50,7 @@ if strcmp(Options.Node,'DIAL1')==1
     fprintf('Current JSond info for DIAL 1 is out of date.\n')
 else
     read_dial2_calvals
-%     JSondeData.MCS.accum = 14000;
     JSondeData.BlankRange = 450;
-%   if strcmp(node,'DIAL01')
-%       JSondeData.MCS.bins = 280;
-%       JSondeData.MCS.bin_duration = 500;
-%       JSondeData.MCS.accum = 32000;
-%   end
-
     DIALAnalysis_V01_01(JSondeData, Options, Paths);
 end
 end

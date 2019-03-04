@@ -31,14 +31,15 @@ Paths.Base       = '/scr/eldora1';
 % % % Paths.RawNetCDFData = [Paths.Base,'/RawData/20',Date];
 % % % % Paths.RawNetCDFData = [Paths.Base,'/RawData/DIAL3_NewLabview/20',Date];
 
-Paths.Code          = '/usr/local/home/rsfdata/git/lrose-projects-eolbase/projDir/dial/Testing'; % get the current path
-Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.Catalog       = '/pub/incoming/catalog/operations';
+Paths.Code          = '/usr/local/home/rsfdata/dial/Testing'; % get the current path
+Paths.Colormap      = [Paths.Code,'/DataFiles'];
+Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
 Paths.FolderType    = 'All';
-Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
-Paths.FigureType    = Options.System;
+Paths.PCARBSet      = [Paths.Base,'/PCA/RayleighBrillouinXY.mat'];
 Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
 
 %% Adding paths to current path to run JSon file readers
 addpath([Paths.Code,'/Calibration'])

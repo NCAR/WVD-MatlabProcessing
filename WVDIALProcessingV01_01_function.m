@@ -51,14 +51,14 @@ if strcmp(Options.Node,'DIAL1')==1
     fprintf('Current JSond info for DIAL 1 is out of date.\n')
 else
     read_dial2_calvals
-    JSondeData.MCS.accum = 14000;
+%     JSondeData.MCS.accum = 14000;
     JSondeData.BlankRange = 450;
-    if strcmp(node,'DIAL01')
-        JSondeData.MCS.bins = 280;
-        JSondeData.MCS.bin_duration = 500;
-        JSondeData.MCS.accum = 32000;
-    end
+%   if strcmp(node,'DIAL01')
+%       JSondeData.MCS.bins = 280;
+%       JSondeData.MCS.bin_duration = 500;
+%       JSondeData.MCS.accum = 32000;
+%   end
 
-    DIALAnalysis_V01_01(JSondeData, Options, Paths)
+    DIALAnalysis_V01_01(JSondeData, Options, Paths);
 end
 end

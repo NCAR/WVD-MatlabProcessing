@@ -4,7 +4,7 @@
 % data figures. 
 % Modification info: Created: November 13, 2018
 
-function PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
+function [Plotting] = PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
 %
 % Inputs: Altitude:       Structure containing all altitude arrays 
 %         Counts:         Structure containing the observed photon counts
@@ -39,11 +39,13 @@ Plotting.xdata      = linspace(fix(min(PulseInfo.DataTimeDateNumFormat)),...
 Plotting.y          = (Altitude.RangeOriginal./1e3);
 
 %%
-PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
- 
-cd(Paths.Code) % point back to original directory
-
-PlotHousekeepingData(DataProducts,PulseInfoNew,Options,Paths,Plotting,PulseInfo)
+if Options.flag.plot_data == 1
+    PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,SurfaceWeather,Map)
+    
+    cd(Paths.Code) % point back to original directory
+    
+    PlotHousekeepingData(DataProducts,PulseInfoNew,Options,Paths,Plotting,PulseInfo)
+end
 
 end
 
@@ -57,6 +59,12 @@ function PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,
 %
 %
 %
+%% Range correcting
+% overlap correction from Zemax model
+O_x = [100;200;300;400;500;750;1000;1250;1500; 2000;3000;4000;5000;6000;8000;12000];
+O_y = [0.00000E+00; 1.36897E-05; 5.28302E-04; 2.36897E-03; 6.96017E-03; 3.68973E-02; 1.11740E-01; 2.15933E-01; 3.41719E-01; 6.01677E-01; 9.93711E-01; 9.97904E-01; 1.00000E+00; 9.93711E-01; 9.68553E-01; 9.24528E-01];
+O = interp1(O_x./1e3, O_y, Plotting.y, 'linear','extrap');
+
 %% Final information needed before plotting
 date = datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'dd mmm yyyy');
 %% Plotting relative backscatter
@@ -68,7 +76,7 @@ end
 subplot1=subplot(2,1,1,'Parent',figure1);
 box(subplot1,'on');
 set(gcf,'renderer','zbuffer');
-Z = double(log10((real(Counts.RelativeBackscatter{Map.Offline,1}'))));
+Z = double(real((log10(Counts.RelativeBackscatter{Map.Offline,1}'./O'))));
 h = pcolor(Plotting.x,Plotting.y,Z);
 set(h, 'EdgeColor', 'none');
 set(gca,'TickDir','out');
@@ -78,7 +86,7 @@ colorbar('EastOutside');
 axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 12])
 caxis([1 6]);
 datetick('x','HH','keeplimits', 'keepticks');
-colormap(Plotting.ColorMap)
+colormap(gca,Plotting.ColorMap)
 %shading interp
 hh = title({[date,'  Relative Backscatter (C/ns km^2)']},'fontweight','b','fontsize',Plotting.FontSize);
 P_t = get(hh, 'Position');
@@ -105,7 +113,7 @@ else
 caxis([0 10]);
 end
 datetick('x','HH','keeplimits', 'keepticks');
-colormap(Plotting.ColorMap)
+colormap(gca,Plotting.ColorMap(2:end,:))
 %shading interp
 hh = title({[date,'  Water Vapor (g/m^{3})']},'fontweight','b','fontsize',Plotting.FontSize);
 P_t = get(hh, 'Position');
@@ -175,7 +183,7 @@ FigureHandle = figure;
 set(gcf,'Color',[1 1 1],'Position',[10 (sh-fh-mh)  fw fh]);
 
 %% Plotting Temperatures (thermocouples, UPS, Weather station)
-subplot(28,1,1:4)
+subplot(32,1,1:4)
 plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
      PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b--',...
      PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
@@ -192,7 +200,7 @@ AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black
 
 
 %% Plotting other weather station data (Pressure, Relative humidity)
-subplot(28,1,5:8)
+subplot(32,1,5:8)
 [Ax, ~, ~] = plotyy(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,...
                     PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.RelativeHumidity);
 ylabel(Ax(1),'Press. [mbar]'); ylabel(Ax(2),'R.H. [%]')
@@ -202,7 +210,7 @@ set(gca,'xticklabel',{})
 AddPlotText(TextXLoc,TextYLoc,'Weather Station Data',FontSize)
 
 %% Plotting deviations of laser wavelength from nominal
-subplot(28,1,9:12); hold on;
+subplot(32,1,9:12); hold on;
 WorstSigma = 0;
 for m=1:1:size(PulseInfoNew.Laser.WavelengthActual,1)
     plot(PulseInfoNew.TimeStamp.Merged,1000.*(PulseInfoNew.Laser.WavelengthActual{m,1} - ...
@@ -236,7 +244,7 @@ AddPlotText(TextXLoc,TextYLoc,'Laser \lambda Deviations [pm]',FontSize)
 
 
 %% Plotting Laser Current
-subplot(28,1,13:16); hold on;
+subplot(32,1,13:16); hold on;
 for m=1:1:size(PulseInfoNew.Laser.Current,1)
     plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.Current{m,1}.*1e3,Hue{m})
 end
@@ -253,26 +261,44 @@ if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
 AddPlotText(TextXLoc,TextYLoc,'Laser Current [mA]',FontSize)
 
+%% Plotting Laser Seed Power
+subplot(32,1,17:20); hold on;
+for m=1:1:size(PulseInfoNew.Laser.Current,1)
+    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.SeedPower{m,1},Hue{m})
+end
+hold off
+xlim([0,24]); 
+grid on;
+set(gca,'xticklabel',{},'yaxislocation','left')
+box on;
+
+MaxLimits = [-15,5];
+YLimits = ylim;
+if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
+if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
+ylim(YLimits);
+AddPlotText(TextXLoc,TextYLoc,'Laser Seed Power [dBm]',FontSize)
+
 %% Plotting Laser Power
-subplot(28,1,17:20); hold on;
+subplot(32,1,21:24); hold on;
 for m=1:1:size(PulseInfoNew.Laser.Power,1)
     plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.Power{m,1}./1e5,Hue{m})
 end
 hold off
 xlim([0,24]); 
 grid on; box on;
-set(gca,'xticklabel',{})
+set(gca,'xticklabel',{},'yaxislocation','right')
 AddPlotText(TextXLoc,TextYLoc,'Laser Power x 10^5 [arb]',FontSize)
 
 %% Plotting etalon temperatures
-subplot(28,1,21:24); hold on;
+subplot(32,1,25:28); hold on;
 for m=1:1:size(PulseInfoNew.Etalon.TemperatureActual,1)
     plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Etalon.TemperatureActual{m,1} - ...
                                        PulseInfoNew.Etalon.TemperatureDesired{m,1},Hue{m});
 end
 hold off
 xlim([0,24]); 
-set(gca,'xticklabel',{},'yaxislocation','right');
+set(gca,'xticklabel',{},'yaxislocation','left');
 grid on; box on;
 MaxLimits = [-5,5];MinLimits = [-0.01,0.01];
 YLimits = ylim;
@@ -284,7 +310,7 @@ DesiredWidth = get(gca,'position');
 DesiredWidth = DesiredWidth(3);
 
 %% Plotting optical depth
-subplot(28,1,25:28); hold on;
+subplot(32,1,29:32); hold on;
 contour3((PulseInfo.DataTime - PulseInfo.DataTime(1)).*24,Plotting.y,DataProducts.OpticalDepth',...
          [0:0.5:2],'ShowText','on','LineColor','k'); 
 pcolor ((PulseInfo.DataTime - PulseInfo.DataTime(1)).*24,Plotting.y,DataProducts.OpticalDepth'); 

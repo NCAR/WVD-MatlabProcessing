@@ -23,7 +23,7 @@ Options.flag.decimate = 0;        % decimate all data to half the wv resoltuion
 Options.flag.int = 0;             % interpolate nans in nanmoving_average
 Options.flag.mark_gaps = 0;       % sets gaps in data to NaNs
 
-Options.flag.plot_data = 0;       % need to have this one to save the figs
+Options.flag.plot_data = 1;       % need to have this one to save the figs
 Options.flag.troubleshoot = 0;    % shows extra plots used for troubleshooting
 % Options.p_hour = 12;              % hour to show troubleshooting profiles
 

@@ -52,6 +52,13 @@ else
     fprintf('      HSRL Retrieval: Calculating Standard HSRL Backscatter Coefficient\n')
 end
 
+%% Spectrum parameters to rebuild
+RebuildFreq  = linspace(-5e9,5e9,250);
+CenterLam    = 770.1085e-9;     % Center wavelength to calculate/plot [nm]
+
+RebuildPolyQ = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam);
+
+12
 % % % % %% Calculate HSRL parameters
 % % % % R_size                = 150;
 % % % % % Calculating the HSRL retrievals
@@ -76,3 +83,88 @@ end
 
 
 end
+
+function [RebuildPolyQ] = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam)
+%
+%
+%
+%
+%
+%% Loading the training set
+load(Paths.PCARBSet); 
+
+%% Calculating rebuilt Tenti parameters
+fprintf('      HSRL Retrieval: Calculating Rayleigh Brillouin Spectra\n')
+[X,Y,~,~]   = CalculateTentiParametersNDim(RebuildPress,RebuildTemp,RebuildFreq,CenterLam,Const);
+X           = shiftdim(X,size(size(X),2)-1);
+RebuildPoly = RebuildNDim(MeanSpectrum,PolyFitParams,PrincipleComponents,Y);
+
+%% Interpolating spectra back to desired frequency grid
+RebuildPolyQ = zeros(size(X)); % Pre-allocating data storage array
+for m=1:1:size(X,3)       % Looping over the columns
+    for n=1:1:size(X,2)   % Looping over the rows
+        % Interpolating retrieved spectrum to frequency grid of interest
+        RebuildPolyQ(:,n,m) = interp1(XLimits',squeeze(RebuildPoly(:,n,m)),squeeze(X(:,n,m)));      
+    end
+end
+% Normalizing all spectra
+RebuildPolyQ = RebuildPolyQ./trapz(RebuildFreq./1e9,RebuildPolyQ);
+
+end
+
+
+function [X,Y,K,Nu0] = CalculateTentiParametersNDim(Pressure,Temperature,FrequencyChange,Lambda,Const)
+%
+%
+%
+%
+%
+%
+%% Calculating magnitude of the wave vector and thermal velocity 
+K   = 4.*pi./Lambda./sin(Const.Theta/2);
+Nu0 = sqrt(Const.Kb.*Temperature./Const.MAir);
+%% Reshaping frequency array to build on size of temperature array
+FrequencyChange = shiftdim(repmat(FrequencyChange',fliplr([fliplr(size(Nu0)),1])),1);
+%% Calculating range of X and Y for training
+X = 2.*pi.*FrequencyChange./sqrt(2)./K./Nu0;
+Y = Pressure./sqrt(2)./K./Nu0./Const.Viscosity;
+end
+
+function [RebuildPoly] = RebuildNDim(MeanSpectrum,PolyFitParams,PrincipleComponents,Y)
+%
+% Inputs: MeanSpectrum:        The mean spectrum of the entire training set
+%                              of values at each wavelength
+%         PolyFitParams:       An array of structures containing the
+%                              coefficients needed by the polyvaln function
+%                              to recreate the polynomial cotours
+%         PrincipleComponents: An array of principle components from the
+%                              training set at the same wavelengths and
+%                              resolutions as the mean spectrum
+%         Y:                   Array of Y parameter values to be rebuilt 
+%
+% Outputs: RebuildPoly:        An array of rebuilt spectra. The rows are at
+%                              the same resolution as the mean spectrum of
+%                              the training set and the columns will
+%                              correspond to the size of the temperature
+%                              and pressure arrays
+%
+%% Constants (number of principle components used to rebuild spectrum)
+PC2Use       = 10;
+%% Rebuilding spectrum from trained polynomials
+RebuildPoly = zeros([size(PrincipleComponents,1),size(Y)]);
+for m=1:1:PC2Use
+    % Rebuilding absorption spectrum weights with polynomial fits
+    PolyWeights2 = polyval(PolyFitParams{m,1},Y);
+    % Multiplying by the weights by the principle components
+    RebuildPoly = RebuildPoly + PrincipleComponents(:,m).*shiftdim(PolyWeights2,-1);
+end
+% Adding the mean spectrum back in to rebuild the full spectrum
+RebuildPoly = RebuildPoly+ MeanSpectrum';
+end
+
+
+
+
+
+
+

@@ -27,6 +27,7 @@ Etalon.TimeStamp          = []; Etalon.Type               = [];
 Thermocouple.TimeStamp    = []; Thermocouple.Temperature  = [];
 
 Laser.Current             = []; Laser.Locked              = [];
+Laser.SeedPower           = [];
 Laser.TemperatureActual   = []; Laser.TemperatureDesired  = [];
 Laser.TimeStamp           = []; Laser.Type                = [];
 Laser.WavelengthActual    = []; Laser.WavelengthDesired   = [];
@@ -94,6 +95,11 @@ for m=1:1:size(DataTypes,1)
                Laser.TemperatureActual   = [Laser.TemperatureActual  ;ncread(Filename,'TempMeas')];
                Laser.TemperatureDesired  = [Laser.TemperatureDesired ;ncread(Filename,'TempDesired')];
                Laser.Current             = [Laser.Current            ;ncread(Filename,'Current')];
+               try
+                   Laser.SeedPower       = [Laser.SeedPower          ;double(ncread(Filename,'SeedPower'))];
+               catch
+                   Laser.SeedPower       = Laser.TimeStamp.*nan;
+               end
                clear Type
            case 'MCSsample*.nc'
                A = double(ncread(Filename,'time'));
@@ -232,7 +238,8 @@ end
 %% Just making sure to get rid of laser power off data or error returns 
 % Especially DIAL01 seems to return current = 0 often...just remove data
 % and move on
-Laser.Current(Laser.Current == 0) = nan;
+Laser.Current(Laser.Current == 0)       = nan;
+Laser.SeedPower(Laser.SeedPower == -99) = nan;
 
 %% Marking time gaps
 Laser        = PaddingDataStructureTimeSeries(Laser,5,0);
@@ -271,6 +278,7 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     PulseInfo.Laser.Current{m,1}            = Laser.Current(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.Locked{m,1}             = Laser.Locked(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.Power{m,1}              = Power.LaserPower(:,HardwareMap.Power(m)+1);
+    PulseInfo.Laser.SeedPower{m,1}          = Laser.SeedPower(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.TemperatureActual{m,1}  = Laser.TemperatureActual(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.TemperatureDesired{m,1} = Laser.TemperatureDesired(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
     PulseInfo.Laser.WavelengthActual{m,1}   = Laser.WavelengthActual(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));

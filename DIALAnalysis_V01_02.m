@@ -11,7 +11,7 @@
         % Reorganizing code into subfunctions more rigidly 
         % Commenting code more thoroughly for other users
         
-function [Uptime] = DIALAnalysis_V01_01(JSondeData, Options, Paths)
+function [Uptime] = DIALAnalysis_V01_02(JSondeData, Options, Paths)
 %
 % Inputs: JSondeData: A structure containing all of the loaded calibration
 %                     data from the JSonde files
@@ -40,10 +40,14 @@ Uptime = PulseInfo.Uptime;
 PulseInfo.BinWidth    = round((double(nanmean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
 PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + ...
                         day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');
-PulseInfo.DeltaRIndex = 150/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing 
+PulseInfo.DeltaRIndex = 75/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing
 PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
-clear DataTypes
-
+time_per_column       = nanmedian(PulseInfoNew.Data.ProfilesPerHistogram{1,1})./7e3;
+PulseInfo.Profiles2AverageWV = 2*round(((Options.ave_time.wv*60/time_per_column)+1)/2); % 7kHz, 10k accum data rate is ~1.4s
+PulseInfo.Profiles2AverageRB = 2*round(((Options.ave_time.rb*60/time_per_column)+1)/2); % 7kHz, 10k accum data rate is ~1.4s
+PulseInfo.DataTimeInt = downsample(movmean(PulseInfo.DataTimeRaw,PulseInfo.Profiles2AverageRB),PulseInfo.Profiles2AverageRB); 
+PulseInfo.DataTimeInt = PulseInfo.DataTimeInt(1:floor(size(PulseInfo.DataTimeRaw,1)/PulseInfo.Profiles2AverageRB));
+clear time_per_column DataTypes
 %% Defining arrays used to smooth the data
 AverageRange   = [1;round(1500/PulseInfo.BinWidth);round(2500/PulseInfo.BinWidth)];
 SpatialAverage = [150/PulseInfo.BinWidth; 300/PulseInfo.BinWidth; 600/PulseInfo.BinWidth];
@@ -82,88 +86,98 @@ for m=1:1:size(PulseInfoNew.Laser.WavelengthDesired,1)
 end
   
 %% Range vector in meters
-Altitude.RangeOriginal = single(0:PulseInfo.BinWidth:(size(Counts.Raw{1,1},2)-1)*PulseInfo.BinWidth);
-Altitude.RangeSquared  = (Altitude.RangeOriginal).^2./((JSondeData.MCS.bin_duration*JSondeData.MCS.accum*(1-JSondeData.SwitchRatio)));  % in units of km^2 C/ns
+Altitude.RangeAcquired = single(0:PulseInfo.BinWidth:(size(Counts.Raw{1,1},2)-1)*PulseInfo.BinWidth);
+if PulseInfo.DeltaRIndex ~= 1
+    Altitude.RangeOriginal = downsample(movmean(Altitude.RangeAcquired,PulseInfo.DeltaRIndex),PulseInfo.DeltaRIndex,1);
+else
+    Altitude.RangeOriginal = Altitude.RangeAcquired;
+end
 Altitude.RangeShift    = (PulseInfo.DeltaRIndex-1)/2*PulseInfo.BinWidth + JSondeData.RangeCorrection; %
 Altitude.RangeActual   = Altitude.RangeOriginal+Altitude.RangeShift; % actual range points of data
 
 %% Processing photon counts
 i = size(Counts.Raw{1,1}, 1);         % Number of time bins
-j = size(Altitude.RangeOriginal, 2);  % Number of altitude bins
+j = size(Altitude.RangeAcquired, 2);  % Number of altitude bins
 
 % Looping over channels and performing operations on photon counting data
 for m=1:1:size(Counts.Raw,1)
     fprintf(['Processing ',Map.Channels{m},' count arrays\n'])
     % Applying saturation correction
     if Options.flag.pileup == 1
-        Counts.Parsed{m,1} = CorrectPileUp(single(Counts.Raw{m,1}),JSondeData.MCS,JSondeData.DeadTime);
+        Counts.Parsed{m,1} = CorrectPileUp(single(Counts.Raw{m,1}),PulseInfoNew.Data.ProfilesPerHistogram{m,1}, ...
+                                               PulseInfoNew.Data.RangeResolution{m,1},JSondeData.DeadTime);
     else
         Counts.Parsed{m,1} = single(Counts.Raw{m,1});
     end
-    % select last ~1200 meters to measure background
-    Counts.Background1D{m,1} = mean(Counts.Parsed{m,1}(:,end-round(1200/PulseInfo.BinWidth):end),2)-0;
-    % Background subtracting the parsed counts
-    Counts.BackgroundSubtracted{m,1} = (bsxfun(@minus, Counts.Parsed{m,1}, Counts.Background1D{m,1}));
-    % smooth RB for 1 minute and set spatial average 
-    Counts.RelativeBackscatter{m,1} = movmean(Counts.BackgroundSubtracted{m,1},JSondeData.Profiles2Average.rb.*2,1,'omitnan');
-    % Range correcting relative backscatter
-    Counts.RelativeBackscatter{m,1} = bsxfun(@times,  Counts.RelativeBackscatter{m,1}, Altitude.RangeSquared);
-    Counts.RelativeBackscatter{m,1} = Counts.RelativeBackscatter{m,1}./(JSondeData.MCS.accum./14000*JSondeData.MCS.bin_duration./250);
-    Counts.RelativeBackscatter{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Integrating photon counts in time and space
-    Temp                            = cumsum(Counts.BackgroundSubtracted{m,1},1,'omitnan')-[zeros(JSondeData.Profiles2Average.wv,j); cumsum(Counts.BackgroundSubtracted{m,1}(1:i-JSondeData.Profiles2Average.wv,:),1,'omitnan')];  %rolling average of rows or time
-    Counts.Integrated{m,1}          = cumsum(Temp,2,'omitnan')-[zeros(i,PulseInfo.DeltaRIndex), cumsum(Temp(:,1:j-PulseInfo.DeltaRIndex),2,'omitnan')]; % rolling sum of collumns or range
-    Counts.Integrated{m,1}(isnan(Counts.Parsed{m,1})) = nan;
+    Counts.Integrated{m,1} = Bin(Counts.Parsed{m,1},i,j,PulseInfo.Profiles2AverageRB,PulseInfo.DeltaRIndex);
+    % select last ~1200 meters to measure background
+    Counts.Background1D{m,1} = mean(Counts.Integrated{m,1}(:,end-round(1200/PulseInfo.BinWidth./PulseInfo.DeltaRIndex):end),2);
+    % Background subtracting the parsed counts
+    Counts.BackgroundSubtracted{m,1} = (bsxfun(@minus, Counts.Integrated{m,1}, Counts.Background1D{m,1}));
+    % smooth RB for 1 minute and set spatial average 
+    Counts.RelativeBackscatter{m,1} = movmean(Counts.BackgroundSubtracted{m,1},2,1,'omitnan');
+    % Range correcting relative backscatter
+    Temp = PulseInfoNew.Data.RangeResolution{m,1}.* PulseInfoNew.Data.ProfilesPerHistogram{m,1}.*(1-JSondeData.SwitchRatio);
+    Temp = downsample(movmean(Temp,PulseInfo.Profiles2AverageRB),PulseInfo.Profiles2AverageRB);  
+    Temp = Temp(1:floor(i/PulseInfo.Profiles2AverageRB));
+    Counts.RelativeBackscatter{m,1} = bsxfun(@times,  Counts.RelativeBackscatter{m,1},Altitude.RangeOriginal.^2./Temp./PulseInfo.Profiles2AverageRB./PulseInfo.DeltaRIndex);
     % Converting background to count rate (counts/sec
-    Counts.Background1D{m,1}        = Counts.Background1D{m,1}/(JSondeData.MCS.bin_duration*1e-9*JSondeData.MCS.accum*JSondeData.SwitchRatio); 
-    % Grid to regular gate spacing (75 m)
-    Counts.Integrated{m,1}   = interp1(Altitude.RangeActual,Counts.Integrated{m,1}',   Altitude.RangeOriginal,Options.InterpMethod,Options.Extrapolation)'; % grid on to standard range bins
+    Counts.Background1D{m,1} = Counts.Background1D{m,1}./(Temp.*1e-9); 
+    % Integrating photon counts in time and space
+%    size(Counts.Integrated{m,1})
+%    size(Counts.Parsed{m,1})
+%    Counts.Integrated{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Regular averaging
-    Counts.CountRate{m,1}    = Counts.Integrated{m,1}./JSondeData.Profiles2Average.wv./PulseInfo.DeltaRIndex;
+    Counts.CountRate{m,1}    = Counts.BackgroundSubtracted{m,1}./PulseInfo.Profiles2AverageRB./PulseInfo.DeltaRIndex;
+    
     % Grid to regular gate spacing in time (???????make recursive???????)
-    Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeRaw, Counts.Background1D{m,1}       ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    Counts.Integrated{m,1}          = interp1(PulseInfo.DataTimeRaw, Counts.Integrated{m,1}         ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeRaw, Counts.CountRate{m,1}          ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    Counts.ParsedFinalGrid{m,1}     = interp1(PulseInfo.DataTimeRaw, Counts.Parsed{m,1}             ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    Counts.RelativeBackscatter{m,1} = interp1(PulseInfo.DataTimeRaw, Counts.RelativeBackscatter{m,1},PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    % Remove the time lag from cumsum (???????make recursive???????)
-    Counts.CountRate{m,1}    = interp1(PulseInfo.DataTimeShifted, Counts.CountRate{m,1}   ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    Counts.Integrated{m,1}   = interp1(PulseInfo.DataTimeShifted, Counts.Integrated{m,1}  ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
-    % Removing any negative counts 
+    Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeInt, Counts.Background1D{m,1}        ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeInt, Counts.CountRate{m,1}           ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.BackgroundSubtracted{m,1}= interp1(PulseInfo.DataTimeInt, Counts.BackgroundSubtracted{m,1},PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.RelativeBackscatter{m,1} = interp1(PulseInfo.DataTimeInt, Counts.RelativeBackscatter{m,1} ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    % Removing any negative counts
     Counts.CountRate{m,1}(real(Counts.CountRate{m,1}) <= 0) = 0;
     Counts.RelativeBackscatter{m,1}(real(Counts.RelativeBackscatter{m,1}) <= 0) = 0;
 end
 clear m Temp i j
 
+
+%% Gradient filter for the WV data
+if Options.flag.gradient_filter == 1
+    [FX,~] = gradient(Counts.CountRate{Map.Offline,1});
+    % Determining the allowable limit of the gradient
+    Limit = (PulseInfoNew.Data.RangeResolution{Map.Offline,1}./250.* PulseInfoNew.Data.ProfilesPerHistogram{Map.Offline,1}./14000).*1000;
+    Limit = downsample(movmean(Limit,PulseInfo.Profiles2AverageRB),PulseInfo.Profiles2AverageRB);  
+    Limit = Limit(1:floor(size(PulseInfoNew.Data.RangeResolution{Map.Offline,1},1)/PulseInfo.Profiles2AverageRB));
+    Limit = interp1(PulseInfo.DataTimeInt,Limit,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+    Counts.CountRate{Map.Offline,1}(FX<-Limit | FX> Limit) = nan; % remove falling (leading) edge of clouds
+    clear FX Limit
+end
+
 %% Recursively interpolate data from collected to averaged grid
 if Options.flag.WS == 1
     SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
 end
+Temp = PulseInfo.DataTimeRaw;
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),Options.InterpMethod,Options.Extrapolation);
-
-%% Gradient filter for the WV data
-if Options.flag.gradient_filter == 1
-    Limit = (JSondeData.MCS.accum./14000*JSondeData.MCS.bin_duration./250).*1000;
-    
-    [FX,~] = gradient(Counts.CountRate{Map.Offline,1});
-    Counts.CountRate{Map.Offline,1}(FX<-Limit | FX> Limit) = nan; % remove falling (leading) edge of clouds
-    clear FX
-end
-
+PulseInfo.DataTimeRaw = Temp;
+clear Temp
 %% Performing data retrievals
 DataProducts = []; % Pre-allocating retrieval info 
 for m=1:1:Iterations
     fprintf('   Retrieval Iteration %0.0f\n',m)
     %%%%%%%%%%% Performing the water vapor retrievals %%%%%%%%%%%
     if Capabilities.WVDIAL == 1
-        [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts, ...
-                                              JSondeData,Map,Options,Paths, ...
-                                              PulseInfo,SpatialAverage,     ...
-                                              SurfaceWeather,AverageRange);
+        [Counts,DataProducts] = RetrievalsH2O(Altitude,Counts,DataProducts,   ...
+                                              JSondeData,Map,Options,Paths,   ...
+                                              PulseInfo,PulseInfoNew,         ...
+                                              SpatialAverage, SurfaceWeather, ...
+                                              AverageRange);
     end
     %%%%%%%%%%% Performing the HSRL retrievals %%%%%%%%%%%
     if Capabilities.HSRL == 1 || Capabilities.O2HSRL == 1
-        RetrievalsHSRL(Altitude,Capabilities,DataProducts,Map,Options,PulseInfo,SurfaceWeather);
+%         RetrievalsHSRL(Altitude,Capabilities,DataProducts,Map,Options,PulseInfo,SurfaceWeather);
     end
     %%%%%%%%%%% Performing perterbative temperature retrievals %%%%%%%%%%%
     if Capabilities.O2DIAL == 1
@@ -176,8 +190,12 @@ PulseInfo.DataTimeDateNumFormat = datenum(2000+str2double(Paths.Date(1:2)),1,0)+
 
 %% Decimate data in time to final array size
 if Options.flag.decimate == 1
-    decimate_time  = Options.ave_time.wv/Options.ave_time.gr; %ave_time.wv/ave_time.gr;
-    decimate_range = 1; % keep native gate spacing
+    decimate_time  = 1;%Options.ave_time.wv/Options.ave_time.gr; %ave_time.wv/ave_time.gr;
+    if size(Altitude.RangeOriginal,2) == 280
+        decimate_range = 1; % keep native gate spacing
+    else
+        decimate_range = 2; % push all data to lower resolution
+    end
     % Decimating needed count profiles
     for m=1:1:size(Counts.RelativeBackscatter,1)
         % average RB data before decimating
@@ -199,12 +217,15 @@ if Options.flag.decimate == 1
     end
 end
 
+%% Plot Data
+Plotting = PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather); %#ok<NASGU>
+
 %% Save Data
 fprintf('Saving Data\n')
 if Options.flag.save_data == 1
     cd(Paths.SaveData)
     Paths.FileName = ['ProcessedDIALData_DIAL0',Options.System(6),'_20',num2str(Paths.Date),'.mat'];
-    save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','PulseInfoNew','SurfaceWeather')
+    save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','PulseInfoNew','SurfaceWeather','-v7.3')
     cd(Paths.Code)
 end
 if Options.flag.save_netCDF == 1  % save the data as an nc file
@@ -213,16 +234,26 @@ if Options.flag.save_netCDF == 1  % save the data as an nc file
                      P,Counts.RelativeBackscatter{1,1},Altitude.RangeOriginal,T,PulseInfo.DataTimeDateNumFormat)
 end
 
-%% Plot Data
-if Options.flag.plot_data == 1
-PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,PulseInfoNew,SurfaceWeather)
-end
 %% Cleaning the workspace variables that are unneeded
 clear decimate_range decimate_time AverageRange SpatialAverage m
 toc
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [Integrated] = Bin(CountArray,TimeBins,AltBins,Prof2Avg,Heights2Avg)
+%
+%
+%
+%
+%% Integrating in time
+Temp  = cumsum(CountArray,1,'omitnan')-[zeros(Prof2Avg,AltBins);cumsum(CountArray(1:TimeBins-Prof2Avg,:),1,'omitnan')];  %rolling average of rows or time
+%% Integrating in range
+Integrated  = cumsum(Temp,2,'omitnan')-[zeros(TimeBins,Heights2Avg), cumsum(Temp(:,1:AltBins-Heights2Avg),2,'omitnan')]; % rolling sum of collumns or range
+%% Only returning the completely interpolated count arrays
+Integrated = Integrated(Prof2Avg:Prof2Avg:end,Heights2Avg:Heights2Avg:end);
+    
+end
+
 function [Surf_AH,Surf_N] = ConvertWeatherStationValues(Surf_RH,Surf_T) 
 %
 % Inputs: Surf_RH:  Surface relative humidity time series   [Units: %]
@@ -249,7 +280,7 @@ Surf_N  = (Surf_RH.*e./(Constants.R.*Conversions.CelciusToKelvin(Surf_T))).*Cons
 Surf_AH = Surf_N.*Constants.m.*1e9;   % g/m^3  
 end
 
-function [CorrCounts] = CorrectPileUp(Counts, MCS, t_d)
+function [CorrCounts] = CorrectPileUp(Counts,MCSAccum,BinDuration,t_d)
 %
 % Inputs: Counts:      
 %         MCS: 
@@ -261,7 +292,7 @@ function [CorrCounts] = CorrectPileUp(Counts, MCS, t_d)
 % MCSC gives counts accumulated for set bin duration so convert to count rate  C/s.
 % divide by bin time in sec (e.g., 500ns) and # of acumulations (e.g., 10000)
 % e.g., 10 accumlated counts is 2000 C/s
-CorrFactor = 1./(1-(t_d.*(Counts./(MCS.bin_duration*1E-9*MCS.accum))));
+CorrFactor = 1./(1-(t_d.*(Counts./(BinDuration.*1E-9.*MCSAccum))));
 CorrCounts = Counts.*CorrFactor;
 end
 

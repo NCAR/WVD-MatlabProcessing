@@ -263,7 +263,7 @@ AddPlotText(TextXLoc,TextYLoc,'Laser Current [mA]',FontSize)
 
 %% Plotting Laser Seed Power
 subplot(32,1,17:20); hold on;
-for m=1:1:size(PulseInfoNew.Laser.Current,1)
+for m=1:1:size(PulseInfoNew.Laser.SeedPower,1)
     plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.SeedPower{m,1},Hue{m})
 end
 hold off

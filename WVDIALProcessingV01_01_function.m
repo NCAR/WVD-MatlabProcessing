@@ -51,6 +51,6 @@ if strcmp(Options.Node,'DIAL1')==1
 else
     read_dial2_calvals
     JSondeData.BlankRange = 450;
-    DIALAnalysis_V01_01(JSondeData, Options, Paths);
+    DIALAnalysis_V01_02(JSondeData, Options, Paths);
 end
 end

@@ -18,21 +18,10 @@ function [Paths] = DefinePaths(Date, Options)
 %
 %% Base path to change for each different platform
 Paths.Base       = '/scr/eldora1';
-% Paths.Base       = '/Volumes/StillwellData01/DIAL/TDIAL';
-% Paths.Base       = '/Volumes/StillwellData01/DIAL/WVDIAL';
 
 %% Other paths 
-% % % Paths.Code          = '/Volumes/StillwellData01/Code/DIALAutoProcessingCode/MatlabV2';
-% % % Paths.Colormap      = [Paths.Code,'/DataFiles'];
-% % % % Paths.Catalog       = '/pub/incoming/catalog/operations';
-% % % Paths.Figures       = [Paths.Base,'/Quicklook'];
-% % % Paths.SaveData      = [Paths.Base,'/Quickload'];
-% % % Paths.FigureType    = Options.System;
-% % % Paths.RawNetCDFData = [Paths.Base,'/RawData/20',Date];
-% % % % Paths.RawNetCDFData = [Paths.Base,'/RawData/DIAL3_NewLabview/20',Date];
-
 Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Code          = '/usr/local/home/rsfdata/dial/Testing'; % get the current path
+Paths.Code          = '/usr/local/home/rsfdata/dial/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];

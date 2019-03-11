@@ -65,8 +65,8 @@ FreqRebuild  = linspace(-5e9,5e9,500);
 CenterLam    = 770.1085e-9;     % Center wavelength to calculate/plot [nm]
 
 % Building spectrum and interpolating to the desired X grid
-[X,Y,~,~]    = CalculateTentiParameters(PressRebuild,TempRebuild,FreqRebuild,CenterLam,Const);
-RebuildPoly2 = Rebuild1D(MeanSpectrum,PolyFitParams,PrincipleComponents,Y);
+[X,Y,~,~]    = CalculateTentiParametersNDim(PressRebuild,TempRebuild,FreqRebuild,CenterLam,Const);
+RebuildPoly2 = RebuildNDim(MeanSpectrum,PolyFitParams,PrincipleComponents,Y);
 RebuildPoly2 = interp1(XLimits,RebuildPoly2',X);
 RebuildPoly2 = RebuildPoly2./trapz(FreqRebuild./1e9,RebuildPoly2);
 

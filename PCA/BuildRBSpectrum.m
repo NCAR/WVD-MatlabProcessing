@@ -19,7 +19,7 @@ eukenf    = Const.MAir*Const.TConductivity/(Const.Viscosity*Const.Kb*(c_tr+c_int
 
 %% Running the Tenti model
 % Calculating the Tenti parameters
-[X,Y,~,~] = CalculateTentiParameters(Pressure,Temperature,FrequencyChange,LambdaCenter,Const);
+[X,Y,~,~] = CalculateTentiParametersNDim(Pressure,Temperature,FrequencyChange,LambdaCenter,Const);
 % Calculating the Tenti spectrum
 [~,RBSpectrum]=crbs6(Y,rlx_int,eukenf,c_int,c_tr,X);
 

@@ -1,80 +1,118 @@
 
+
 %% Setting up runtime environment
-clear; close all; clc;
+clear all; close all; clc;
 
-%% Constants
-Kb                  = 1.3806504e-23;
-Mair                = (1.66053886e-27)*28.013;
-Viscosity           = 17.63e-6;
-BulkViscosity       = Viscosity*0.73;
-ThermalConductivity = 25.2e-3;
+%% Function handles
+NormalizePolyInputs   = @(T1,Tm,Sigma)    (T1-Tm)./Sigma;
+DNu2DLamWithNu        = @(C,Nu,DNu)       -C.*DNu./Nu./Nu;
+Atm2Pascal            = @(ATM)            ATM.*1.01325e5;
 
-% % %% Lidar constants
-% % Lambda         = 828e-9;
+%% Defining the universal constants
+Const.AMU           = 1.66053886e-27;       % Atomic mass unit [kg]
+Const.C             = 299792458;            % Speed of light in vacuum [m/s]
+Const.Kb            = 1.3806504e-23;        % Boltzmann's Constant [m^2*kg/s^2/K]
+Const.MAir          = 28.013.*Const.AMU;    % Mass of air [kg]
+Const.Theta         = pi;                   % Scattering angle of pi (Backscattering)
+Const.Viscosity     = 17.63e-6;             % Shear viscosity of air [Pa*s]
+Const.ViscosityBulk = Const.Viscosity*0.73; % 
+Const.TConductivity = 25.2e-3;              % Thermal conductivity 
 
-%% Unknown Tenti Model constants
-c_int     = 1.0;
-c_tr      = 3/2;
-gamma_int = c_int/(c_tr+c_int);
-rlx_int   = 1.5*BulkViscosity/(Viscosity*gamma_int);
-eukenf    = Mair*ThermalConductivity/(Viscosity*Kb*(c_tr+c_int));
+%% Operational Constants
+CenterLam    = 770.1085e-9;     % Center wavelength to calculate/plot [nm]
+FreqWindow   = 10e9;            % Full width of the wavelength window [Hz]
+Point2Plot   = 300;
+YLimits      = linspace(0,1.2,100);
+XLimits      = linspace(-8,8,Point2Plot);
+Gas          = 'Air';
 
-%% Atmospheric Pressure and temperature
-Pressure    = 1.*1.01325e5;
-Temperature = 273;
+%% Determining the wavelength and frequency spectra 
+% Determining the wavelength window
+LambWindow = DNu2DLamWithNu(Const.C,Const.C./CenterLam,FreqWindow/2);
+% Making wavelength list
+Lambda     = linspace(CenterLam+LambWindow,CenterLam-LambWindow,Point2Plot);
 
-%% Calculating Tenit Model
-X = linspace(-7.5,7.5,500);
-Y = linspace(0.01,2.1,100);
-% Pre-allocating data
-sptsig6      = zeros(size(Y,2),size(X,2));
-TentiRunTime = zeros(size(Y,2),1);
-for m=1:1:size(Y,2)
-    fprintf('Tenti model run %0.0f \n',m)
-    tic
-    [~,sptsig6(m,:)]=crbs6(Y(m),rlx_int,eukenf,c_int,c_tr,X);
-    TentiRunTime(m) = toc;
+%% Making Rayleigh Brillouin spectra
+Counter      = 1;
+TotalSpectra = size(YLimits,1)*size(YLimits,2);
+Sigma = zeros(TotalSpectra,Point2Plot);
+for m=1:1:size(YLimits,2)
+        Sigma(Counter,:) = BuildRBSpectrumXY(Const,XLimits,YLimits(m));
+        fprintf('Producing Spectrum %0.0f of %0.0f\n',Counter,TotalSpectra)
+        Counter = Counter + 1;
 end
 
-%% Singular value decomposition 
-MeanSpectrum = sptsig6(floor(size(sptsig6,1))/2,:);
-A            = sptsig6 - repmat(MeanSpectrum,size(sptsig6,1),1);
-[PrincipleComponents,PrincipleWeights,V2]    = svd(A');
+%% Principle component analysis
+MeanSpectrum = mean(Sigma);
+A            = Sigma - repmat(MeanSpectrum,size(Sigma,1),1);
+[PrincipleComponents,PrincipleWeights,V]= svd(A');
+PrincipleWeights  = PrincipleWeights*V';
 
-PaperWeights  = PrincipleWeights*V2';
+%% Creating weight contours and fitting polynomials
+PC2Use = 15; 
 
-%% Polynomial fitting the weights
-for m=1:1:size(PrincipleComponents,1)
-    PolyCoefficients(m,:) = polyfit(Y,PaperWeights(m,:),6);
-    PolyWeights(m,:)      = polyval(PolyCoefficients(m,:),Y);
-end
-for m=1:1:size(PrincipleComponents,1)
-    PolyWeights(m,:) = polyval(PolyCoefficients(m,:),Y);
+for m=1:1:PC2Use
+    % Fit polynomial
+    PolyFitParams{m,1} = polyfit(YLimits,PrincipleWeights(m,:),10);
 end
 
-%% Reconstructing 
-PC2Use = 6; 
-ReconstructPoly = PrincipleComponents(:,1:PC2Use)*PolyWeights(1:PC2Use,:);
+
+%% Random rebuilding spectrum
+PC2Rebuild   = 10;
+PressRebuild = Atm2Pascal(0.2);
+TempRebuild  = 230;
+FreqRebuild  = linspace(-5e9,5e9,500);
+CenterLam    = 770.1085e-9;     % Center wavelength to calculate/plot [nm]
+
+% Building spectrum and interpolating to the desired X grid
+[X,Y,~,~]    = CalculateTentiParameters(PressRebuild,TempRebuild,FreqRebuild,CenterLam,Const);
+RebuildPoly2 = Rebuild1D(MeanSpectrum,PolyFitParams,PrincipleComponents,Y);
+RebuildPoly2 = interp1(XLimits,RebuildPoly2',X);
+RebuildPoly2 = RebuildPoly2./trapz(FreqRebuild./1e9,RebuildPoly2);
+
+% Running the Tenit model to check
+Truth = BuildRBSpectrum(Const,FreqRebuild,Lambda,CenterLam,PressRebuild,TempRebuild);
+Truth = Truth./trapz(FreqRebuild./1e9,Truth);
+
 
 %% Plotting
-figure(1); hold on;
-for m=1:1:5
-    plot3(X,m.*ones(size(PrincipleComponents(:,m),1)),PrincipleComponents(:,m));
+% Checking fit contours
+for m=1:1:6
+   figure(1); subplot(6,1,m)
+   plot(YLimits,PrincipleWeights(m,:),'k.',YLimits,polyval(PolyFitParams{m,1},YLimits),'b') 
+   if m == 1
+       legend('Training Set','Fit Polynomials')
+   elseif m==6
+       xlabel('Y Parameter'); 
+   end
+   ylabel('Weight')
 end
-xlim([-5,5]); view(3)
+
+figure(100); hold on;
+for m=1:1:5 %PC2Use
+    plot3(Lambda,m.*ones(size(PrincipleComponents(:,m),1)),PrincipleComponents(:,m));
+end
+view(3)
 xlabel('X'); ylabel('Principle Component Number');
 
-figure(2);
-plot(X,sptsig6(1,:)  ,'k',X,MeanSpectrum'+ReconstructPoly(:,1),'r-.', ...
-     X,sptsig6(end,:),'b',X,MeanSpectrum'+ReconstructPoly(:,end),'c-.');
-title('Reconstructed Spectrum from Polynomial Fit Weights'); 
-xlabel('X'); ylabel('Intensity [a.u.]')
+figure(10);
+plot(FreqRebuild,Truth,'k',FreqRebuild,RebuildPoly2,'g-.')
+axis tight;
+xlabel('Wavelength [nm]'); ylabel('Cross Section [m^2]');
+legend('Tenti 6','Polyfitn')
+ 
+PercentError = @(Ex,Th) abs((Ex-Th)./Th).*100; 
+figure(11); 
+plot(FreqRebuild, PercentError(RebuildPoly2,Truth));
 
-%% Formatting plots
-Current=pwd;cd('/Users/Bobby/Documents/MATLAB');MovePlots;cd(Current)
+%% Cleaning up workspace
+clear A Atm2Pascal CenterLam Counter DNu2DLamWithNu FreqRebuild FreqWindow
+clear Gas Lambda LambWindow m NormalizePolyInputs PC2Rebuild PC2Use PercentError
+clear Point2Plot PressRebuild PrincipleWeights RebuildPoly2 Sigma TempRebuild
+clear TotalSpectra Truth  X Y 
 
-%% Saving data
-% cd PCAResults/
-% save('RBSpectrumPCA','MeanSpectrum','PolyCoefficients','PrincipleComponents','X','Y');
-% cd ..
+%% Saving data 
+cd PCAResults/
+save('RayleighBrillouinXY','Const','MeanSpectrum','PolyFitParams','PrincipleComponents','V','XLimits','YLimits')
+cd ..
 

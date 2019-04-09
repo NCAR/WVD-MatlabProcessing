@@ -31,6 +31,6 @@ Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1
 Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
 
 %% Adding paths to current path to run JSon file readers
-addpath([Paths.Code,'/Calibration'])
+addpath([Paths.Code,'/GitCalibrations/calibrations'])
 addpath([Paths.Code,'/JSon'])
 end

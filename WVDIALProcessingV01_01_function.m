@@ -13,7 +13,7 @@ close all;
 %% Defining processing options
 Options          = DefineOptions;
 if strcmp(node,'DIAL01')
-	Options.Location = 'RELAMPAGO';
+	Options.Location = 'FL1';
 else
 	Options.Location = 'FL1';
 end
@@ -34,7 +34,7 @@ Date = DatesDesired;
 Paths = DefinePaths(Date,Options);
 Paths.Code          = pwd; % get the current path
 if strcmp(node,'DIAL01')
-    Paths.Catalog       = '/pub/incoming/catalog/relampago';
+    Paths.Catalog       = '/pub/incoming/catalog/operations';
 else
     Paths.Catalog       = '/pub/incoming/catalog/operations';
 end

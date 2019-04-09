@@ -107,11 +107,7 @@ set(gca,'TickDir','out');
 set(gca,'TickLength',[0.005; 0.0025]);
 colorbar('EastOutside');
 axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 6])
-if strcmp(Options.System,'DIAL01')
-caxis([0,20]);
-else
 caxis([0 10]);
-end
 datetick('x','HH','keeplimits', 'keepticks');
 colormap(gca,Plotting.ColorMap(2:end,:))
 %shading interp

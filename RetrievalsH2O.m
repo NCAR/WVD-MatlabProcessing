@@ -29,9 +29,9 @@ DataProducts.OpticalDepth = -(log(Counts.CountRate{Map.Online,1}./bsxfun(@times,
 
 %% Blanking lowest range bins
 % blank lowest gates...not needed on HSRL
-blank = nan.*ones(size(Counts.CountRate{Map.Online,1}(:,1:JSondeData.BlankRange/PulseInfo.BinWidth)));
-Counts.CountRate{Map.Online,1}  = single(horzcat(blank, Counts.CountRate{Map.Online,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth+1):end)));
-Counts.CountRate{Map.Offline,1} = single(horzcat(blank, Counts.CountRate{Map.Offline,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth+1):end)));
+blank = nan.*ones(size(Counts.CountRate{Map.Online,1}(:,1:JSondeData.BlankRange/PulseInfo.BinWidth/PulseInfo.DeltaRIndex)));
+Counts.CountRate{Map.Online,1}  = single(horzcat(blank, Counts.CountRate{Map.Online,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth/PulseInfo.DeltaRIndex+1):end)));
+Counts.CountRate{Map.Offline,1} = single(horzcat(blank, Counts.CountRate{Map.Offline,1} (:,(JSondeData.BlankRange/PulseInfo.BinWidth/PulseInfo.DeltaRIndex+1):end)));
 clear blank
 
 %% Spectral Line Fitting

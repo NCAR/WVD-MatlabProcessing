@@ -22,7 +22,7 @@ function [Uptime] = DIALAnalysis_V01_02(JSondeData, Options, Paths)
 %
 % Outputs: none
 %
-%% 
+%%
 tic;
 fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 
@@ -130,7 +130,6 @@ for m=1:1:size(Counts.Raw,1)
 %    Counts.Integrated{m,1}(isnan(Counts.Parsed{m,1})) = nan;
     % Regular averaging
     Counts.CountRate{m,1}    = Counts.BackgroundSubtracted{m,1}./PulseInfo.Profiles2AverageRB./PulseInfo.DeltaRIndex;
-    
     % Grid to regular gate spacing in time (???????make recursive???????)
     Counts.Background1D{m,1}        = interp1(PulseInfo.DataTimeInt, Counts.Background1D{m,1}        ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
     Counts.CountRate{m,1}           = interp1(PulseInfo.DataTimeInt, Counts.CountRate{m,1}           ,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
@@ -177,7 +176,7 @@ for m=1:1:Iterations
     end
     %%%%%%%%%%% Performing the HSRL retrievals %%%%%%%%%%%
     if Capabilities.HSRL == 1 || Capabilities.O2HSRL == 1
-%         RetrievalsHSRL(Altitude,Capabilities,DataProducts,Map,Options,PulseInfo,SurfaceWeather);
+        % RetrievalsHSRL(Altitude,Capabilities,Counts,DataProducts,Map,Options,Paths,PulseInfo,SurfaceWeather);
     end
     %%%%%%%%%%% Performing perterbative temperature retrievals %%%%%%%%%%%
     if Capabilities.O2DIAL == 1

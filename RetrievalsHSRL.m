@@ -4,7 +4,7 @@
 % from the MPD system. It also filters and averages the data.
 % Modification info: Created: November 13, 2018
 
-function [] = RetrievalsHSRL(Altitude, Capabilities, DataProducts, Map, Options, PulseInfo, SurfaceWeather)
+function [] = RetrievalsHSRL(Altitude, Capabilities, Counts, DataProducts, Map, Options, Paths, PulseInfo, SurfaceWeather)
 %
 %
 %
@@ -56,20 +56,24 @@ end
 RebuildFreq  = linspace(-5e9,5e9,250);
 CenterLam    = 770.1085e-9;     % Center wavelength to calculate/plot [nm]
 
-RebuildPolyQ = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam);
+RebuildPress = reshape(DataProducts.PresssureProfile,prod(size(DataProducts.PresssureProfile)),1); %#ok<*PSIZE>
+RebuildTemp  = reshape(DataProducts.TemperatureProfile,prod(size(DataProducts.TemperatureProfile)),1);
 
-12
-% % % % %% Calculate HSRL parameters
-% % % % R_size                = 150;
-% % % % % Calculating the HSRL retrievals
-% % % % [DataProducts.AExtinction, DataProducts.Extinction, DataProducts.ABackscatterCoeff] = ...
-% % % %     FindHSRLParameters(DataProducts.BetaMProfile,                         ...
-% % % %     Counts.CountRate{Map.Combined,1},                  ...
-% % % %     Counts.CountRate{Map.Molecular,1},                 ...
-% % % %     ones(1,size(Counts.CountRate{Map.Combined,1},2)),  ...
-% % % %     ones(1,size(Counts.CountRate{Map.Molecular,1},2)), ...
-% % % %     Altitude.RangeOriginal,                            ...
-% % % %     JSondeData.ReceiverScaleFactor);
+% RebuildPolyQ = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam,Paths);
+
+
+
+% % % %% Calculate HSRL parameters
+% % % R_size                = 150;
+% % % % Calculating the HSRL retrievals
+% % % [DataProducts.AExtinction, DataProducts.Extinction, DataProducts.ABackscatterCoeff] = ...
+% % %     FindHSRLParameters(DataProducts.BetaMProfile,                         ...
+% % %                        Counts.CountRate{Map.Combined,1},                  ...
+% % %                        Counts.CountRate{Map.Molecular,1},                 ...
+% % %                        ones(1,size(Counts.CountRate{Map.Combined,1},2)),  ...
+% % %                        ones(1,size(Counts.CountRate{Map.Molecular,1},2)), ...
+% % %                        Altitude.RangeOriginal,                            ...
+% % %                        JSondeData.ReceiverScaleFactor);
 % % % % % Applying some data mask for the HSRL data
 % % % % if Options.flag.mask_data == 1
 % % % %     Combined_masked = Counts.CountRate{Map.Combined,1};
@@ -84,7 +88,7 @@ RebuildPolyQ = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam);
 
 end
 
-function [RebuildPolyQ] = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam)
+function [RebuildPolyQ] = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,CenterLam,Paths)
 %
 %
 %
@@ -92,13 +96,11 @@ function [RebuildPolyQ] = RebuildRBSpectra(RebuildPress,RebuildTemp,RebuildFreq,
 %
 %% Loading the training set
 load(Paths.PCARBSet); 
-
 %% Calculating rebuilt Tenti parameters
 fprintf('      HSRL Retrieval: Calculating Rayleigh Brillouin Spectra\n')
 [X,Y,~,~]   = CalculateTentiParametersNDim(RebuildPress,RebuildTemp,RebuildFreq,CenterLam,Const);
 X           = shiftdim(X,size(size(X),2)-1);
 RebuildPoly = RebuildNDim(MeanSpectrum,PolyFitParams,PrincipleComponents,Y);
-
 %% Interpolating spectra back to desired frequency grid
 RebuildPolyQ = zeros(size(X)); % Pre-allocating data storage array
 for m=1:1:size(X,3)       % Looping over the columns
@@ -109,9 +111,7 @@ for m=1:1:size(X,3)       % Looping over the columns
 end
 % Normalizing all spectra
 RebuildPolyQ = RebuildPolyQ./trapz(RebuildFreq./1e9,RebuildPolyQ);
-
 end
-
 
 function [X,Y,K,Nu0] = CalculateTentiParametersNDim(Pressure,Temperature,FrequencyChange,Lambda,Const)
 %
@@ -161,7 +161,6 @@ end
 % Adding the mean spectrum back in to rebuild the full spectrum
 RebuildPoly = RebuildPoly+ MeanSpectrum';
 end
-
 
 
 

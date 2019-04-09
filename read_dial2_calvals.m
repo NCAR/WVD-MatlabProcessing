@@ -1,6 +1,6 @@
 cd JSon/
 
-dat=loadjson('dial2_calvals.json','SimplifyCell',1);
+dat=loadjson(['dial',Options.System(6),'_calvals.json'],'SimplifyCell',1);
 cd ..
 %t_date = '11-Jun-2017'
 t_date = datetime(num2str(Date),'InputFormat','yyMMdd');

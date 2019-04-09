@@ -74,7 +74,19 @@ for m=1:1:size(DataTypes,1)
                clear Type
            case 'HKeepsample*.nc'
                Thermocouple.TimeStamp   = [Thermocouple.TimeStamp;   double(ncread(Filename,'time'))];
-               Thermocouple.Temperature = [Thermocouple.Temperature; double(ncread(Filename,'Temperature'))];
+               A = double(ncread(Filename,'Temperature'));
+               if size(Thermocouple.Temperature,2) > size(A,2)
+                   % Thermocouples were removed
+                   B = [A, nan.*zeros(size(A,1),size(Thermocouple.Temperature,2)-size(A,2))];
+                   Thermocouple.Temperature = [Thermocouple.Temperature; B];
+               elseif size(Thermocouple.Temperature,2) < size(A,2)
+                   % Thermocouples were added
+                   B = [Thermocouple.Temperature, nan.*zeros(size(A,1),size(A,2)-size(Thermocouple.Temperature,2))];
+                   Thermocouple.Temperature = [B;A];
+               else
+                   % Thermocouple number is constant
+                   Thermocouple.Temperature = [Thermocouple.Temperature; A];
+               end
            case 'LLsample*.nc'
                A = h5read(Filename,'/LaserName');
                Type = -1.*ones(size(A));

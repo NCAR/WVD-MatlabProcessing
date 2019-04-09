@@ -180,7 +180,7 @@ set(gcf,'Color',[1 1 1],'Position',[10 (sh-fh-mh)  fw fh]);
 
 %% Plotting Temperatures (thermocouples, UPS, Weather station)
 A = PulseInfoNew.Housekeeping.Temperature;
-A(A>1000) = nan; % Removing non-physical values
+A(A>399) = nan; % Removing non-physical values
 
 subplot(32,1,1:4)
 plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...

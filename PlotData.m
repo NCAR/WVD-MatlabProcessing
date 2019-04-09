@@ -179,21 +179,31 @@ FigureHandle = figure;
 set(gcf,'Color',[1 1 1],'Position',[10 (sh-fh-mh)  fw fh]);
 
 %% Plotting Temperatures (thermocouples, UPS, Weather station)
+A = PulseInfoNew.Housekeeping.Temperature;
+A(A>1000) = nan; % Removing non-physical values
+
 subplot(32,1,1:4)
 plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
-     PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b--',...
-     PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
-xlim([0,24]); 
+    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b--',...
+    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
+xlim([0,24]);
 title([Options.System, ' Housekeeping Parameters (20',Paths.Date,')'])
 grid on; box on;
 set(gca,'xticklabel',{})
-MaxLimits = [0,40];
+MaxLimits = [0,45];
 YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
-AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple',FontSize)
-
+% Plotting cell temperature if it is there
+if sum(max(A) > 50) > 0 
+    yyaxis right
+    plot(PulseInfoNew.TimeStamp.Merged,A(:,max(A) > 50),'m')
+    set(gca,'ycolor','m')
+    AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple, \color{magenta}HSRL Cell\color{magenta}',FontSize)
+else
+    AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple',FontSize)
+end
 
 %% Plotting other weather station data (Pressure, Relative humidity)
 subplot(32,1,5:8)

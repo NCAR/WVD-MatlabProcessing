@@ -81,7 +81,7 @@ for m=1:1:size(DataTypes,1)
                    Thermocouple.Temperature = [Thermocouple.Temperature; B];
                elseif size(Thermocouple.Temperature,2) < size(A,2)
                    % Thermocouples were added
-                   B = [Thermocouple.Temperature, nan.*zeros(size(A,1),size(A,2)-size(Thermocouple.Temperature,2))];
+                   B = [Thermocouple.Temperature, nan.*zeros(size(Thermocouple.Temperature,1),size(A,2)-size(Thermocouple.Temperature,2))];
                    Thermocouple.Temperature = [B;A];
                else
                    % Thermocouple number is constant

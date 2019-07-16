@@ -63,7 +63,7 @@ function PlottingMainPlots(Counts,PulseInfo,DataProducts,Options,Paths,Plotting,
 % overlap correction from Zemax model
 O_x = [100;200;300;400;500;750;1000;1250;1500; 2000;3000;4000;5000;6000;8000;12000];
 O_y = [0.00000E+00; 1.36897E-05; 5.28302E-04; 2.36897E-03; 6.96017E-03; 3.68973E-02; 1.11740E-01; 2.15933E-01; 3.41719E-01; 6.01677E-01; 9.93711E-01; 9.97904E-01; 1.00000E+00; 9.93711E-01; 9.68553E-01; 9.24528E-01];
-O = interp1(O_x./1e3, O_y, Plotting.y, 'linear','extrap');
+Overlap = interp1(O_x./1e3, O_y, Plotting.y, 'linear','extrap');
 
 %% Final information needed before plotting
 date = datestr(nanmean(PulseInfo.DataTimeDateNumFormat), 'dd mmm yyyy');
@@ -76,13 +76,13 @@ end
 subplot1=subplot(2,1,1,'Parent',figure1);
 box(subplot1,'on');
 set(gcf,'renderer','zbuffer');
-Z = double(real((log10(Counts.RelativeBackscatter{Map.Offline,1}'./O'))));
+Z = double(real(log10((Counts.RelativeBackscatter{Map.Offline,1}'./Overlap'))));
 h = pcolor(Plotting.x,Plotting.y,Z);
 set(h, 'EdgeColor', 'none');
 set(gca,'TickDir','out');
 set(gca,'TickLength',[0.005; 0.0025]);
 set(gca, 'XTick',  Plotting.xdata)
-colorbar('EastOutside');
+cb = colorbar('EastOutside');
 axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 12])
 caxis([1 6]);
 datetick('x','HH','keeplimits', 'keepticks');
@@ -94,7 +94,11 @@ set(hh,'Position', [P_t(1) P_t(2)+0.2 P_t(3)])
 xlabel('Time (UTC)','fontweight','b','fontsize',Plotting.FontSize);
 ylabel('Height (km, AGL)','fontweight','b','fontsize',Plotting.FontSize);
 set(gca,'Fontsize',Plotting.FontSize,'Fontweight','b');
-
+% Setting the colorbar ticks
+A = get(cb,'yticklabel');
+C = get(cb,'ytick');
+for m=1:1:size(A,1); B{m,1} = ['10^{',A{m},'}']; end
+set(cb,'ytick',C,'yticklabel',B)
 %% Plot water vapor in g/m^3
 subplot1=subplot(2,1,2,'Parent',figure1);
 box(subplot1,'on'); %(number density in mol/cm3)(1e6 cm3/m3)/(N_A mol/mole)*(18g/mole)
@@ -107,7 +111,7 @@ set(gca,'TickDir','out');
 set(gca,'TickLength',[0.005; 0.0025]);
 colorbar('EastOutside');
 axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 6])
-caxis([0 10]);
+caxis([0 20]);
 datetick('x','HH','keeplimits', 'keepticks');
 colormap(gca,Plotting.ColorMap(2:end,:))
 %shading interp
@@ -242,7 +246,7 @@ if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
 if YLimits(1) > MinLimits(1); YLimits(1) = MinLimits(1); end
-if YLimits(2) < MaxLimits(2); YLimits(2) = MinLimits(2); end
+if YLimits(2) < MinLimits(2); YLimits(2) = MinLimits(2); end
 ylim(YLimits);
 grid on; box on;
 set(gca,'xticklabel',{})

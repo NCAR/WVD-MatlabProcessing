@@ -157,6 +157,9 @@ end
 %% Recursively interpolate data from collected to averaged grid
 if Options.flag.WS == 1
     SurfaceWeather = RecursivelyInterpolateStructure(SurfaceWeather,PulseInfo.DataTimeRaw,PulseInfo.DataTime,Options.InterpMethod,Options.Extrapolation);
+else
+    SurfaceWeather.Pressure    = [];
+    SurfaceWeather.Temperature = [];
 end
 Temp = PulseInfo.DataTimeRaw;
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,double(PulseInfo.DataTimeRaw),double(PulseInfo.DataTime),Options.InterpMethod,Options.Extrapolation);
@@ -236,7 +239,7 @@ end
 %% Cleaning the workspace variables that are unneeded
 clear decimate_range decimate_time AverageRange SpatialAverage m
 toc
-end
+end 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sub-functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Integrated] = Bin(CountArray,TimeBins,AltBins,Prof2Avg,Heights2Avg)

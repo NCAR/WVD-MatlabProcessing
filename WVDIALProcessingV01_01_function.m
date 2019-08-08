@@ -12,7 +12,7 @@ close all;
 
 %% Defining processing options
 Options          = DefineOptions;
-Options.Location = 'SGP';
+Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Overwriting default options with data inputs
@@ -30,9 +30,9 @@ Date = DatesDesired;
 Paths = DefinePaths(Date,Options);
 Paths.Code          = pwd; % get the current path
 Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Figures       = ['/scr/eldora1/wvdial_',Options.System(6),'_processed_data/Quicklook'];
+Paths.Figures       = ['/scr/fog1/rsfdata/wvdial_',Options.System(6),'_processed_data/Quicklook'];
 Paths.FigureType    = Options.System;
-Paths.RawNetCDFData = ['/scr/eldora1/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+Paths.RawNetCDFData = ['/scr/fog1/rsfdata/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Processing data %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Read date of file

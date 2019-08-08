@@ -127,7 +127,7 @@ DataProducts.N_Masked = DataProducts.N_avg;
 DataProducts.N_Masked(DataProducts.N_avg < 0 & (DataProducts.N_Error.*1e6./6.022E23.*18.015) < 1) = 0; % remove non-pysical (negative) wv regions
 DataProducts.N_Masked(DataProducts.N_Masked < 0) = nan;
 DataProducts.N_Masked(abs(DataProducts.N_Error./DataProducts.N_avg) > 2.*30 & (DataProducts.N_Error.*1e6./6.022E23.*18.015) > 5) = nan; % remove high error regions
-DataProducts.N_Masked(CountRateObserved > 5E6) = nan; % remove raw counts above linear count threshold (5MC/s)
+% DataProducts.N_Masked(CountRateObserved > 5E6) = nan; % remove raw counts above linear count threshold (5MC/s)
 DataProducts.OpticalDepth(isnan(DataProducts.N_Masked)) = nan;
 % calcuate the range lag for number density (to center in range bin)
 Altitude.RangeShift  = PulseInfo.BinWidth/2; %

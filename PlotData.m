@@ -200,9 +200,10 @@ if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
 ylim(YLimits);
 % Plotting cell temperature if it is there
-if sum(max(A) > 50) > 0 
+CellThresh = 50;
+if sum(nanmean(A) > CellThresh) > 0 
     yyaxis right
-    plot(PulseInfoNew.TimeStamp.Merged,A(:,max(A) > 50),'m')
+    plot(PulseInfoNew.TimeStamp.Merged,A(:,nanmean(A) > CellThresh),'m')
     set(gca,'ycolor','m')
     AddPlotText(TextXLoc,TextYLoc,'Temperature [^\circC]: \color{red}UPS\color{black}, \color{blue}Weather Station\color{black}, Thermocouple, \color{magenta}HSRL Cell\color{magenta}',FontSize)
 else

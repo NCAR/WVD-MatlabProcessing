@@ -17,11 +17,11 @@ function [Paths] = DefinePaths(Date, Options)
 %                  processed data and figures.
 %
 %% Base path to change for each different platform
-Paths.Base       = '/scr/eldora1';
+Paths.Base       = '/scr/fog1/rsfdata';
 
 %% Other paths 
 Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Code          = '/usr/local/home/rsfdata/dial/MatlabV2'; % get the current path
+Paths.Code          = '/home/rsfdata/MPD_base/projDir/processing/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];

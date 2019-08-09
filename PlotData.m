@@ -248,7 +248,7 @@ grid on;
 set(gca,'xticklabel',{},'yaxislocation','right')
 box on;
 
-MaxLimits = [110,180];
+MaxLimits = [50,180];
 YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end

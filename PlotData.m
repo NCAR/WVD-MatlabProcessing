@@ -111,7 +111,7 @@ set(gca,'TickDir','out');
 set(gca,'TickLength',[0.005; 0.0025]);
 colorbar('EastOutside');
 axis([fix(min(PulseInfo.DataTimeDateNumFormat)) fix(min(PulseInfo.DataTimeDateNumFormat))+1 0 6])
-caxis([0 20]);
+caxis([0 10]);
 datetick('x','HH','keeplimits', 'keepticks');
 colormap(gca,Plotting.ColorMap(2:end,:))
 %shading interp
@@ -140,23 +140,6 @@ if Options.flag.save_quicklook == 1
     end
     cd(Paths.Code)
 end
-
-    
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Data2Save.WavelengthX   = PulseInfo.DataTimeDateNumFormat;
-% Data2Save.WavelengthOn  = PulseInfo.Lambda{1,1};
-% Data2Save.WavelengthOff = PulseInfo.Lambda{2,1};
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% CurrentPath = pwd;
-% MeasurementsTotal = size(Counts.Raw{1,1},1);
-% cd(Paths.SaveData)
-% ExtraSave = [Paths.FigureType,'NewDataProcessing20',num2str(Paths.FolderDate),'.mat'];
-% save(ExtraSave,'Data2Save','MeasurementsTotal');
-% cd(CurrentPath)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
    
 end
 

@@ -21,12 +21,12 @@ Paths.Base       = '/scr/fog1/rsfdata';
 
 %% Other paths 
 Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Code          = '/home/rsfdata/MPD_base/projDir/processing/MatlabV2'; % get the current path
+Paths.Code          = '/home/rsfdata/processing/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
 Paths.FolderType    = 'All';
-Paths.PCARBSet      = [Paths.Base,'/PCA/RayleighBrillouinXY.mat'];
+Paths.PCARBSet      = [Paths.Code,'/PCA/RayleighBrillouinXY.mat'];
 Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
 Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
 

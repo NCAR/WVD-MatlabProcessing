@@ -15,7 +15,7 @@ echo "year = $year"
 node=\'$5\'
 echo "node = ${node}"
 # set the Matlab command
-matcmd="addpath $HOME/processing/MatlabV2; WVDIALProcessingV01_01_function(${daystr},$1,$2,$3,$4,${node}); exit"
+matcmd="addpath $HOME/Processing/MatlabV2; WVDIALProcessingV01_01_function(${daystr},$1,$2,$3,$4,${node}); exit"
 # file, save_quicklook, save_data, save_netCDF, save_catalog
 cmd="/opt/local/bin/matlab -nodisplay -nosplash -r \"$matcmd\""
 echo "cmd = $cmd"

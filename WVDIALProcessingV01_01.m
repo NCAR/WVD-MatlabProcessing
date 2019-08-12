@@ -8,7 +8,7 @@ clear; close all; clc
 % Systems = {'DIAL01';'DIclose aAL02';'DIAL03';'DIAL04';'DIAL05'};
 % Systems = {'DIAL01';'DIAL02';'DIAL04';'DIAL05'};
 % Systems = {'DIAL03'};
-Systems = {'DIAL05'};
+Systems = {'DIAL02'};
 
 for a=1:1:size(Systems,1)
 
@@ -19,7 +19,7 @@ Options.Location = 'FL1';
 Options.Node     = 'DIAL2';   % Keep for now because hacking jsonde files
 
 %% Defining all file paths
-DatesDesired = {'190719'};
+DatesDesired = {'190812'};
 % DatesDesired = {'190701';'190702';'190703';'190704';'190705';
 %                 '190706';'190707';'190708';'190709';'190710';
 %                 '190711';'190712';'190713';'190714'};

@@ -23,7 +23,7 @@ Options.System              = node;
 DatesDesired                = num2str(files);
 
 %% Defining all file paths
-Paths = DefinePaths(Date,Options);
+Paths = DefinePaths(DatesDesired,Options);
 
 %% Processing data 
 % Read date of file

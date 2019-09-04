@@ -35,6 +35,12 @@ Options.DeadTime = 37.25E-9;      % Detector dead time
 
 Options.Process.WVPCA = 1;        % Process water vapor using trained PCA = 1, or direct = 0
 
+%% Plotting options
+Options.Plotting.RB.YLimits = [0 12];
+Options.Plotting.RB.CAxis   = [1 6];
+Options.Plotting.WV.YLimits = [0 6];
+Options.Plotting.WV.CAxis   = [0 10];
+
 %% Processing Options
 Options.InterpMethod  = 'linear';
 Options.Extrapolation = 'extrap'; 

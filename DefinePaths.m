@@ -18,10 +18,10 @@ function [Paths] = DefinePaths(Date, Options)
 %
 %% Base path to change for each different platform
 Paths.Base       = '/scr/fog1/rsfdata/MPD';
+Paths.Catalog    = '/pub/incoming/catalog/operations';
+Paths.Code       = '/home/rsfdata/Processing/MatlabV2'; % get the current path
 
 %% Other paths 
-Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Code          = '/home/rsfdata/Processing/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
@@ -32,5 +32,4 @@ Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/
 
 %% Adding paths to current path to run JSon file readers
 addpath([Paths.Code,'/GitCalibrations/calibrations'])
-addpath([Paths.Code,'/JSon'])
 end

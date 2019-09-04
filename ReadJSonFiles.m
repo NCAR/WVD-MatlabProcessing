@@ -45,7 +45,7 @@ JSondeData.DeadTime        = 37.25E-9;
 JSondeData.Location        = location;
 JSondeData.RangeCorrection = (1.25-0.2+0.5/2-1.0/2)*150;    % 
 JSondeData.SwitchRatio     = switch_ratio;
-JSondeData.WavemeterOffset = wavemeteroffset;
+JSondeData.WavemeterOffset = wavemeteroffset./1e-9;
 
 end
 
@@ -231,7 +231,8 @@ function object = parse_object(inStr, esc, varargin)
     end
 end
 %%-------------------------------------------------------------------------
-function object = parse_array(inStr, esc, varargin) % JSON array is written in row-major order
+function object = parse_array(inStr, esc, varargin) 
+    % JSON array is written in row-major order
     global pos isoct
     parse_char(inStr, '[');
     object = cell(0, 1);

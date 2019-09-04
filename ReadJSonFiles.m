@@ -30,6 +30,12 @@ for i=1:size(dat.Location,2)
         location = dat.Location(i).location;
     end
 end
+wavemeteroffset = [];
+for i=1:size(dat.Wavemeter_offset,2)
+    if (t_date >= datetime(dat.Wavemeter_offset(i).date,'InputFormat','d-MM-yyyy H:m')) == 1
+        wavemeteroffset = dat.Wavemeter_offset(i).value;
+    end
+end
 
 %% 
 JSondeData.BlankRange      = 450;
@@ -37,8 +43,9 @@ JSondeData.Data            = dat;
 JSondeData.Date            = t_date;
 JSondeData.DeadTime        = 37.25E-9;
 JSondeData.Location        = location;
-JSondeData.RangeCorrection = (1.25-0.2+0.5/2-1.0/2)*150;
+JSondeData.RangeCorrection = (1.25-0.2+0.5/2-1.0/2)*150;    % 
 JSondeData.SwitchRatio     = switch_ratio;
+JSondeData.WavemeterOffset = wavemeteroffset;
 
 end
 

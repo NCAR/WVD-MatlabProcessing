@@ -46,6 +46,9 @@ WStation.AbsoluteHumidity = []; WStation.Pressure         = [];
 WStation.RelativeHumidity = []; WStation.Temperature      = [];
 WStation.TimeStamp        = [];
 
+Humidity.Temperature      = []; Humidity.DewPoint         = [];
+Humidity.RelativeHumidity = []; Humidity.TimeStamp        = [];
+
 %% Loading data
 for m=1:1:size(DataTypes,1)
     % Finding all of the relevant files
@@ -141,7 +144,7 @@ for m=1:1:size(DataTypes,1)
            case 'UPSsample*.nc'
                UPS.BatteryCapacity       = [UPS.BatteryCapacity ; ncread(Filename,'BatteryCapacity')];
                UPS.BatteryHours          = [UPS.BatteryHours    ; ncread(Filename,'BatteryTimeLeft')];
-               UPS.BatteryInUse          = [UPS.BatteryInUse    ; ncread(Filename,'BatteryInUse')];
+               UPS.BatteryInUse          = [UPS.BatteryInUse    ; double(ncread(Filename,'BatteryInUse'))];
                UPS.BatteryNominal        = [UPS.BatteryNominal  ; double(ncread(Filename,'BatteryNominal'))];
                UPS.Temperature           = [UPS.Temperature     ; ncread(Filename,'UPSTemperature')];
                UPS.TimeStamp             = [UPS.TimeStamp       ; ncread(Filename,'time')];
@@ -155,6 +158,13 @@ for m=1:1:size(DataTypes,1)
                WStation.RelativeHumidity = [WStation.RelativeHumidity;ncread(Filename,'RelHum')];
                WStation.Pressure         = [WStation.Pressure        ;ncread(Filename,'Pressure')];
                WStation.AbsoluteHumidity = [WStation.AbsoluteHumidity;ncread(Filename,'AbsHum')];
+           case 'Humidity*.nc'
+               Humidity.TimeStamp        = [Humidity.TimeStamp       ;double(ncread(Filename,'time'))];
+               Humidity.Temperature      = [Humidity.Temperature     ;[double(ncread(Filename,'InternalTemperature')), ...
+                                                                       double(ncread(Filename,'ExternalTemperature'))]];
+               Humidity.DewPoint         = [Humidity.DewPoint        ;double(ncread(Filename,'DewPoint'))];
+               Humidity.RelativeHumidity = [Humidity.RelativeHumidity;double(ncread(Filename,'RelativeHumidity'))];
+               clear Type
        end
    end
 end
@@ -209,22 +219,6 @@ Power.LaserPower = nan.*repmat(TimeBounds,1,12);
 Power.TimeStamp  = TimeBounds;
 end     
 
-%% Removing bad laser scans
-BadData = find(Laser.WavelengthActual <= -1);
-if isempty(BadData) == 0
-    % Converting the names structure to a cell array
-    CellArray  = struct2cell(Laser);
-    FieldNames = fieldnames(Laser);
-    % Removing bad data
-    for m=1:1:size(CellArray)
-        CellArray{m,1}(BadData,:) = [];
-    end
-    % Converting back to a named structure
-    Laser = cell2struct(CellArray,FieldNames);
-    clear CellArray FieldNames m
-end
-clear BadData 
-
 %% Filling in bad data
 TimeBounds = linspace(0,24,100)';
 if isempty(WStation.TimeStamp)
@@ -247,6 +241,18 @@ if isempty(UPS.TimeStamp)
    UPS.Temperature           = TimeBounds.*nan;
 end
 
+%% Removing bad laser scans
+Laser    = RemoveBadData(Laser,find(Laser.WavelengthActual <= -1));
+WStation = RemoveBadData(WStation,find(WStation.RelativeHumidity<=-1000));
+Humidity = RemoveBadData(Humidity,find(Humidity.RelativeHumidity<=-1000));
+
+if isempty(Humidity.TimeStamp)
+   Humidity.TimeStamp         = TimeBounds;
+   Humidity.Temperature       = TimeBounds.*nan;
+   Humidity.DewPoint          = TimeBounds.*nan;
+   Humidity.RelativeHumidity  = TimeBounds.*nan;
+end
+
 %% Just making sure to get rid of laser power off data or error returns 
 % Especially DIAL01 seems to return current = 0 often...just remove data
 % and move on
@@ -260,15 +266,42 @@ Etalon       = PaddingDataStructureTimeSeries(Etalon,5,1);
 WStation     = PaddingDataStructureTimeSeries(WStation,5,0);
 UPS          = PaddingDataStructureTimeSeries(UPS,5,0);
 Power        = PaddingDataStructureTimeSeries(Power,5,0);
+Humidity     = PaddingDataStructureTimeSeries(Humidity,5,0);
 [MCS,Uptime] = PaddingDataStructureMCS(MCS,5,7043);
 
 %% Parsing data
-[Counts,PulseInfoNew] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap);
+[Counts,PulseInfoNew] = RawNetCDFDataParse(Etalon,Humidity,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap);
 %% Pushing data to a regular grid
 [~,PulseInfoNew]      = RawNetCDFData2RegularGrid(PulseInfoNew);
 end
 
-function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
+function [Struct] = RemoveBadData(Struct,BadData)
+%
+% Inputs: Struct:  A structure of data containing raw data read from the
+%                  netcdf file.
+%         BadData: An array of row indices indicating bad data in the data
+%                  structure to be removed
+%
+% Outputs: Struct: A structure of data containing all raw data that is not
+%                  marked as bad. 
+%
+%%
+if isempty(BadData) == 0
+    % Converting the names structure to a cell array
+    CellArray  = struct2cell(Struct);
+    FieldNames = fieldnames(Struct);
+    % Removing bad data
+    for m=1:1:size(CellArray)
+        CellArray{m,1}(BadData,:) = [];
+    end
+    % Converting back to a named structure
+    Struct = cell2struct(CellArray,FieldNames);
+    clear CellArray FieldNames m
+end
+end
+
+
+function [Counts,PulseInfo] = RawNetCDFDataParse(Etalon,Humidity,Laser,MCS,Power,Thermocouple,UPS,WStation,HardwareMap)
 %
 %
 %
@@ -299,6 +332,7 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     Counts.Raw{m,1}                         = MCS.Data(MCS.Channel == HardwareMap.PhotonCounting(m),:);
     % Time stamps
     PulseInfo.TimeStamp.Etalon{m,1}         = Etalon.TimeStamp(Etalon.Type == HardwareMap.Etalon(m) | isnan(Etalon.Type));
+    PulseInfo.TimeStamp.Humidity            = Humidity.TimeStamp;
     PulseInfo.TimeStamp.Housekeeping        = Thermocouple.TimeStamp;
     PulseInfo.TimeStamp.LidarData{m,1}      = MCS.TimeStamp(MCS.Channel == HardwareMap.PhotonCounting(m));
     PulseInfo.TimeStamp.LaserLocking{m,1}   = Laser.TimeStamp(Laser.Type == HardwareMap.Laser(m) | isnan(Laser.Type));
@@ -316,6 +350,8 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     PulseInfo.WeatherStation.Pressure          = WStation.Pressure;
     PulseInfo.WeatherStation.RelativeHumidity  = WStation.RelativeHumidity;
     PulseInfo.WeatherStation.Temperature       = WStation.Temperature;
+    %
+    PulseInfo.Humidity                         = Humidity;
 end
 end
 
@@ -331,6 +367,7 @@ PulseInfo.TimeStamp.Merged = double(PulseInfo.TimeStamp.LidarData{1,1});
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.WeatherStation,PulseInfo.TimeStamp.Merged,'linear','extrap');
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.Housekeeping,PulseInfo.TimeStamp.Merged,'linear','extrap');
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.UPS,PulseInfo.TimeStamp.Merged,'linear','extrap');
+PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.Humidity,PulseInfo.TimeStamp.Merged,'linear','extrap');
 
 % Pushing power data to MCS time grid
 PulseInfo = RecursivelyInterpolateStructure(PulseInfo,PulseInfo.TimeStamp.LaserPower{1,1},PulseInfo.TimeStamp.Merged,'linear','extrap');

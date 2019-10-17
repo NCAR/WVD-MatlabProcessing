@@ -195,13 +195,26 @@ end
 
 %% Plotting other weather station data (Pressure, Relative humidity)
 subplot(32,1,5:8)
-[Ax, ~, ~] = plotyy(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,...
-                    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.RelativeHumidity);
+if sum(~isnan(PulseInfoNew.Humidity.RelativeHumidity)) > 0
+    RH2Plot = [PulseInfoNew.WeatherStation.RelativeHumidity, ... 
+               PulseInfoNew.Humidity.RelativeHumidity];
+else
+    RH2Plot = PulseInfoNew.WeatherStation.RelativeHumidity;
+end
+
+[Ax, ~, Line2] = plotyy(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,...
+                    PulseInfoNew.TimeStamp.Merged,RH2Plot);
 ylabel(Ax(1),'Press. [mbar]'); ylabel(Ax(2),'R.H. [%]')
 xlim(Ax(1),[0,24]); xlim(Ax(2),[0,24]); 
 grid on; box on;
 set(gca,'xticklabel',{})
-AddPlotText(TextXLoc,TextYLoc,'Weather Station Data',FontSize)
+if size(Line2,1) == 2
+    Line2(1).Color = 'r';
+    Line2(2).Color = 'r';
+    Line2(2).LineStyle = '-.';
+    Ax(2).YColor = 'r';
+end
+AddPlotText(TextXLoc,TextYLoc,'Environmental Data',FontSize)
 
 %% Plotting deviations of laser wavelength from nominal
 subplot(32,1,9:12); hold on;

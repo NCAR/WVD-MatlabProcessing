@@ -30,7 +30,7 @@ fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 [Capabilities,Iterations,HardwareMap,Map] = ReadFakeJSondFile(Paths);
 
 DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';
-             'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc'};
+             'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc';'Humidity*.nc'};
 
 %% Importing all netcdf data files from the selected date
 % Loading data
@@ -68,13 +68,8 @@ PulseInfo.DataTime = (floor(min(PulseInfo.DataTimeRaw)):1/24/60*(Options.ave_tim
 PulseInfo.DataTimeShifted = PulseInfo.DataTime -(1/24/60*((Options.ave_time.wv-1)/2));
 %Calculating average wavelength
 for m=1:1:size(Counts.Raw,1)
-    if strcmp(Options.System,'DIAL01')
-       WavelengthOffset = -0.09e-3;
-    else
-       WavelengthOffset = 0;
-    end
-    PulseInfoNew.Laser.WavelengthActual{m,1} = PulseInfoNew.Laser.WavelengthActual{m,1} + WavelengthOffset;
-    PulseInfoNew.Laser.WavelengthDesired{m,1} = PulseInfoNew.Laser.WavelengthDesired{m,1} + WavelengthOffset;
+    PulseInfoNew.Laser.WavelengthActual{m,1} = PulseInfoNew.Laser.WavelengthActual{m,1} - JSondeData.WavemeterOffset;
+    PulseInfoNew.Laser.WavelengthDesired{m,1} = PulseInfoNew.Laser.WavelengthDesired{m,1} - JSondeData.WavemeterOffset;
 end
 clear m
 

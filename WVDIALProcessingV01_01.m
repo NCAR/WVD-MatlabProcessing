@@ -9,7 +9,7 @@ clear; close all; clc
 Systems = {'DIAL02'};
 
 %% Selecting the days to process
-DatesDesired = {'190819'};
+DatesDesired = {'191016'};
 % DatesDesired = {'190701';'190702';'190703';'190704';'190705';
 %                 '190706';'190707';'190708';'190709';'190710';
 %                 '190711';'190712';'190713';'190714'};

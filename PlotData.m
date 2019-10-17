@@ -168,16 +168,22 @@ set(gcf,'Color',[1 1 1],'Position',[10 (sh-fh-mh)  fw fh]);
 %% Plotting Temperatures (thermocouples, UPS, Weather station)
 A = PulseInfoNew.Housekeeping.Temperature;
 A(A>399) = nan; % Removing non-physical values
-
+CellThresh = 50;
 subplot(32,1,1:4)
-plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
-    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b--',...
-    PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
+if sum(nanmean(A) > CellThresh) > 0
+    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
+         PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b',...
+         PulseInfoNew.TimeStamp.Merged,A(:,~(nanmean(A) > CellThresh)),'k')
+else
+    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.UPS.Temperature,'r-.',...
+         PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Temperature,'b',...
+         PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Housekeeping.Temperature,'k')
+end
 xlim([0,24]);
 title([Options.System, ' Housekeeping Parameters (20',Paths.Date,')'])
 grid on; box on;
 set(gca,'xticklabel',{})
-MaxLimits = [0,45];
+MaxLimits = [-20,45];
 YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
@@ -195,25 +201,28 @@ end
 
 %% Plotting other weather station data (Pressure, Relative humidity)
 subplot(32,1,5:8)
-if sum(~isnan(PulseInfoNew.Humidity.RelativeHumidity)) > 0
-    RH2Plot = [PulseInfoNew.WeatherStation.RelativeHumidity, ... 
-               PulseInfoNew.Humidity.RelativeHumidity];
-else
-    RH2Plot = PulseInfoNew.WeatherStation.RelativeHumidity;
-end
-
-[Ax, ~, Line2] = plotyy(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,...
-                    PulseInfoNew.TimeStamp.Merged,RH2Plot);
-ylabel(Ax(1),'Press. [mbar]'); ylabel(Ax(2),'R.H. [%]')
-xlim(Ax(1),[0,24]); xlim(Ax(2),[0,24]); 
+yyaxis left
+plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.Pressure,'b','linewidth',1.5)
+xlim([0,24]);
+ylabel('Press. [mbar]');
 grid on; box on;
-set(gca,'xticklabel',{})
-if size(Line2,1) == 2
-    Line2(1).Color = 'r';
-    Line2(2).Color = 'r';
-    Line2(2).LineStyle = '-.';
-    Ax(2).YColor = 'r';
+set(gca,'xticklabel',{},'ycolor','b','color','w')
+
+yyaxis right
+if sum(~isnan(PulseInfoNew.Humidity.RelativeHumidity)) > 0
+    hold on;
+    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Humidity.RelativeHumidity,'-','color',[0.5,0.5,0.5],'linewidth',1.5)
 end
+plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.WeatherStation.RelativeHumidity,'k','linewidth',1.5)
+xlim([0,24]);ylabel('Press. [mbar]');
+ylabel('R.H. [%]');
+grid on; box on;
+set(gca,'xticklabel',{},'ycolor','k','color','w')
+MaxLimits = [0,100];
+YLimits = ylim;
+YLimits = [floor(YLimits(1)/10)*10,ceil(YLimits(2)/10)*10];
+if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
+ylim(YLimits);
 AddPlotText(TextXLoc,TextYLoc,'Environmental Data',FontSize)
 
 %% Plotting deviations of laser wavelength from nominal
@@ -253,7 +262,7 @@ AddPlotText(TextXLoc,TextYLoc,'Laser \lambda Deviations [pm]',FontSize)
 %% Plotting Laser Current
 subplot(32,1,13:16); hold on;
 for m=1:1:size(PulseInfoNew.Laser.Current,1)
-    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.Current{m,1}.*1e3,Hue{m})
+    plot(PulseInfoNew.TimeStamp.Merged,PulseInfoNew.Laser.Current{m,1}.*1e3,Hue{m},'linewidth',1.5)
 end
 hold off
 xlim([0,24]); 

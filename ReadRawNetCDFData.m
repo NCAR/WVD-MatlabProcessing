@@ -243,8 +243,9 @@ end
 
 %% Removing bad laser scans
 Laser    = RemoveBadData(Laser,find(Laser.WavelengthActual <= -1));
-WStation = RemoveBadData(WStation,find(WStation.RelativeHumidity<=-1000));
-Humidity = RemoveBadData(Humidity,find(Humidity.RelativeHumidity<=-1000));
+WStation = RemoveBadData(WStation,find(WStation.RelativeHumidity<0));
+Humidity = RemoveBadData(Humidity,find(Humidity.RelativeHumidity<=-1));
+Thermocouple = RemoveBadData(Thermocouple,find(Thermocouple.Temperature(:,1)<=-1000));
 
 if isempty(Humidity.TimeStamp)
    Humidity.TimeStamp         = TimeBounds;

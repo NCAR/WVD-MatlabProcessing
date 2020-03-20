@@ -58,7 +58,7 @@ for m=1:1:size(DataTypes,1)
        Filename = s(n,1).name;
        % Loading the data
        switch DataTypes{m,1}
-           case 'Etalonsample*.nc'
+           case 'Etalon*.nc'
                A = h5read(Filename,'/EtalonNum');
                Type = -1.*ones(size(A));
                for p=1:1:size(A,1)   % Looping over all data entries
@@ -75,7 +75,7 @@ for m=1:1:size(DataTypes,1)
                Etalon.TemperatureActual  = [Etalon.TemperatureActual ;ncread(Filename,'Temperature')];
                Etalon.TemperatureDesired = [Etalon.TemperatureDesired;ncread(Filename,'TempDiff')];
                clear Type
-           case 'HKeepsample*.nc'
+           case 'HKeep*.nc'
                Thermocouple.TimeStamp   = [Thermocouple.TimeStamp;   double(ncread(Filename,'time'))];
                A = double(ncread(Filename,'Temperature'));
                if size(Thermocouple.Temperature,2) > size(A,2)
@@ -90,7 +90,7 @@ for m=1:1:size(DataTypes,1)
                    % Thermocouple number is constant
                    Thermocouple.Temperature = [Thermocouple.Temperature; A];
                end
-           case 'LLsample*.nc'
+           case 'LL*.nc'
                A = h5read(Filename,'/LaserName');
                Type = -1.*ones(size(A));
                for p=1:1:size(A,1)   % Looping over all data entries
@@ -116,7 +116,7 @@ for m=1:1:size(DataTypes,1)
                    Laser.SeedPower       = Laser.TimeStamp.*nan;
                end
                clear Type
-           case 'MCSsample*.nc'
+           case 'MCS*.nc'
                A = double(ncread(Filename,'time'));
                if str2double(Filename(10:11)) == 23
                    % Checking to make sure all data is reported today
@@ -132,7 +132,7 @@ for m=1:1:size(DataTypes,1)
                end
                MCS.Data                  = [MCS.Data                 ;single(ncread(Filename,'Data'))];  
                clear A
-           case 'Powsample*.nc'
+           case 'Pow*.nc'
                Power.LaserPower          = [Power.LaserPower         ;ncread(Filename,'Power')];
                A = double(ncread(Filename,'time'));
                if str2double(Filename(10:11)) == 23
@@ -141,14 +141,14 @@ for m=1:1:size(DataTypes,1)
                end
                Power.TimeStamp           = [Power.TimeStamp          ;A];
                clear A
-           case 'UPSsample*.nc'
+           case 'UPS*.nc'
                UPS.BatteryCapacity       = [UPS.BatteryCapacity ; ncread(Filename,'BatteryCapacity')];
                UPS.BatteryHours          = [UPS.BatteryHours    ; ncread(Filename,'BatteryTimeLeft')];
                UPS.BatteryInUse          = [UPS.BatteryInUse    ; double(ncread(Filename,'BatteryInUse'))];
                UPS.BatteryNominal        = [UPS.BatteryNominal  ; double(ncread(Filename,'BatteryNominal'))];
                UPS.Temperature           = [UPS.Temperature     ; ncread(Filename,'UPSTemperature')];
                UPS.TimeStamp             = [UPS.TimeStamp       ; ncread(Filename,'time')];
-           case 'WSsample*.nc'
+           case 'WS*.nc'
                A = double(ncread(Filename,'time'));
                if str2double(Filename(9:10)) == 00
                    A(A>23) = A(A>23)-24;
@@ -341,16 +341,18 @@ for m=1:1:size(HardwareMap.ChannelName,1)
     PulseInfo.TimeStamp.UPS                 = UPS.TimeStamp;
     PulseInfo.TimeStamp.WeatherStation      = WStation.TimeStamp;
     % Parsing out the UPS data
-    PulseInfo.UPS.BatteryCapacity = UPS.BatteryCapacity;
-    PulseInfo.UPS.BatteryHours    = UPS.BatteryHours;
-    PulseInfo.UPS.BatteryInUse    = UPS.BatteryInUse;
-    PulseInfo.UPS.BatteryNominal  = UPS.BatteryNominal;
-    PulseInfo.UPS.Temperature     = UPS.Temperature;
+    PulseInfo.UPS                 = UPS;
+%     PulseInfo.UPS.BatteryCapacity = UPS.BatteryCapacity;
+%     PulseInfo.UPS.BatteryHours    = UPS.BatteryHours;
+%     PulseInfo.UPS.BatteryInUse    = UPS.BatteryInUse;
+%     PulseInfo.UPS.BatteryNominal  = UPS.BatteryNominal;
+%     PulseInfo.UPS.Temperature     = UPS.Temperature;
     % Parsing out the weather station
-    PulseInfo.WeatherStation.AbsoluteHumidity  = WStation.AbsoluteHumidity;
-    PulseInfo.WeatherStation.Pressure          = WStation.Pressure;
-    PulseInfo.WeatherStation.RelativeHumidity  = WStation.RelativeHumidity;
-    PulseInfo.WeatherStation.Temperature       = WStation.Temperature;
+    PulseInfo.WeatherStation      = WStation;
+%     PulseInfo.WeatherStation.AbsoluteHumidity  = WStation.AbsoluteHumidity;
+%     PulseInfo.WeatherStation.Pressure          = WStation.Pressure;
+%     PulseInfo.WeatherStation.RelativeHumidity  = WStation.RelativeHumidity;
+%     PulseInfo.WeatherStation.Temperature       = WStation.Temperature;
     %
     PulseInfo.Humidity                         = Humidity;
 end
@@ -415,8 +417,6 @@ else
     % widths away from the median
     A = find(FindOutliers(diff([0;Data.TimeStamp;24])) >= MedianWidths2Flag);
 end
-% %% Finding the points where the time stamps are more than 5 median widths away from the median
-% A = find(FindOutliers(diff([0;Data.TimeStamp;24])) >= MedianWidths2Flag);
 %% Converting the names structure to a cell array
 CellArray  = struct2cell(Data);
 FieldNames = fieldnames(Data);
@@ -495,11 +495,6 @@ function [MCS] = RemoveIncompleteMCSScans(MCS,Depth)
 %
 %
 %
-%% Removing data to simulate bad scans
-% for m=1:1:6
-%     Index2Flip(m) = floor(rand.*size(GoodRows,1)); %#ok<SAGROW>
-% end
-% GoodRows(Index2Flip) = [];
 %% Identifying bad data
 % Checking for the unique channel identification numbers
 A = unique(MCS.Channel);
@@ -582,15 +577,12 @@ for m=1:1:size(DataBreakIndices)
     end
     
 end
-
 % Making sure to include complete scans
 % DataWidth = round(DataWidth./size(A,1)).*size(A,1);
-DataWidth = round(DataWidth).*size(A,1);
-              
+DataWidth = round(DataWidth).*size(A,1); 
 %% Converting the names structure to a cell array
 CellArray  = struct2cell(MCS);
 FieldNames = fieldnames(MCS);
-
 %% Filling data arrays (if needed)
 if isempty(B)
     NewCell = CellArray;
@@ -636,13 +628,8 @@ else
                     EndIndex = size(CellArray{n,1},1);
                 end
                 % Padding the new cell array
-%                 NewCell{n,1} = [NewCell{n,1};
-%                                 ToAdd;
-%                                 CellArray{n,1}(StartIndex:EndIndex,:)];
-%                 StartIndex = EndIndex+1;
                 NewCell{n,1} = [NewCell{n,1};
                                 ToAdd];
-%                 StartIndex = EndIndex+1;
             elseif DataBreakIndices(m) == size(CellArray{n,1},1) -1
                 %%%%%%%% There is a break at the end of the day %%%%%%%%
                 NewCell{n,1} = [NewCell{n,1};

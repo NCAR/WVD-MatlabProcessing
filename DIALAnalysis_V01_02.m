@@ -29,8 +29,8 @@ fprintf(['Processing: ',Options.System,' data from 20',Paths.Date,'\n'])
 %% Reading Jsond file information
 [Capabilities,Iterations,HardwareMap,Map] = ReadFakeJSondFile(Paths);
 
-DataTypes = {'Etalonsample*.nc';'LLsample*.nc';'MCSsample*.nc';'Powsample*.nc';
-             'WSsample*.nc';'UPSsample*.nc';'HKeepsample*.nc';'Humidity*.nc'};
+DataTypes = {'Etalon*.nc';'LL*.nc';'MCS*.nc';'Pow*.nc';
+             'WS*.nc';'UPS*.nc';'HKeep*.nc';'Humidity*.nc'};
 
 %% Importing all netcdf data files from the selected date
 % Loading data
@@ -40,7 +40,7 @@ Uptime = PulseInfo.Uptime;
 PulseInfo.BinWidth    = round((double(nanmean(PulseInfoNew.Data.RangeResolution{1,1}))*1e-9*3e8/2)*10)/10;
 PulseInfo.DataTimeRaw = double(PulseInfoNew.TimeStamp.LidarData{1,1})./24 + ...
                         day(datetime(['20',Paths.Date],'inputformat','yyyyMMdd'),'dayofyear');
-PulseInfo.DeltaRIndex = 75/PulseInfo.BinWidth; % this is the cumlative sum photons gate spacing
+PulseInfo.DeltaRIndex = ceil(75/PulseInfo.BinWidth); % this is the cumlative sum photons gate spacing
 PulseInfo.DeltaR      = PulseInfo.DeltaRIndex*PulseInfo.BinWidth*100; % delta r in cm
 time_per_column       = nanmedian(PulseInfoNew.Data.ProfilesPerHistogram{1,1})./7e3;
 PulseInfo.Profiles2AverageWV = 2*round(((Options.ave_time.wv*60/time_per_column)+1)/2); % 7kHz, 10k accum data rate is ~1.4s

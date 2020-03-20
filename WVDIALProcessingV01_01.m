@@ -6,10 +6,10 @@ clear; close all; clc
 
 %% Selecting the systems to process
 % Systems = {'DIAL01';'DIAL02';'DIAL03';'DIAL04';'DIAL05'};
-Systems = {'DIAL02'};
+Systems = {'DIAL04'};
 
 %% Selecting the days to process
-DatesDesired = {'191016'};
+DatesDesired = {'191106'};
 % DatesDesired = {'190701';'190702';'190703';'190704';'190705';
 %                 '190706';'190707';'190708';'190709';'190710';
 %                 '190711';'190712';'190713';'190714'};

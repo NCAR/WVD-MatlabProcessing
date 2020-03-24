@@ -19,13 +19,15 @@ function [Paths] = DefinePaths(Date, Options)
 %% Base path to change for each different platform
 if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
     Paths.Base = '/scr/fog1/rsfdata/MPD';
+    Paths.Code = '/home/rsfdata/Processing/MatlabV2';
 elseif strcmp(getenv('HOSTNAME'),'snow.eol.ucar.edu')
     Paths.Base = '/scr/snow2/rsfdata/projects/mpd';
+    Paths.Code = '/home/rsfdata/MPD/Processing/MatlabV2';
 end
 
 %% Other paths 
 Paths.Catalog       = '/pub/incoming/catalog/operations';
-Paths.Code          = '/home/rsfdata/Processing/MatlabV2'; % get the current path
+%Paths.Code          = '/home/rsfdata/Processing/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
 Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];

@@ -17,7 +17,11 @@ function [Paths] = DefinePaths(Date, Options)
 %                  processed data and figures.
 %
 %% Base path to change for each different platform
-Paths.Base       = '/scr/fog1/rsfdata/MPD';
+if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
+    Paths.Base = '/scr/fog1/rsfdata/MPD';
+elseif strcmp(getenv('HOSTNAME'),'snow.eol.ucar.edu')
+    Paths.Base = '/scr/snow2/rsfdata/projects/mpd';
+end
 
 %% Other paths 
 Paths.Catalog       = '/pub/incoming/catalog/operations';

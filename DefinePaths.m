@@ -23,6 +23,9 @@ if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
 elseif strcmp(getenv('HOSTNAME'),'snow.eol.ucar.edu')
     Paths.Base = '/scr/snow2/rsfdata/projects/mpd';
     Paths.Code = '/home/rsfdata/MPD/Processing/MatlabV2';
+else
+    Paths.Base = '/scr/fog1/rsfdata/MPD';
+    Paths.Code = '/home/rsfdata/Processing/MatlabV2';
 end
 
 %% Other paths 
@@ -30,11 +33,11 @@ Paths.Catalog       = '/pub/incoming/catalog/operations';
 %Paths.Code          = '/home/rsfdata/Processing/MatlabV2'; % get the current path
 Paths.Colormap      = [Paths.Code,'/DataFiles'];
 Paths.FigureType    = Options.System;
-Paths.Figures       = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quicklook'];
+Paths.Figures       = [Paths.Base,'/mpd_0',Options.System(6),'_processed_data/Quicklook'];
 Paths.FolderType    = 'All';
 Paths.PCARBSet      = [Paths.Code,'/PCA/RayleighBrillouinXY.mat'];
-Paths.RawNetCDFData = [Paths.Base,'/wvdial_',Options.System(6),'_data/20',Date(1:2),'/20',Date];
-Paths.SaveData      = [Paths.Base,'/wvdial_',Options.System(6),'_processed_data/Quickload'];
+Paths.RawNetCDFData = [Paths.Base,'/mpd_0',Options.System(6),'_data/20',Date(1:2),'/20',Date];
+Paths.SaveData      = [Paths.Base,'/mpd_0',Options.System(6),'_processed_data/Quickload'];
 
 %% Adding paths to current path to run JSon file readers
 addpath([Paths.Code,'/GitCalibrations/calibrations'])

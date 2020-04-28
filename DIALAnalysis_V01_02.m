@@ -221,7 +221,7 @@ Plotting = PlotData(Altitude,Counts,DataProducts,Map,Options,Paths,PulseInfo,Pul
 fprintf('Saving Data\n')
 if Options.flag.save_data == 1
     cd(Paths.SaveData)
-    Paths.FileName = ['ProcessedDIALData_DIAL0',Options.System(6),'_20',num2str(Paths.Date),'.mat'];
+    Paths.FileName = ['ProcessedMPDData_MPD0',Options.System(6),'_20',num2str(Paths.Date),'.mat'];
     save(Paths.FileName,'Altitude','Counts','DataProducts','Options','Paths','Plotting','PulseInfo','PulseInfoNew','SurfaceWeather','-v7.3')
     cd(Paths.Code)
 end

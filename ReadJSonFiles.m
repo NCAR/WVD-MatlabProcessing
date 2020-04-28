@@ -15,24 +15,26 @@ function [JSondeData] = ReadJSonFiles(Date, Options)
 %% Read the data files
 dat=loadjson(['dial',Options.System(6),'_calvals.json'],'SimplifyCell',1);
 
+
+
 %% Parsing data from the json data
 t_date = datetime(num2str(Date),'InputFormat','yyMMdd');
 
 switch_ratio = 0.5;
 for i=1:size(dat.switch_ratio,2)
-    if (t_date >= datetime(dat.switch_ratio(i).date,'InputFormat','d-MM-yyyy H:m')) == 1
+    if (t_date >= datetime(dat.switch_ratio(i).date,'InputFormat','d-MMM-yyyy H:m')) == 1
         switch_ratio = dat.switch_ratio(i).value;
     end
 end
 location = [];
 for i=1:size(dat.Location,2)
-    if (t_date >= datetime(dat.Location(i).date,'InputFormat','d-MM-yyyy H:m')) == 1
+    if (t_date >= datetime(dat.Location(i).date,'InputFormat','d-MMM-yyyy H:m')) == 1
         location = dat.Location(i).location;
     end
 end
 wavemeteroffset = 0;
 for i=1:size(dat.Wavemeter_offset,2)
-    if (t_date >= datetime(dat.Wavemeter_offset(i).date,'InputFormat','d-MM-yyyy H:m')) == 1
+    if (t_date >= datetime(dat.Wavemeter_offset(i).date,'InputFormat','d-MMM-yyyy H:m')) == 1
         wavemeteroffset = dat.Wavemeter_offset(i).value;
     end
 end

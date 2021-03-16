@@ -37,7 +37,7 @@ Options.BreakSize    = 15;      % Medians allowed before marking data break
 Options.Date         = Date;
 Options.InterpMethod = 'linear';
 Options.Logging      = Logging; % 'Full', 'Skinny', 'None'
-Options.SaveFigures  = false;
+Options.SaveFigures  = true;
 Options.System       = System;
 %%%%%%%%%%%%%%%%%%%%%%%% Defining default options %%%%%%%%%%%%%%%%%%%%%%%%%
 Options.Default.RangeRes = 250;                    % Units are nanosceconds
@@ -49,9 +49,9 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation'};  
 %% Defining filepaths
 Paths.Code      = pwd;
-Paths.Data      = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
-Paths.Quickload = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quickload',upper(erase(Options.System,'_')));
-Paths.Quicklook = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quicklooks',upper(erase(Options.System,'_')));
+Paths.Data      = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
+Paths.Quickload = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','V04');
+Paths.Quicklook = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
 %% Reading data and pre-processing 
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
@@ -112,8 +112,5 @@ Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.De
 % % % cd(Paths.Quickload)
 % % % save([lower(erase(Options.System,'_')),'.',Date,'.MatlabPreload.mat'],'Data','Options','RawData','RawTSData')
 % % % cd(Paths.Code)
-
-%% Temperary Code
-% SaveBackground(Data,FindCurrentFigure+1,Date)
 
 end

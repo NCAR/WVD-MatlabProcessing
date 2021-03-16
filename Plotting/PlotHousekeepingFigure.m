@@ -16,7 +16,7 @@ set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
 PO.Hue      = {[0 0 0];[1 0 0];[0 0 1];[.8 0 .8];[0 1 1];[0 .5 0];};           % k,r,b,c,m,g
 PO.TextXLoc = 0.01;
 PO.TextYLoc = 0.9;
-PO.FontSize = 14;
+PO.FontSize = 12;
 PO.XLims    = [0,24]; 
 PO.XTick    = 0:6:24;
 PO.MaxSubs  = 8*4;

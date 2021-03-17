@@ -95,7 +95,6 @@ SaveFigure(FigNum,Options,Paths,'Housekeeping')
 CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
 Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
 
-
 %% Plotting lidar data
 
 

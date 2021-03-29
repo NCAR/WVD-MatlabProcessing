@@ -13,7 +13,9 @@ function [Data] = CheckMonotonicTimeStamps(Data)
 % Bad = {'MCS'       ,'TimeStamp';
 %        'Power'     ,'TimeStamp';
 %        'Container' ,'TimeStamp'};
-Bad = {'Power'     ,'TimeStamp'};
+Bad = {'Power'         ,'TimeStamp';
+       'Etalon'        ,'TimeStamp';
+       'WeatherStation','TimeStamp'};
 %%
 for m=1:1:size(Bad,1)
     % Checking if the fields exist

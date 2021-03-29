@@ -17,8 +17,12 @@ SubField  = 'Data';
 [IsField,Power] = RecursivelyCheckIsField(RawData,'Power');
 if IsField
     % Determining what data is and where
-    Key     = Power.Type;
-    PTypes  = unique(Power.Type);
+    Key = Power.Type; Key(isnan(Key)) = [];
+    % Checking if the key is default data (nan)
+    if isempty(Key)
+        Key = ones(size(Power.Type)).*PowerChannels({'Unrecognized'});
+    end
+    PTypes = unique(Key);
     % Converting power data to cell array
     Power  = rmfield(Power,'Type');
     FN     = fieldnames(Power);
@@ -27,7 +31,7 @@ if IsField
     for m=1:1:size(PTypes,1)     % Looping over power types
         for n=1:1:size(Power,1)  % Looping over fieldnames
             if all(size(Key) ==  size(Power{n,1}))
-                Temp{m,1}{n,1} = Power{n,1}(Key == PTypes(m)); 
+                Temp{m,1}{n,1} = Power{n,1}(Key == PTypes(m));
             else
                 Temp{m,1}{n,1} = Power{n,1}; %#ok<*AGROW>
             end
@@ -70,6 +74,15 @@ function [NewData] = UnpackTimeSeriesData(Data)
 %% Finding unique hardware types
 UniqueTypes = sortrows(unique(Data.Type));
 AllTypes    = Data.Type;
+%% Checking if any data exists that is not just default
+if isa(AllTypes,'double')
+    AllTypes(isnan(AllTypes)) = [];
+    if isempty(AllTypes)
+        AllTypes = cell(size(Data.Type));
+        AllTypes(:) = {'Unrecognized'};
+        UniqueTypes = {'Unrecognized'};
+    end
+end
 %% Removing types from the strucutre and making it a cell array for looping
 Data       = rmfield(Data,'Type');
 FieldNames = fieldnames(Data);

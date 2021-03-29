@@ -23,8 +23,8 @@ function [Data,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging)
 %
 %% Checking inputs and using default values if running as stand-alone
 if nargin ~= 3
-    Date   = '20200902';
-    System = 'mpd_05';
+    Date   = '20210318';
+    System = 'mpd_02';
     Logging = 'Skinny';
 end
 %% Adding path to recursive functional utilities

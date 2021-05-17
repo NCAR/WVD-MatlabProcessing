@@ -2,9 +2,10 @@
 close all; clear; clc;
 
 %% Options to define what systems and when to analyze MPD data
-Dates2Process   = {'20200829','20210316'};
+Dates2Process   = {'20210505','20210505'};
 
-Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
+% Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
+Systems2Process = {'mpd_05'};
 
 %% Processing all required data
 DateNum = datenum(Dates2Process,'yyyymmdd');

@@ -23,8 +23,8 @@ function [Data,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging)
 %
 %% Checking inputs and using default values if running as stand-alone
 if nargin ~= 3
-    Date   = '20210318';
-    System = 'mpd_02';
+    Date   = '20210506';
+    System = 'mpd_05';
     Logging = 'Skinny';
 end
 %% Adding path to recursive functional utilities
@@ -49,9 +49,15 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation'};  
 %% Defining filepaths
 Paths.Code      = pwd;
-Paths.Data      = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
-Paths.Quickload = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','V04');
-Paths.Quicklook = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
+if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
+    Paths.Data      = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
+    Paths.Quickload = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','V04');
+    Paths.Quicklook = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
+else
+    Paths.Data      = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
+    Paths.Quicklook = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quicklooks',upper(erase(System,'_')));
+    Paths.Quickload = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quickload',upper(erase(System,'_')));
+end
 %% Reading data and pre-processing 
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
@@ -83,6 +89,8 @@ Data.TimeSeries = RecursivelyIdentifyBreaks(RawTSData,Options.BreakSize);
 % Recursively pushing all 1-d data to a constant grid 
 CWLogging('---------Interpolate 1d data----------\n',Options,'Main')
 Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGrid1d,Options.InterpMethod); 
+% Making sure that no time series elements are NaNs
+Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation
 CWLogging('--------Plotting status figure--------\n',Options,'Main')
 [~,FigNum] = PlotStatusFigure(Data,RawData,Options);

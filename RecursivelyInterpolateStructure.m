@@ -12,11 +12,11 @@ function [ReturnDataStructure] = RecursivelyInterpolateStructure(OriginalDataStr
 % Outputs: ReturnDataStructure:  A structure containing all data as before
 %                                but with data interpolated to desired grid
 %
-%% Converting the surface weather structure into a cell array
+%% Converting the structure into a cell array
 [Cell,FieldNames,TimeStamps] = RecursiveStruct2Cell(OriginalDataStructure);
 %% Recursively performing an interpolation of the cell contents
 CellDataNew = RecursiveInterpolateData(Cell,TimeStamps,NewTime,Method,FieldNames);
-%% Convert the surface weather cell array back to a structure
+%% Convert the cell array back to a structure
 ReturnDataStructure = RecursiveCell2Struct(CellDataNew, FieldNames);
 end
 

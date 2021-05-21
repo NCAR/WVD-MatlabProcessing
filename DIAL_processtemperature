@@ -1,0 +1,17 @@
+#! /bin/sh
+
+echo "Current Time: `date +%Y%m%d-%H%M%S`"
+echo "System: $1" 
+echo "Logging: $2"
+# get yesterday's date to feed into Matlab
+daystr=\'`date +%Y%m%d -d "2 day ago"`\'
+echo "daystr = $daystr"
+node=\'$1\'
+logging=\'$2\'
+# set the Matlab command
+matcmd="cd('/home/rsfdata/Processing/TestingTemperature'); [~]=RunLoader(${daystr},${node},${logging}); exit"
+# file, save_quicklook, save_data, save_netCDF, save_catalog
+cmd="/opt/local/bin/matlab -nodisplay -nosplash -r \"$matcmd\""
+echo "cmd = $cmd"
+# run the command
+eval $cmd

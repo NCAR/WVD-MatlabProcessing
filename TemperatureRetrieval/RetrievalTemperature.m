@@ -31,6 +31,10 @@ Data2D = RecursivelyApplyMask(Data2D);
 Data1D = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
 Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');
 %% Calculating needed spectra
+GuessLapse = -0.0098;
+ConstProfile = (Options.Range').*(GuessLapse);
+% Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+283.15;
+% Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+Data1D.Surface.Temperature.Value';
 Spectra.Rebuilt = BuildSpectra(Spectra.PCA,Data2D.NCIP.Temperature,Data2D.NCIP.Pressure,Data1D.Wavelength,Op);
 %% Calculating perturbative absorption terms
 [Alpha,PerterbOrders] = PerturbativeRetrieval(Constants,Counts,Data2D,Options,Spectra,Op);

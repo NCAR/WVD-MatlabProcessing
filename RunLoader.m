@@ -66,9 +66,11 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
 %% Defining filepaths
 Paths.Code      = pwd;
 if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
-    Paths.Data      = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
-    Paths.Quickload = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','V04');
-    Paths.Quicklook = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
+    Paths.Data       = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
+    Paths.PythonData = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],...
+                                [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
+    Paths.Quickload  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','TempData');
+    Paths.Quicklook  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
 else
     Paths.Data       = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
     Paths.PythonData = fullfile('/Volumes/StillwellData01/DIAL/MPD/PythonProcessed',upper(erase(System,'_')),...
@@ -112,11 +114,11 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation
 CWLogging('--------Plotting status figure--------\n',Options,'Main')
-[~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-SaveFigure(FigNum,Options,Paths,'Status')
+%[~,FigNum] = PlotStatusFigure(Data,RawData,Options);
+%SaveFigure(FigNum,Options,Paths,'Status')
 CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
-FigNum = PlotHousekeepingFigure(Data,Options);
-SaveFigure(FigNum,Options,Paths,'Housekeeping')
+%FigNum = PlotHousekeepingFigure(Data,Options);
+%SaveFigure(FigNum,Options,Paths,'Housekeeping')
 %% Process lidar data
 % Push lidar data onto a constant grid
 CWLogging('-----Push lidar data to known grid----\n',Options,'Main')

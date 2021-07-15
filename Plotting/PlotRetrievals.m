@@ -30,6 +30,14 @@ OD =  double(2.*LidarRatio.*cumsum(Beta).*(Altitude(2)-Altitude(1)));
 % Applying an optical depth filter
 Python.BSCoefficient.Value(OD>0.25) = nan;
 
+%% Copying HSRL and WV masks for Temperature
+TempMask = isnan(Python.BSCoefficient.Value) | isnan(Python.Humidity.Mask);
+% Interpolating Python grid to temperature grid
+[X,Y] = meshgrid(Python.BackRatio.TimeStamp, Python.BackRatio.Range);
+[x,y] = meshgrid(Retrievals.Temperature.TimeStamp,Retrievals.Temperature.Range);
+TempMaskInt = ceil(interp2(X,Y,double(TempMask),x,y));
+% Applying mask
+Retrievals.Temperature.Smoothed(TempMaskInt==1) = nan;
 
 %% Plotting retrieved data
 figure(FigNum);

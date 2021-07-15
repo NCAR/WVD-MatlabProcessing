@@ -22,8 +22,8 @@ PO.XTick    = 0:6:24;
 PO.MaxSubs  = 8*4;
 Subs        = [];
 %% Temperatures
-Subs = GeneralPlotter(Data,{'UPS';'WeatherStation';'Thermocouple';'HumiditySensor'},...
-                      {'Temperature';'Temperature';'Temperature';'IntTemp'},...
+Subs = GeneralPlotter(Data,{'UPS';'WeatherStation';{'Thermocouple','OpticalBench'};{'Thermocouple','HVACSource'};'HumiditySensor'},...
+                      {'Temperature';'Temperature';'Temperature';'Temperature';'IntTemp'},...
                       {{'Temperature';'[^oC]'}},{1:4},{[-45,45]},{[]},Subs,PO); 
 title([upper(erase(Options.System,'_')),' Housekeeping Parameters (',Options.Date,')'])
 % Add second transparent axis on top of the last with HSRL cell temperature
@@ -48,8 +48,8 @@ Subs = LaserPlotter(Data,{'TimeSeries','Etalon'},{25:28},{'TempDiff'},1,...
                       {{'Etalon Temp';'Deviation [^oC]'}},{[-5,5]},...
                       {[-0.05,.05]},Subs,PO);
 %% Current 
-Subs = GeneralPlotter(Data,{'System';'HVAC';'Instrument';'Heaters';'Window Fan'},...
-                      {'System';'HVAC';'Instrument';'Heaters';'WindowFan'},...
+Subs = GeneralPlotter(Data,{{'Current','SystemInput'};{'Current','HVAC'};{'Current','WallPowerStrip'};{'Current','WallHeaters'};{'Current','WindowHeaterFan'}},...
+                      {'Current';'Current';'Current';'Current';'Current'},...
                       {{'Current';'[A]'}},{29:32},{[0,30]},{[0,15]},Subs,PO);
 %% Moving the y-axes from side to side for readability 
 for m=3:1:size(Subs,2)
@@ -106,8 +106,12 @@ Label    = '';
 %% Looking for availible data and plotting if there
 n=1;
 for m=1:1:size(Types2Plot,1)
-   [IsField,TempData] = RecursivelyCheckIsField(Data,{'TimeSeries',Types2Plot{m,1}}); 
-   Label = [Label,'\color[rgb]{',num2str(PO.Hue{m}),'} ',Types2Plot{m},'\color{black}, ']; %#ok<AGROW>
+   [IsField,TempData] = RecursivelyCheckIsField(Data,cellflat({'TimeSeries',Types2Plot{m,1}})); 
+   if iscell(Types2Plot{m,1})
+       Label = [Label,'\color[rgb]{',num2str(PO.Hue{m}),'} ',Types2Plot{m}{end},'\color{black}, ']; %#ok<AGROW>
+   else
+       Label = [Label,'\color[rgb]{',num2str(PO.Hue{m}),'} ',Types2Plot{m},'\color{black}, ']; %#ok<AGROW>
+   end
    if IsField
        subplot(PO.MaxSubs,1,Subplots{n}); hold on;
        plot(TempData.TimeStamp,TempData.(Var2Plot{m}),'Color',PO.Hue{m})
@@ -139,16 +143,24 @@ if IsField
     Av = fieldnames(TempData);
     Av(ismember(Av,'Unknown')) = []; 
     % Plotting all data
-    for m=1:1:size(Av,1)
-        for n=1:1:size(Subplots)
-            subplot(PO.MaxSubs,1,Subplots{n}); hold on;
-            plot(TempData.(Av{m}).TimeStamp,TempData.(Av{m}).(SubVars{n}).*Multiple(n),'Color',PO.Hue{m})
+    
+%     for m=1:1:size(Av,1)
+%         for n=1:1:size(Subplots)
+    for n=1:1:size(Subplots)
+        Label    = '';
+        for m=1:1:size(Av,1)
+            % Only plot Amplifier data if it is current
+            if strcmp(Av{m}(end-2:end),'Amp') == 0 || strcmp(SubVars{n},'Current')
+                subplot(PO.MaxSubs,1,Subplots{n}); hold on;
+                plot(TempData.(Av{m}).TimeStamp,TempData.(Av{m}).(SubVars{n}).*Multiple(n),'Color',PO.Hue{m})
+                Label = [Label, '\color[rgb]{',num2str(PO.Hue{m}),'}',Av{m},'\color{black}, ']; %#ok<AGROW>
+            end
         end
-        Label = [Label, '\color[rgb]{',num2str(PO.Hue{m}),'}',Av{m},'\color{black}, ']; %#ok<AGROW>
+        L{n} = Label;
     end
 end
 %% Formatting subplot
-Subs = FormatGeneral(Label,Subplots,YMaxLim,YMinLim,SubLabel,Subs,PO);
+Subs = FormatGeneral(L,Subplots,YMaxLim,YMinLim,SubLabel,Subs,PO);
 end
 
 function [Subs] = FormatGeneral(Label,Subplots,YMaxLim,YMinLim,SubLabel,Subs,PO)
@@ -188,7 +200,12 @@ for n=1:1:length(Subplots)
     % Removing the x-axis labels if not the bottom subplot
     if max(Subplots{n}) ~= PO.MaxSubs; set(gca,'xticklabel',{}); end
     % Adding text to define subplot contents (legend)
-    AddPlotText(PO.TextXLoc,PO.TextYLoc,Label(1:end-2),PO.FontSize)
+    if iscell(Label)
+        L = Label{n}(1:end-2);
+    else
+        L = Label(1:end-2);
+    end
+    AddPlotText(PO.TextXLoc,PO.TextYLoc,L,PO.FontSize)
 end
 end
 
@@ -220,3 +237,39 @@ YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
 text(XLoc,YLoc,Text,'Fontsize',FontSize,'Fontweight','bold')
 end
 
+function out = cellflat(celllist)
+% CELLFLAT is a helper function to flatten nested cell arrays. 
+% 
+% CELLFLAT(celllist) searches every cell element in cellist and put them on
+% the top most level. Therefore, CELLFLAT linearizes a cell array tree
+% structure. 
+%
+% Example: cellflat({[1 2 3], [4 5 6],{[7 8 9 10],[11 12 13 14 15]},{'abc',{'defg','hijk'},'lmnop'}}) 
+% 
+% Output: 
+%Columns 1 through 7
+%     [1x3 double]    [1x3 double]    [1x4 double]    [1x5 double]    'abc'    'defg'    'hijk'
+%   Column 8 
+%     'lmnop'
+%
+% cellflat(({{1 {2 3}} 'z' {'y' 'x' 'w'} {4 @iscell 5} 6}) )
+% Output: 
+% [1]    [2]    [3]    'z'    'y'    'x'    'w'    [4]    @iscell    [5]    [6]
+%
+% Version: 1.0
+% Author: Yung-Yeh Chang, Ph.D. (yungyeh@hotmail.com)
+% Date: 12/31/2014
+% Copyright 2015, Yung-Yeh Chang, Ph.D.
+% See Also: cell
+if ~iscell(celllist)
+    error('CELLFLAT:ImproperInputAugument','Input argument must be a cell array');
+end
+out = {};
+for idx_c = 1:numel(celllist)
+    if iscell(celllist{idx_c})
+        out = [out cellflat(celllist{idx_c})];
+    else
+        out = [out celllist(idx_c)];
+    end
+end
+end

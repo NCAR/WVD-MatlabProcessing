@@ -96,6 +96,11 @@ for m=1:1:length(Types)
             Vars     = {'time';'FunctionType';'CQueueEl';'RQueueEl';'Status'};
             CodeName = {'TimeStamp';'Type';'-';'-';'-'};
             Type     = {'-';'String';'-';'-';'-'};
+        case 'Current'
+            DataType = 'Current*.nc';
+            Vars     = {'time';'Current';'CurrentMonitorLocations'};
+            CodeName = {'TimeStamp';'-';'Type'};
+            Type     = {'-';'-';'String'};
         case 'Etalon'
             DataType = 'Etalon*.nc';
             Vars     = {'time';'Temperature';'TempDiff';'IsLocked';'EtalonNum'};
@@ -134,12 +139,9 @@ for m=1:1:length(Types)
             Type     = {'-';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-'};
         case 'Thermocouple'
             DataType = 'HKeep*.nc';
-%             Vars     = {'time';'Temperature';'ThermocoupleLocations'};
-%             CodeName = {'TimeStamp';'-';'Type'};
-%             Type     = {'-';'-';'String'};
-            Vars     = {'time';'Temperature'};
-            CodeName = {'TimeStamp';'-'};
-            Type     = {'-';'-'};
+            Vars     = {'time';'Temperature';'ThermocoupleLocations'};
+            CodeName = {'TimeStamp';'-';'Type'};
+            Type     = {'-';'-';'String'};
         case 'UPS'
             DataType = 'UPS*.nc';
             Vars     = {'time';'BatteryNominal';'BatteryReplace';'BatteryInUse';
@@ -210,11 +212,22 @@ if strcmp(FileType,'Power')
         Data = repmat(PowerChannels(Data)',ncinfo(Filename,'time').Size,1);
     end
 end
+%% Reshaping the location variable 
 if strcmp(FileType,'Thermocouple') && strcmp(FileVar,'ThermocoupleLocations')
     % Channel map is already loaded so try to load the number of
     % measurements to repmat the map over
     Key = ReadVariable(Filename,'Temperature','Double');
-    if iscell(Data) ~= 1 || size(Key,2) == length(Data)
+    if iscell(Data) ~= 1 || size(Key,2) ~= length(Data)
+        for m=1:1:size(Key,2); DKey{m,1} = sprintf('Unknown%02.0f',m); end
+        Data = DKey; % Setting data to a default value
+    end
+    Data = repmat(Data',size(Key,1),1);
+end
+if strcmp(FileType,'Current') && strcmp(FileVar,'CurrentMonitorLocations')
+    % Channel map is already loaded so try to load the number of
+    % measurements to repmat the map over
+    Key = ReadVariable(Filename,'Current','Double');
+    if iscell(Data) ~= 1 || size(Key,2) ~= length(Data)
         for m=1:1:size(Key,2); DKey{m,1} = sprintf('Unknown%02.0f',m); end
         Data = DKey; % Setting data to a default value
     end

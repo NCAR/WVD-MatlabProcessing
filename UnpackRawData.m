@@ -10,10 +10,10 @@ function [Data,LidarData] = UnpackRawData(RawData)
 %                  into a usable form
 %
 %% Defining elements to unpack
-ToUnpack  = {'Container';'Etalon';'Laser';'MCS'};
+ToUnpack  = {'Container';'Etalon';'Laser';'MCS';'Current';'Thermocouple'};
 MCSField  = 'MCS';
 SubField  = 'Data';
-%% Unpacking power data first  (Can 
+%% Unpacking power data first
 [IsField,Power] = RecursivelyCheckIsField(RawData,'Power');
 if IsField
     % Determining what data is and where
@@ -45,7 +45,7 @@ clear IsField Power
 %% Converting structure to cell to be able to loop over elements
 FieldNames = fieldnames(RawData);
 Data       = struct2cell(RawData);
-%% Unpacking the container/etalon/laser/MCS data to be useful
+%% Unpacking the container/etalon/laser/MCS/Current data to be useful
 for m=1:1:size(ToUnpack,1)
     Member = find(ismember(FieldNames,ToUnpack{m,1}));
     if isempty(Member) ~= 1
@@ -89,11 +89,26 @@ FieldNames = fieldnames(Data);
 Data       = struct2cell(Data);
 %% Looping over hardware types and cell array elements to parse by hardware
 NewData = cell(size(UniqueTypes,1),1);
+% Checking if file elements need to be broadcast to multple elements...this
+% happens when something writes multiple values per time stamp (like
+% current monitoring or 
+if size(AllTypes,2) ~= 1
+    for m=1:1:size(Data,2)
+        if size(Data{m,1},2) == 1
+            Data{m,1} = repmat(Data{m,1},1,size(AllTypes,2));
+        end
+    end
+end
+% Parsing data
 for m=1:1:size(UniqueTypes,1)
     % Finding the indices of each piece of hardware
     IsPresent = cellfun(@(s) strcmp(UniqueTypes{m,1},s), AllTypes);
     % Parsing original cell array into hardware specific sub-cell arrays
-    NewData{m,1} = cellfun(@(s) s(IsPresent,:),Data,'Uni',false);
+    if size(AllTypes,2) ~= 1
+        NewData{m,1} = cellfun(@(s) s(IsPresent),Data,'Uni',false);
+    else
+        NewData{m,1} = cellfun(@(s) s(IsPresent,:),Data,'Uni',false);
+    end
     % Converting the sub-cells back to structures
     NewData{m,1} = cell2struct(NewData{m,1},FieldNames);
 end

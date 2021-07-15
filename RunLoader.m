@@ -1,7 +1,6 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % 
-
 function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
@@ -31,17 +30,17 @@ end
 addpath(fullfile(pwd,'Utilities'))
 addpath(fullfile(pwd,'Plotting'))
 addpath(fullfile(pwd,'HardwareDefinitions'))
-addpath(fullfile(pwd,'TemperatureRetrieval'))
+addpath(fullfile(pwd,'TemperatureRetrieval'))  %%%%######
 %% Defining options
 %%%%%%%%%%%%%%%%%%%%%%%%%% Defining user options %%%%%%%%%%%%%%%%%%%%%%%%%%
-Options.BreakSize    = 15;       % Medians allowed before marking databreak
-Options.Date         = Date;
-Options.InterpMethod = 'linear';
-Options.Logging      = Logging;  % 'Full', 'Skinny', 'None'
-Options.UploadFig    = true;
-Options.SaveFigures  = true;
-Options.System       = System;
-
+Options.BreakSize     = 15;      % Medians allowed before marking databreak
+Options.Date          = Date;
+Options.InterpMethod  = 'linear';
+Options.Logging       = Logging; % 'Full', 'Skinny', 'None'
+Options.UploadFig     = true;
+Options.SaveFigures   = true;
+Options.SaveQuickLoad = true;   %%%%######
+Options.System        = System;
 % Temperature retrieval options
 Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
                                      % use to estimate background noise
@@ -63,7 +62,8 @@ Options.TimeGrid1d       = ((30:60:86400)./3600)'; % Data every 60 seconds
 Options.TimeGridLidar    = ((0:60:86400)./3600)';  % Data every 60 seconds
 %%%%%%%%%%%%%%%%%%%%%%%%%% Defining data to read %%%%%%%%%%%%%%%%%%%%%%%%%%    
 DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
-             'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation'};  
+             'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
+             'Current'};  
 %% Defining filepaths
 Paths.Code      = pwd;
 %if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
@@ -114,12 +114,14 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation
-CWLogging('--------Plotting status figure--------\n',Options,'Main')
-%[~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-%SaveFigure(FigNum,Options,Paths,'Status')
-CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
-%FigNum = PlotHousekeepingFigure(Data,Options);
-%SaveFigure(FigNum,Options,Paths,'Housekeeping')
+% CWLogging('--------Plotting status figure--------\n',Options,'Main')
+% [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
+% FTPFigure(FigNum,Options,Paths,'Status')
+% SaveFigure(FigNum,Options,Paths,'Status')
+% CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
+% FigNum = PlotHousekeepingFigure(Data,Options);
+% FTPFigure(FigNum,Options,Paths,'Housekeeping')
+% SaveFigure(FigNum,Options,Paths,'Housekeeping')
 %% Process lidar data
 % Push lidar data onto a constant grid
 CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
@@ -146,9 +148,11 @@ SaveFigure(FigNum,Options,Paths,'Retrievals')
 % % FormatFigures
 
 %% Saving quickload information
-CWLogging('---------Saving quickload data--------\n',Options,'Main')
-cd(Paths.Quickload)
-save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'],'Data','Options','Paths','RawData','RawTSData','Retrievals')
-cd(Paths.Code)
-
+if Options.SaveQuickLoad
+    CWLogging('---------Saving quickload data--------\n',Options,'Main')
+    cd(Paths.Quickload)
+    save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'], ...
+               'Data','Options','Paths','RawData','RawTSData','Retrievals')
+    cd(Paths.Code)
+end
 end

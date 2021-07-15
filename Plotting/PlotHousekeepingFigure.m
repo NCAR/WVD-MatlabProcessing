@@ -143,9 +143,6 @@ if IsField
     Av = fieldnames(TempData);
     Av(ismember(Av,'Unknown')) = []; 
     % Plotting all data
-    
-%     for m=1:1:size(Av,1)
-%         for n=1:1:size(Subplots)
     for n=1:1:size(Subplots)
         Label    = '';
         for m=1:1:size(Av,1)

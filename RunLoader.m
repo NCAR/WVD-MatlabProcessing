@@ -39,7 +39,7 @@ Options.InterpMethod  = 'linear';
 Options.Logging       = Logging; % 'Full', 'Skinny', 'None'
 Options.UploadFig     = true;
 Options.SaveFigures   = true;
-Options.SaveQuickLoad = true;   %%%%######
+Options.SaveQuickLoad = false;  
 Options.System        = System;
 % Temperature retrieval options
 Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
@@ -66,19 +66,12 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'Current'};  
 %% Defining filepaths
 Paths.Code      = pwd;
-%if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
-    Paths.Data       = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
-    Paths.PythonData = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],...
+Paths.Data       = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
+Paths.PythonData = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],...
                                 [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
-    Paths.Quickload  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','TempData');
-    Paths.Quicklook  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
-%else
-%    Paths.Data       = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
-%    Paths.PythonData = fullfile('/Volumes/StillwellData01/DIAL/MPD/PythonProcessed',upper(erase(System,'_')),...
-%                                [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
-%    Paths.Quicklook  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quicklooks',upper(erase(System,'_')));
-%    Paths.Quickload  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quickload',upper(erase(System,'_')));
-%end
+Paths.Quickload  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','TempData');
+Paths.Quicklook  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
+
 %% Reading data and pre-processing 
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
@@ -114,13 +107,13 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation
-% CWLogging('--------Plotting status figure--------\n',Options,'Main')
-% [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-% FTPFigure(FigNum,Options,Paths,'Status')
+CWLogging('--------Plotting status figure--------\n',Options,'Main')
+[~,FigNum] = PlotStatusFigure(Data,RawData,Options);
+FTPFigure(FigNum,Options,Paths,'Status')
 % SaveFigure(FigNum,Options,Paths,'Status')
-% CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
-% FigNum = PlotHousekeepingFigure(Data,Options);
-% FTPFigure(FigNum,Options,Paths,'Housekeeping')
+CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
+FigNum = PlotHousekeepingFigure(Data,Options);
+FTPFigure(FigNum,Options,Paths,'Housekeeping')
 % SaveFigure(FigNum,Options,Paths,'Housekeeping')
 %% Process lidar data
 % Push lidar data onto a constant grid
@@ -128,16 +121,16 @@ CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
 Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
 
 %% WV Retrieval 
-% CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
+CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
 %% HSRL Retrieval
-% CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
+CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
 %% Temperature Retrieval 
 CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-[Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
-
+% % % [Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
+Retrievals = [];
 %% Plotting lidar data
-FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
-SaveFigure(FigNum,Options,Paths,'Retrievals')
+% % % FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+% % % SaveFigure(FigNum,Options,Paths,'Retrievals')
 
 %% Plotting data dumps at the end of processing
 % % CWLogging('---------------------Plotting data dump---------------------\n',Options,'Main')

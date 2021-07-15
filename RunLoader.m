@@ -38,15 +38,16 @@ Options.BreakSize    = 15;       % Medians allowed before marking databreak
 Options.Date         = Date;
 Options.InterpMethod = 'linear';
 Options.Logging      = Logging;  % 'Full', 'Skinny', 'None'
+Options.UploadFig    = true;
 Options.SaveFigures  = true;
 Options.System       = System;
 
 % Temperature retrieval options
 Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
                                      % use to estimate background noise
-Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution           [meters]
-Options.Temp.BinTime     = 5*60;     % Desired data time resolution            [seconds]
-Options.Temp.SmoothRange = 525;      % Desired smoothing range res            [meters]
+Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]            [seconds]
+Options.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Options.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
 Options.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
 Options.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
@@ -65,19 +66,19 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation'};  
 %% Defining filepaths
 Paths.Code      = pwd;
-if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
+%if strcmp(getenv('HOSTNAME'),'fog.eol.ucar.edu')
     Paths.Data       = fullfile('/export/fog1/rsfdata/MPD',[System,'_data'],Date(1:4),Date);
     Paths.PythonData = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],...
                                 [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
     Paths.Quickload  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quickload','TempData');
     Paths.Quicklook  = fullfile('/export/fog1/rsfdata/MPD',[System,'_processed_data'],'Quicklook');
-else
-    Paths.Data       = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
-    Paths.PythonData = fullfile('/Volumes/StillwellData01/DIAL/MPD/PythonProcessed',upper(erase(System,'_')),...
-                                [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
-    Paths.Quicklook  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quicklooks',upper(erase(System,'_')));
-    Paths.Quickload  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quickload',upper(erase(System,'_')));
-end
+%else
+%    Paths.Data       = fullfile('/Volumes/StillwellData01/DIAL/MPD/NetCDFData',[System,'_data'],Date(1:4),Date);
+%    Paths.PythonData = fullfile('/Volumes/StillwellData01/DIAL/MPD/PythonProcessed',upper(erase(System,'_')),...
+%                                [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
+%    Paths.Quicklook  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quicklooks',upper(erase(System,'_')));
+%    Paths.Quickload  = fullfile('/Volumes/StillwellData01/DIAL/MPD/Quickload',upper(erase(System,'_')));
+%end
 %% Reading data and pre-processing 
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
@@ -125,9 +126,9 @@ CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
 Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
 
 %% WV Retrieval 
-
+% CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
 %% HSRL Retrieval
-
+% CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
 %% Temperature Retrieval 
 CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
 [Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
@@ -147,7 +148,6 @@ SaveFigure(FigNum,Options,Paths,'Retrievals')
 %% Saving quickload information
 CWLogging('---------Saving quickload data--------\n',Options,'Main')
 cd(Paths.Quickload)
-% save([lower(erase(Options.System,'_')),'.',Date,'.MatlabPreload.mat'],'Data','Options','RawData','RawTSData')
 save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'],'Data','Options','Paths','RawData','RawTSData','Retrievals')
 cd(Paths.Code)
 

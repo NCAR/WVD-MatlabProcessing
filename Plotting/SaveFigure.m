@@ -1,4 +1,6 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
+% Modificication Info: Created March 29th, 2021
 
 function SaveFigure(FN,Op,Paths,Type)
 %

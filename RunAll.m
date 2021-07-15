@@ -2,10 +2,10 @@
 close all; clear; clc;
 
 %% Options to define what systems and when to analyze MPD data
-Dates2Process   = {'20210616','20210712'};
+Dates2Process   = {'20210715','20210715'};
 
-% Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
-Systems2Process = {'mpd_05'};
+Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
+% Systems2Process = {'mpd_01'};
 
 %% Processing all required data
 DateNum = datenum(Dates2Process,'yyyymmdd');
@@ -21,5 +21,5 @@ for n=DateNum(1):1:DateNum(2)
         end
     end
 end
-TEnd = toc;
+TEnd = toc(TStart);
 fprintf('Elapsed time is %0.2f minutes.\n',TEnd/60)

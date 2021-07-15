@@ -15,7 +15,7 @@ Tolerance  = 0.05;
 
 Qwv = 0;
 
-LoopNumber = 25;  % Number of times to run the temperature iterator
+LoopNumber = 50;  % Number of times to run the temperature iterator
 To         = 296; % Hitran reference temperature
 %% Calculating constants
 Gamma = Const.G0*Const.MolMAir/Const.R;

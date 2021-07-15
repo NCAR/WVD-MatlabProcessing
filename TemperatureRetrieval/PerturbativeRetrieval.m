@@ -2,7 +2,7 @@
 % Written On: December 4, 2020
 % Written For: National Center for Atmospheric Research
 
-function [Alpha,Pt] = PerturbativeRetrieval(Constants, Counts,Data2D,Options,Spectra,Op)
+function [Alpha,Pt] = PerturbativeRetrieval(Constants,Counts,Data2D,Options,Spectra,Op)
 %
 %
 %

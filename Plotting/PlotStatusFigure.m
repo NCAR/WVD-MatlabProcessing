@@ -195,10 +195,10 @@ LabelInfo.Children       = {'MCS'    ,'MCS';
                             'Clock'  ,'QuantumComposer'};
 %% Settings for installed hardware
 switch Type
-    case 'mpd_02'
-        LabelInfo.Lasers        = {'WVOnline';'WVOffline';'HSRL'};
-        LabelInfo.Etalons       = {'WVEtalon';'HSRLEtalon';'HSRLEtalon2'};
-        LabelInfo.Environmental = {'WVEtalonHeatSink';'RbEtalonHeatSink';'Bench';'RbOven';'Humidity'};
+%     case 'mpd_02'
+%         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'HSRL'};
+%         LabelInfo.Etalons       = {'WVEtalon';'HSRLEtalon';'HSRLEtalon2'};
+%         LabelInfo.Environmental = {'WVEtalonHeatSink';'RbEtalonHeatSink';'Bench';'RbOven';'Humidity'};
     case 'mpd_05'
         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'O2Online';'O2Offline'};
         LabelInfo.Etalons       = {'WVEtalon';'O2Etalon'};

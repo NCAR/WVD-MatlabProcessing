@@ -155,6 +155,12 @@ end
 % because there is no data at the end of the day or because it could not
 % have possibly been taken yet
 if GLTO > 0 && (now-1 < datenum(Options.Date,'yyyymmdd'))
+    % Final check...the absolute Global Last Observed Time should be right
+    % now. If that is less than the GLTO, there was a file issue
+    TimeOfDay = (now-datenum('20210715','yyyymmdd'))*24;
+    if GLTO > TimeOfDay && TimeOfDay>0
+        GLTO = TimeOfDay;
+    end
     Contour((Time > GLTO),:) = nan;
 end
 %% Plotting all data

@@ -4,7 +4,7 @@ echo "Current Time: `date +%Y%m%d-%H%M%S`"
 echo "System: $1" 
 echo "Logging: $2"
 # get yesterday's date to feed into Matlab
-daystr=\'`date +%Y%m%d -d "2 day ago"`\'
+daystr=\'`date +%Y%m%d -d "1 day ago"`\'
 echo "daystr = $daystr"
 node=\'$1\'
 logging=\'$2\'

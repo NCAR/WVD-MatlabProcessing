@@ -77,6 +77,13 @@ end
 LastContour = 3.*m;
 clear CheckData DataAvail Responding Queues IsField TempData m 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Lasers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checking for the end of the data (must check raw data because it is not
+% yet pushed to a known time grid)
+[IsField,TempData] = RecursivelyCheckIsField(RawData,'Laser');
+if IsField
+    [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
+end
+% Looping over the lasers for data
 for m=1:1:size(LabelInfo.Lasers,1)
     % Default data if if can not be found
     Locked = DefaultData; Stable = DefaultData; Low = DefaultData; 
@@ -84,8 +91,6 @@ for m=1:1:size(LabelInfo.Lasers,1)
     [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Laser',LabelInfo.Lasers{m}});
     % If data exists, determine what its color coding should be
     if IsField
-        % Checking for the end of the data
-        [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
         % Checking if the lasers are locked
         Locked = CheckDataStatus(Locked,TempData.WaveDiff,Bounds.LLError);
         % Checking if the seeds are stable 
@@ -104,6 +109,12 @@ end
 LastContour = LastContour + 2*m;
 clear Locked Stable IsField TempData m Raw
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Etalons %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checking for the end of the data (must check raw data because it is not
+% yet pushed to a known time grid)
+[IsField,TempData] = RecursivelyCheckIsField(RawData,'Etalon');
+if IsField
+    [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
+end
 for m=1:1:size(LabelInfo.Etalons,1)
     % Default data if if can not be found
     Locked = DefaultData;
@@ -111,8 +122,6 @@ for m=1:1:size(LabelInfo.Etalons,1)
     [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Etalon',LabelInfo.Etalons{m}});
     % If data exists, determine what its color coding should be
     if IsField
-        % Checking for the end of the data
-        [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
         Locked = CheckDataStatus(Locked,TempData.TempDiff,Bounds.EtalonStable);
     end
     % Filling the data contour
@@ -121,6 +130,12 @@ end
 LastContour = LastContour + m;
 clear Locked IsField TempData m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% UPS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checking for the end of the data (must check raw data because it is not
+% yet pushed to a known time grid)
+[IsField,TempData] = RecursivelyCheckIsField(RawData,'UPS');
+if IsField
+    [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
+end
 for m=1:1:1
     Battery    = DefaultData;
     OnBattery  = DefaultData;
@@ -129,8 +144,6 @@ for m=1:1:1
     [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','UPS'});
     % If data exists, determine what its color coding should be
     if IsField
-        % Checking for the end of the data
-        [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
         % If data exists, determine what its color coding should be
         if isfield(TempData,'BatteryInUse')
             OnBattery(TempData.BatteryInUse == 1) = 0;
@@ -157,7 +170,7 @@ end
 if GLTO > 0 && (now-1 < datenum(Options.Date,'yyyymmdd'))
     % Final check...the absolute Global Last Observed Time should be right
     % now. If that is less than the GLTO, there was a file issue
-    TimeOfDay = (now-datenum('20210715','yyyymmdd'))*24;
+    TimeOfDay = (now-datenum(Options.Date,'yyyymmdd'))*24;
     if GLTO > TimeOfDay && TimeOfDay>0
         GLTO = TimeOfDay;
     end

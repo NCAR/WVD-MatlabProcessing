@@ -15,7 +15,8 @@ function [Data] = CheckMonotonicTimeStamps(Data)
 %        'Container' ,'TimeStamp'};
 Bad = {'Power'         ,'TimeStamp';
        'Etalon'        ,'TimeStamp';
-       'WeatherStation','TimeStamp'};
+       'WeatherStation','TimeStamp';
+       'Laser'         ,'TimeStamp'};
 %%
 for m=1:1:size(Bad,1)
     % Checking if the fields exist
@@ -23,6 +24,15 @@ for m=1:1:size(Bad,1)
     % Field exists so check if it is monotonically increasing in time
     if IsField
        Data.(Bad{m,1}).(Bad{m,2}) = ForceMonotonicTimeStamps(OldTime);
+       % Checking to see if the data needs to be shifted backwards
+       for n=1:1:5  % Only moving back 5 days (more than 1 would be weird)
+           if mean(Data.(Bad{m,1}).(Bad{m,2}),'omitnan') > 24 % Shifting back a full day to check
+               Data.(Bad{m,1}).(Bad{m,2}) = Data.(Bad{m,1}).(Bad{m,2}) - 24;
+           else
+               break
+           end
+       end
+       
     end
 end
 end

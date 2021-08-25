@@ -52,7 +52,7 @@ for n=1:1:size(subs,1)
         % Vertical box lines
         TopPlot(XLims(m)*ones(1,Pts),linspace(YLims(1),YLims(2),Pts),'k','-',BoxWidth)
     end
-    % Making sure axis doesn't resize
-    axis tight
+%     % Making sure axis doesn't resize
+%     axis tight
 end
 end

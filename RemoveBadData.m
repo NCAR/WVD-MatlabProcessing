@@ -12,7 +12,7 @@ function [Data] = RemoveBadData(Data)
 Bad = {'Laser'         ,'WavelengthActual',-1;
        'HumiditySensor','RelativeHumidity',-100;
        'Thermocouple'  ,'Temperature'     ,-1000; % Broadcast error
-       'WeatherStation','RelativeHumidity',-1; 
+       'WeatherStation','RelativeHumidity',-0.000000001;  
        'Container'     ,'TimeStamp'       ,1e-9};
 %% Searching to see if the elements of the Bad data array exist
 for m=1:1:size(Bad,1)

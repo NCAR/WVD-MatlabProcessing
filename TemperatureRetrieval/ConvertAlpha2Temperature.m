@@ -27,13 +27,14 @@ TCurrent.TimeStamp = Data2D.NCIP.Temperature.TimeStamp;
 TCurrent.Range     = Data2D.NCIP.Temperature.Range;
 TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 % TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+283.15;
+% TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 283.15;
 % Looping
 for m=1:1:LoopNumber
     % Calculating the absorption lineshape function (update with temp)
     PCA.O2Online.Absorption = Spectra.PCA.O2Online.Absorption;
     SpecNew = BuildSpectra(PCA,TCurrent,Data2D.NCIP.Pressure,Data1D.Wavelength,Op);
     LineShape = SpecNew.O2Online.AbsorptionObserved./Const.O2LineS;
-    % Calculating lapse rate fo the current temperature profile
+    % Calculating lapse rate of the current temperature profile 
 %     Lapse = FittingLapseRate(TCurrent);
     Lapse = ones(1,length(Surf.Temperature.Value)).*GuessLapse; 
     % Calculating simplifying constants
@@ -115,3 +116,4 @@ for m=1:1:length(LapseRates)
 end
 fprintf(['      Lapse rate fitting took: ',num2str(toc),' [sec] with mean: ',num2str(mean(LapseRates)),'\n'])
 end
+

@@ -42,6 +42,8 @@ Spectra.Rebuilt = BuildSpectra(Spectra.PCA,Data2D.NCIP.Temperature,Data2D.NCIP.P
 [Alpha,PerterbOrders] = PerturbativeRetrieval(Constants,Counts,Data2D,Options,Spectra,Op);
 %% Converting apparent absorption to temperature 
 Temperature = ConvertAlpha2Temperature(Alpha,Constants,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op);
+%% Masking out the lowest data points
+Temperature.Value(Temperature.Range<450,:) = nan;
 %% Smoothing temperature
 Smoothing2 = MakeSmoothingKernal(Options);
 Temperature.Smoothed = WeightedSmooth(Temperature.Value,Smoothing2);

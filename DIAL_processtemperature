@@ -9,7 +9,7 @@ echo "daystr = $daystr"
 node=\'$1\'
 logging=\'$2\'
 # set the Matlab command
-matcmd="cd('/home/rsfdata/Processing/TestingTemperature'); [~]=RunLoader(${daystr},${node},${logging},false,true); exit"
+matcmd="cd('/home/rsfdata/git/WVD-MatlabProcessingUpgrade/WVD-MatlabProcessing'); [~]=RunLoader(${daystr},${node},${logging},false,true); exit"
 # file, save_quicklook, save_data, save_netCDF, save_catalog
 cmd="/opt/local/bin/matlab -nodisplay -nosplash -r \"$matcmd\""
 echo "cmd = $cmd"

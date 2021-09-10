@@ -3,9 +3,11 @@ close all; clear; clc;
 
 %% Options to define what systems and when to analyze MPD data
 Dates2Process   = {'20210715','20210715'};
-
 Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
-% Systems2Process = {'mpd_01'};
+
+%% Options to define what to process
+ProcessHousekeeping = true;
+ProcessRetrievals   = true;
 
 %% Processing all required data
 DateNum = datenum(Dates2Process,'yyyymmdd');
@@ -15,7 +17,7 @@ for n=DateNum(1):1:DateNum(2)
         DateString = datestr(n,'yyyymmdd');
         fprintf(['Processing ',upper(erase(Systems2Process{m},'_')),': ',DateString,' (',datestr(now,'HH:MM:SS'),')\n'])
         try
-            [~,~,~,~,~] = RunLoader(DateString,Systems2Process{m},'Skinny');
+            [~,~,~,~,~] = RunLoader(DateString,Systems2Process{m},'Skinny',ProcessHousekeeping,ProcessRetrievals);
         catch
             fprintf('************Processing Failed************\n')
         end

@@ -1,7 +1,7 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % 
-function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging)
+function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRet)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
 %         System:     String defining the system number to run of the form
@@ -10,6 +10,9 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %                       'Full':   See everything
 %                       'Skinny': See only comments from this function
 %                       'None':   See nothing from this function or below
+%         ProcessHK:  A boolean value: true runs housekeeping figures,
+%                     false does not
+%         ProcessRet: A boolean value: true runs retrievals, false does not
 %                     
 % Outputs: Data:      Structure containing all of the loaded and processed
 %                     MPD data 
@@ -21,10 +24,12 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %                     processed MPD time series data
 %
 %% Checking inputs and using default values if running as stand-alone
-if nargin ~= 3
-    Date   = '20210426';
-    System = 'mpd_05';
-    Logging = 'Skinny';
+if nargin ~= 5
+    Date       = '20210426';
+    System     = 'mpd_05';
+    Logging    = 'Skinny';
+    ProcessHK  = false;
+    ProcessRet = false;
 end
 %% Adding path to recursive functional utilities
 addpath(fullfile(pwd,'Utilities'))
@@ -37,9 +42,9 @@ Options.BreakSize     = 15;      % Medians allowed before marking databreak
 Options.Date          = Date;
 Options.InterpMethod  = 'linear';
 Options.Logging       = Logging; % 'Full', 'Skinny', 'None'
-Options.UploadFig     = true;
-Options.SaveFigures   = true;
-Options.SaveQuickLoad = true; 
+Options.UploadFig     = ProcessHK;
+Options.SaveFigures   = ProcessHK | ProcessRet;
+Options.SaveQuickLoad = ProcessRet; 
 Options.System        = System;
 % Temperature retrieval options
 Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
@@ -54,7 +59,6 @@ Options.Temp.MinRange    = 150;                     % Start of retrievals     [m
 Options.Temp.MinTime     = Options.Temp.BinTime./2; % Start of retrievals     [seconds]
 Options.Temp.Range       = Options.Temp.MinRange:Options.Temp.BinRange:Options.Temp.MaxRange;
 Options.Temp.TimeStamp   = Options.Temp.MinTime:Options.Temp.BinTime:Options.Temp.MaxTime;
-
 %%%%%%%%%%%%%%%%%%%%%%%% Defining default options %%%%%%%%%%%%%%%%%%%%%%%%%
 Options.Default.RangeRes = 250;                    % Units are nanosceconds
 Options.Default.Range    = 16e3;                   % Units are kilometers
@@ -65,7 +69,7 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
              'Current'};  
 %% Defining filepaths
-DataBase         = '/export/fog1/rsfdata/MPD';
+DataBase         = '/export/fog1/rsfdata/MPD';  % = '/Volumes/MPD_Data';
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
 Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],...
@@ -86,16 +90,12 @@ CWLogging('--Checking for monotonic time stamps--\n',Options,'Main')
 RawData = CheckMonotonicTimeStamps(RawData);
 % Removing specific bad data
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [IsField,~] = RecursivelyCheckIsField(RawData, {'Laser','Current'});
 if IsField
     RawData.Laser.Current(RawData.Laser.Current==0) = nan;
 end
 clear IsField
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Unpacking the container/etalon/laser/MCS data to be useful
 CWLogging('------------Unpack raw data-----------\n',Options,'Main')
 [RawTSData, Data.Lidar] = UnpackRawData(RawData);
@@ -108,30 +108,34 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation
-% CWLogging('--------Plotting status figure--------\n',Options,'Main')
-% [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-% FTPFigure(FigNum,Options,Paths,'Status')
-% SaveFigure(FigNum,Options,Paths,'Status')
-% CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
-% FigNum = PlotHousekeepingFigure(Data,Options);
-% FTPFigure(FigNum,Options,Paths,'Housekeeping')
-% SaveFigure(FigNum,Options,Paths,'Housekeeping')
-%% Process lidar data
-% Push lidar data onto a constant grid
-CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
-Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
-
-%% WV Retrieval 
-% CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
-%% HSRL Retrieval
-% CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
-%% Temperature Retrieval 
-CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-[Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
-
-%% Plotting lidar data
-FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
-SaveFigure(FigNum,Options,Paths,'Retrievals')
+if ProcessHK
+    CWLogging('--------Plotting status figure--------\n',Options,'Main')
+    [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
+    FTPFigure(FigNum,Options,Paths,'Status')
+    SaveFigure(FigNum,Options,Paths,'Status')
+    CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
+    FigNum = PlotHousekeepingFigure(Data,Options);
+    FTPFigure(FigNum,Options,Paths,'Housekeeping')
+    SaveFigure(FigNum,Options,Paths,'Housekeeping')
+end
+%% Process lidar data retrievals and plotting
+if ProcessRet
+    % Push lidar data onto a constant grid
+    CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
+    Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
+    % WV Retrieval
+    CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
+    % HSRL Retrieval
+    CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
+    % Temperature Retrieval
+    CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
+    [Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
+    % Plotting lidar data
+    FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+    SaveFigure(FigNum,Options,Paths,'Retrievals')
+else
+    Retrievals = [];
+end
 
 %% Plotting data dumps at the end of processing
 % % CWLogging('---------------------Plotting data dump---------------------\n',Options,'Main')

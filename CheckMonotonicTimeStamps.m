@@ -10,13 +10,15 @@ function [Data] = CheckMonotonicTimeStamps(Data)
 %                time stamps addressed.
 %
 %% Fields to check if they are monotonically increasing 
-% Bad = {'MCS'       ,'TimeStamp';
-%        'Power'     ,'TimeStamp';
-%        'Container' ,'TimeStamp'};
-Bad = {'Power'         ,'TimeStamp';
+Bad = {'Current'       ,'TimeStamp';
        'Etalon'        ,'TimeStamp';
-       'WeatherStation','TimeStamp';
-       'Laser'         ,'TimeStamp'};
+       'HumiditySensor','TimeStamp';
+       'Laser'         ,'TimeStamp';
+       'Power'         ,'TimeStamp';
+       'Thermocouple'  ,'TimeStamp';
+       'UPS'           ,'TimeStamp';
+       'WeatherStation','TimeStamp'};
+% Don't currently see: Quantum Composer, Container, MCS
 %%
 for m=1:1:size(Bad,1)
     % Checking if the fields exist

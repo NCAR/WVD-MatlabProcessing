@@ -72,8 +72,8 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
 DataBase         = '/export/fog1/rsfdata/MPD';  % = '/Volumes/MPD_Data';
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
-Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],...
-                                [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
+Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
+                                [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','TempData');
 Paths.Quicklook  = fullfile(DataBase,[System,'_processed_data'],'Quicklook');
 clear DataBase

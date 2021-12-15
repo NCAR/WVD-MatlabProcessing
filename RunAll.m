@@ -2,11 +2,11 @@
 close all; clear; clc;
 
 %% Options to define what systems and when to analyze MPD data
-Dates2Process   = {'20210715','20210715'};
-Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
+Dates2Process   = {'20211116','20211206'};
+Systems2Process = {'mpd_01'};
 
 %% Options to define what to process
-ProcessHousekeeping = true;
+ProcessHousekeeping = false;
 ProcessRetrievals   = true;
 
 %% Processing all required data

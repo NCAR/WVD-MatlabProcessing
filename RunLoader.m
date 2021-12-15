@@ -69,10 +69,10 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
              'Current'};  
 %% Defining filepaths
-if isunix
-    DataBase = '/export/fog1/rsfdata/MPD';
-elseif ismac
+if ismac
     DataBase = '/Volumes/MPD_Data';
+elseif isunix
+    DataBase = '/export/fog1/rsfdata/MPD';
 end
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);

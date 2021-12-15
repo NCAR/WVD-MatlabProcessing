@@ -27,7 +27,7 @@ TCurrent.TimeStamp = Data2D.NCIP.Temperature.TimeStamp;
 TCurrent.Range     = Data2D.NCIP.Temperature.Range;
 TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 % TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+283.15;
-% TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 283.15;
+% TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 330;
 % Looping
 for m=1:1:LoopNumber
     % Calculating the absorption lineshape function (update with temp)

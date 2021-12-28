@@ -1,14 +1,13 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
+%% Setting up runtime environment
 close all; clear; clc;
-
 %% Options to define what systems and when to analyze MPD data
-Dates2Process   = {'20211116','20211206'};
-Systems2Process = {'mpd_01'};
-
+Dates2Process   = {'20210719','20210719'};
+Systems2Process = {'mpd_05'};
 %% Options to define what to process
 ProcessHousekeeping = false;
 ProcessRetrievals   = true;
-
 %% Processing all required data
 DateNum = datenum(Dates2Process,'yyyymmdd');
 TStart = tic;

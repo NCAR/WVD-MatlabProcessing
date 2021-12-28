@@ -41,7 +41,7 @@ addpath(fullfile(pwd,'TemperatureRetrieval'))
 Options.BreakSize     = 15;      % Medians allowed before marking databreak
 Options.Date          = Date;
 Options.InterpMethod  = 'linear';
-Options.Logging       = Logging; % 'Full', 'Skinny', 'None'
+Options.Logging       = Logging; % Possibilities: 'Full', 'Skinny', 'None'
 Options.UploadFig     = ProcessHK;
 Options.SaveFigures   = ProcessHK | ProcessRet;
 Options.SaveQuickLoad = ProcessRet; 
@@ -50,7 +50,7 @@ Options.System        = System;
 Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
                                      % use to estimate background noise
 Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
-Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]            [seconds]
+Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
 Options.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Options.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
 Options.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
@@ -69,10 +69,8 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
              'Current'};  
 %% Defining filepaths
-if ismac
-    DataBase = '/Volumes/MPD_Data';
-elseif isunix
-    DataBase = '/export/fog1/rsfdata/MPD';
+if ismac;      DataBase = '/Volumes/MPD_Data';
+elseif isunix; DataBase = '/export/fog1/rsfdata/MPD';
 end
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
@@ -154,7 +152,7 @@ if Options.SaveQuickLoad
     CWLogging('---------Saving quickload data--------\n',Options,'Main')
     cd(Paths.Quickload)
     save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'], ...
-               'Data','Options','Paths','RawData','RawTSData','Retrievals')
+                                            'Data','Options','Retrievals')
     cd(Paths.Code)
 end
 end

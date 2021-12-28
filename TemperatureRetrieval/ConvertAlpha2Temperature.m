@@ -2,7 +2,7 @@
 
 
 
-function [TCurrent] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Surf,Spectra,Op)
+function [TCurrent,DTAll] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Surf,Spectra,Op,StartCond)
 %
 %
 % Add moisture mixing ratio
@@ -25,9 +25,13 @@ ConstProfile = (Options.Range').*(GuessLapse);
 % Creating current temperature structure
 TCurrent.TimeStamp = Data2D.NCIP.Temperature.TimeStamp;
 TCurrent.Range     = Data2D.NCIP.Temperature.Range;
-TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
-% TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+283.15;
-% TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 330;
+if strcmp(StartCond,'Cold')
+    TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 240;
+elseif strcmp(StartCond,'Warm')
+    TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 330;
+else
+    TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
+end
 % Looping
 for m=1:1:LoopNumber
     % Calculating the absorption lineshape function (update with temp)
@@ -44,7 +48,8 @@ for m=1:1:LoopNumber
     % Limiting the gradient possible
     DeltaT(abs(DeltaT) > 2) = sign(DeltaT(abs(DeltaT) > 2)).*2;
     % Outputting temperature state
-    TempDiffAvg = mean(mean(DeltaT,'omitnan'),'omitnan');
+    TempDiffAvg = mean(mean(abs(DeltaT),'omitnan'),'omitnan');
+    DTAll(m) = TempDiffAvg; %#ok<AGROW>
     
     CWLogging(sprintf('      Mean dT: %4.3f\n',TempDiffAvg),Op,'Retrievals')
 

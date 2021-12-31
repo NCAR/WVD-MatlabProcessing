@@ -51,6 +51,7 @@ Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to
                                      % use to estimate background noise
 Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
 Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
+Options.Temp.BootIters   = 50;       % Iterations to use when bootstraping
 Options.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Options.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
 Options.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
@@ -74,6 +75,8 @@ elseif isunix; DataBase = '/export/fog1/rsfdata/MPD';
 end
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
+% Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
+%                                 [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
 Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','TempData');
@@ -131,14 +134,15 @@ if ProcessRet
     CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
     % Temperature Retrieval
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-    [Retrievals.Temperature,~,Retrievals.Python] = RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
-    % Plotting lidar data
-    FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
-    SaveFigure(FigNum,Options,Paths,'Retrievals')
+
+    [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.TemperatureVarSmoothed,Retrievals.VarOld,Retrievals.Dt,Retrievals.MaxChange] = ...
+          RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
+%     % Plotting lidar data
+%     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+%     SaveFigure(FigNum,Options,Paths,'Retrievals')
 else
     Retrievals = [];
 end
-
 %% Plotting data dumps at the end of processing
 % % CWLogging('---------------------Plotting data dump---------------------\n',Options,'Main')
 % % PlotTSData(RawTSData,Data.TimeSeries)

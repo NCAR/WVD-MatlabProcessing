@@ -29,6 +29,8 @@ if strcmp(StartCond,'Cold')
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 240;
 elseif strcmp(StartCond,'Warm')
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 330;
+elseif strcmp(StartCond,'Bootstrap')
+    TCurrent.Value     = Data2D.NCIP.Temperature.Value; % Reset previously
 else
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 end

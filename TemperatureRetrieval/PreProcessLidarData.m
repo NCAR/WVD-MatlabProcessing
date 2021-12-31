@@ -2,7 +2,7 @@
 % Written For: NCAR
 % Modificication Info: Created August 20th, 2020
 
-function [Binned,BGSub] = PreProcessLidarData(RawData,Options)
+function [Binned,Binning] = PreProcessLidarData(RawData,Options)
 %
 %
 %
@@ -36,14 +36,16 @@ for m=1:1:size(Cell,1)
     end
     Counts(Counts==0 & GoodData >= 1) = nan;
     InterpCell{m,1}.Counts = Counts;
-    %Background subtracting
-    A = floor(Options.BackgroundInd/BinNum(contains(BinDir,'Range')));
-    BSubCell{m,1} = InterpCell{m,1}; %#ok<*AGROW>
-    BSubCell{m,1}.Background = mean(BSubCell{m,1}.Counts(end-A:end,:));
-    BSubCell{m,1}.Counts = BSubCell{m,1}.Counts - BSubCell{m,1}.Background;
+%     %Background subtracting
+%     A = floor(Options.BackgroundInd/BinNum(contains(BinDir,'Range')));
+%     BSubCell{m,1} = InterpCell{m,1}; %#ok<*AGROW>
+%     BSubCell{m,1}.Background = mean(BSubCell{m,1}.Counts(end-A:end,:));
+%     BSubCell{m,1}.Counts = BSubCell{m,1}.Counts - BSubCell{m,1}.Background;
 end
 %% Convert the count cell array back to a structure
 Binned = RecursiveCell2Struct(InterpCell, FieldNames);
-BGSub  = RecursiveCell2Struct(BSubCell  , FieldNames);
+Binning.BinNum = BinNum;
+Binning.BinDir = BinDir;
+% BGSub  = RecursiveCell2Struct(BSubCell  , FieldNames);
 end
 

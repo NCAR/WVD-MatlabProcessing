@@ -27,8 +27,8 @@ Spectra.Optics = ReadSystemScanData(Spectra.PCA,Constants);                % Sho
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid
-Data1D = RecursivelyInterpolateStructure(Data1D,Options.TimeStamp,[],'linear',true);
-Data2D = RecursivelyInterpolateStructure(Data2D,Options.TimeStamp,Options.Range,'linear',false);
+Data1D = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
+Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');
 
 %% Bootstrapping
 VarSum = zeros(length(Options.Range),length(Options.TimeStamp));

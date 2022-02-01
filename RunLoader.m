@@ -75,8 +75,6 @@ elseif isunix; DataBase = '/export/fog1/rsfdata/MPD';
 end
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
-% Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
-%                                 [lower(erase(System,'_')),'.',Date(3:end),'.Python.nc']);
 Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','TempData');
@@ -109,7 +107,7 @@ CWLogging('---------Finding data breaks----------\n',Options,'Main')
 Data.TimeSeries = RecursivelyIdentifyBreaks(RawTSData,Options.BreakSize);
 % Recursively pushing all 1-d data to a constant grid 
 CWLogging('---------Interpolate 1d data----------\n',Options,'Main')
-Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGrid1d,Options.InterpMethod); 
+Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGrid1d,[],Options.InterpMethod,true);
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 %% Plotting field catalog infomation

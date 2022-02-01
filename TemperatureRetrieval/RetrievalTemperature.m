@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [AvgTemp,Var,VarSmo,VarOld,Dt,MaxChange] = RetrievalTemperature(Op,Options,Paths,Data,PythonFile)
+function [TUnsmoothed,TVarUnsmoothed,TVarSmoothed,VarOld,Dt,MaxChange] = RetrievalTemperature(Op,Options,Paths,Data,PythonFile)
 %
 %
 %
@@ -31,10 +31,6 @@ Data1D = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
 Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');
 
 %% Bootstrapping
-VarSum = zeros(length(Options.Range),length(Options.TimeStamp));
-VarSumSmo = zeros(length(Options.Range),length(Options.TimeStamp));
-Var    = zeros(length(Options.Range),length(Options.TimeStamp));
-VarSmo    = zeros(length(Options.Range),length(Options.TimeStamp));
 % Looping over bootstrap iterations
 for m=1:1:Options.BootIters
     CWLogging(['Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
@@ -60,26 +56,40 @@ for m=1:1:Options.BootIters
         Smoothing = MakeSmoothingKernal(Options);
         Temperature{n,1}.Smoothed    = WeightedSmooth(Temperature{n,1}.Value,Smoothing);
     end
+
     % Calculate temperature average and variance from both poisson thinned profiles
     CWLogging('     Calculating variance\n',Op,'Sub')
-    AvgTemp{m,1} = (Temperature{1,1}.Value    + Temperature{2,1}.Value)./2;
-    AvgTemp{m,2} = (Temperature{1,1}.Smoothed + Temperature{2,1}.Smoothed)./2;
-	VarOld{m,1}  = Var;
-    VarOld{m,2}  = VarSmo;
-    
-    VarSum    = VarSum    + (Temperature{1,1}.Value    - Temperature{2,1}.Value).^2;
-    VarSumSmo = VarSumSmo + (Temperature{1,1}.Smoothed - Temperature{2,1}.Smoothed).^2;
-    if m >= 2
-        Var    = (1./(2.*(m-1))).*VarSum;
-        VarSmo = (1./(2.*(m-1))).*VarSumSmo;
-    else
-        Var    = (1./2).*VarSum;
-        VarSmo = (1./2).*VarSumSmo;
+    % Looping over teh raw and smoothed data set
+    n = 1;
+    for el = {'Value','Smoothed'}
+        if m == 1
+            % Pre-allocating the arrays to hold current and total variance
+            VarSum{n,1} = zeros(length(Options.Range),length(Options.TimeStamp));
+            Var{n,1}    = zeros(length(Options.Range),length(Options.TimeStamp));
+        end
+        Element = el{1};
+        % Calculating the average temperature from this bootstrap iteration
+        AvgTemp{m,n} = (Temperature{1,1}.(Element) + Temperature{2,1}.(Element))./2;
+        % Saving the old variance
+        VarOld{m,n}  = Var{n,1};
+        % Calculating the variance from this bootstrap iteration
+        VarSum{n,1} = VarSum{n,1} + (Temperature{1,1}.(Element) - Temperature{2,1}.(Element)).^2;
+        % Updating the current guess at variance
+        if m >= 2
+            Var{n,1} = (1./(2.*(m-1))).*VarSum{n,1};
+        else
+            Var{n,1} = (1./2).*VarSum{n,1};
+        end
+        % Calculate max change in variance for each iteration
+        MaxChange(m,n) = max(max(abs(Var{n,1} - VarOld{m,n})));
+        % Updating the loop counter
+        n = n + 1;
     end
-    % Calculate max change in variance for each iteration
-    MaxChange(m,1) = max(max(abs(Var - VarOld{m,1})));
-    MaxChange(m,2) = max(max(abs(VarSmo - VarOld{m,2})));
- 
 end
+
+%% Parsing out data for returning
+TUnsmoothed    = AvgTemp(:,1);
+TVarUnsmoothed = Var{1,1};
+TVarSmoothed   = Var{2,1};
 
 end

@@ -32,7 +32,7 @@ if nargin ~= 5
     ProcessRet = false;
 end
 %% Adding path to recursive functional utilities
-for el = {'HardwareDefinitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
+for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
     addpath(fullfile(pwd,el{1,1}))
 end
 

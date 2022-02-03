@@ -32,10 +32,10 @@ if nargin ~= 5
     ProcessRet = false;
 end
 %% Adding path to recursive functional utilities
-addpath(fullfile(pwd,'Utilities'))
-addpath(fullfile(pwd,'Plotting'))
-addpath(fullfile(pwd,'HardwareDefinitions'))
-addpath(fullfile(pwd,'TemperatureRetrieval'))
+for el = {'HardwareDefinitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
+    addpath(fullfile(pwd,el{1,1}))
+end
+
 %% Defining options
 %%%%%%%%%%%%%%%%%%%%%%%%%% Defining user options %%%%%%%%%%%%%%%%%%%%%%%%%%
 Options.BreakSize     = 15;      % Medians allowed before marking databreak
@@ -51,6 +51,7 @@ Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to
                                      % use to estimate background noise
 Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
 Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
+Options.Temp.Bootstrap   = true;
 Options.Temp.BootIters   = 50;       % Iterations to use when bootstraping
 Options.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Options.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
@@ -134,7 +135,7 @@ if ProcessRet
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
 
     [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.TemperatureVarSmoothed,Retrievals.VarOld,Retrievals.Dt,Retrievals.MaxChange] = ...
-          RetrievalTemperature(Options,Options.Temp,Paths,Data,Paths.PythonData);
+          RetrievalTemperature(Options,Options.Temp,Paths,Data);
 %     % Plotting lidar data
 %     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
 %     SaveFigure(FigNum,Options,Paths,'Retrievals')

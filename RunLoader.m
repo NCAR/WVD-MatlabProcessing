@@ -134,7 +134,7 @@ if ProcessRet
     % Temperature Retrieval
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
 
-    [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.Dt,Retrievals.MaxChange] = ...
+    [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.Dt,Retrievals.MaxChange,Retrievals.Python] = ...
           RetrievalTemperature(Options,Options.Temp,Paths,Data);
       
 %     % Plotting lidar data
@@ -156,7 +156,7 @@ if Options.SaveQuickLoad
     CWLogging('---------Saving quickload data--------\n',Options,'Main')
     cd(Paths.Quickload)
     save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'], ...
-                                            'Data','Options','Retrievals')
+                                            'Options','Retrievals')
     cd(Paths.Code)
 end
 end

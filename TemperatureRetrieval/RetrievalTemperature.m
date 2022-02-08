@@ -65,9 +65,9 @@ if Options.Bootstrap
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
-    Counts = BackgroundSubtractLidarData(Counts,CData,BinInfo,Op);
+    Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
-    [~,~,Temperature,Dt] = CalculateTemperatureclea(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
+    [~,~,Temperature,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
     Temp      = Temperature.Value;
     Variance  = [];
     MaxChange = [];
@@ -134,3 +134,4 @@ for el = {'Value','Smoothed'}
     n = n + 1;
 end
 end
+

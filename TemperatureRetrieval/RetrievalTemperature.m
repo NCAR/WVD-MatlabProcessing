@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [Temp,Variance,Dt,MaxChange] = RetrievalTemperature(Op,Options,Paths,Data)
+function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Options,Paths,Data)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -22,6 +22,7 @@ Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
 % Pulling out and loading needed data
 [Counts.Raw,Data1D]     = IdentifyNeededInfo(Data);
 [Data1D.Surface,Data2D] = LoadPythonData(Paths.PythonData);
+MPD = Data2D.MPD;
 % Loading data needed for processing
 Const       = DefineConstants;
 Spectra.PCA = ReadPCASpectra(Paths);
@@ -67,8 +68,7 @@ else
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
-    [~,~,Temperature,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
-    Temp      = Temperature.Value;
+    [~,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
     Variance  = [];
     MaxChange = [];
 end

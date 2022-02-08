@@ -18,7 +18,7 @@ PO.TextYLoc = 0.9;
 PO.FontSize = 16;
 
 %% Applying data masks and making my own 
-Python = RecursivelyApplyMask(Python);
+% Python = RecursivelyApplyMask(Python);
 
 % Applying an optical depth filter to remove bad data above clouds
 LidarRatio = 30;

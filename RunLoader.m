@@ -71,9 +71,14 @@ DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
              'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
              'Current'};  
 %% Defining filepaths
-if ismac;      DataBase = '/Volumes/MPD_Data';
-elseif isunix; DataBase = '/export/fog1/rsfdata/MPD';
+if ismac
+    DataBase = '/Volumes/MPD_Data';
+    CalBase  = '/Users/stillwel/Documents/StillwellResearch/Code/Instrument/eol-lidar-calvals';
+elseif isunix
+    DataBase = '/export/fog1/rsfdata/MPD';
+    CalBase  = '/export/fog1/rsfdata/MPD/calibration/';
 end
+Paths.CalVal     = fullfile(CalBase,'calvals',['dial',System(end),'_calvals.json']);
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
 Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
@@ -82,6 +87,8 @@ Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','Tem
 Paths.Quicklook  = fullfile(DataBase,[System,'_processed_data'],'Quicklook');
 clear DataBase
 %% Reading data and pre-processing 
+% Reading the calval files
+CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
 RawData = ReadMPDData(DataNames,Paths.Code,Paths.Data,Options);

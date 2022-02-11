@@ -34,7 +34,6 @@ for m=1:1:size(Bad,1)
                break
            end
        end
-       
     end
 end
 end

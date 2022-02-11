@@ -85,7 +85,7 @@ Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','TempData');
 Paths.Quicklook  = fullfile(DataBase,[System,'_processed_data'],'Quicklook');
-clear DataBase
+clear CalBase DataBase
 %% Reading data and pre-processing 
 % Reading the calval files
 CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
@@ -99,14 +99,6 @@ RawData = RemoveBadData(RawData);
 % Force timestamps to increase monotonically
 CWLogging('--Checking for monotonic time stamps--\n',Options,'Main')
 RawData = CheckMonotonicTimeStamps(RawData);
-% Removing specific bad data
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[IsField,~] = RecursivelyCheckIsField(RawData, {'Laser','Current'});
-if IsField
-    RawData.Laser.Current(RawData.Laser.Current==0) = nan;
-end
-clear IsField
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Unpacking the container/etalon/laser/MCS data to be useful
 CWLogging('------------Unpack raw data-----------\n',Options,'Main')
 [RawTSData, Data.Lidar] = UnpackRawData(RawData);

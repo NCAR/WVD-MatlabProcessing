@@ -22,7 +22,12 @@ for m=1:1:size(Bad,1)
     if IsField
         Data.(Bad{m,1}) = RemoveData(Data.(Bad{m,1}),Data2Check>Bad{m,3});
     end
-end    
+end
+%% Removing specific bad data
+[IsField,~] = RecursivelyCheckIsField(Data, {'Laser','Current'});
+if IsField
+    Data.Laser.Current(Data.Laser.Current==0) = nan;
+end
 end
 
 % This function removes identified bad data from the data structure

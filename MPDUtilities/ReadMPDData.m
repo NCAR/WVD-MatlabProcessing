@@ -3,7 +3,7 @@
 % Modificication Info: Created March 19, 2020
 
 % This function is used to load micropulse dial lidar data.
-function [Data] = ReadMPDData(DataNames,CodePath,DataPath,Options)
+function [Data] = ReadMPDData(DataNames,DataPath,Options)
 %
 % Input: ToLoad:   A cell array of strings containing the types of files to
 %                  load
@@ -18,9 +18,8 @@ CType.CodeVar  = 4; CType.VarType  = 5;
 %% Determining the file structure
 ToLoad = DefineFileStructure(DataNames,CType);
 %% Loading data
-cd(DataPath)
-for m=1:1:size(ToLoad,1)             % Looping over filetypes
-    s = dir(ToLoad{m,CType.File});   % Finding any availible files
+for m=1:1:size(ToLoad,1)                              % Looping over filetypes
+    s = dir(fullfile(DataPath,ToLoad{m,CType.File})); % Finding availible files
     % Loading all files
     if isempty(s)
         % No files to load
@@ -43,7 +42,7 @@ for m=1:1:size(ToLoad,1)             % Looping over filetypes
                            ' as ',ToLoad{m,CType.CodeVar}{p},'\n'],Options,'Sub')
             % Looping over availible files and loading data
             for n=1:1:size(s,1)
-                Filename     = s(n,1).name;
+                Filename     = fullfile(DataPath,s(n,1).name);
                 FileVar      = ToLoad{m,CType.FileVar}{p};
                 FileType     = ToLoad{m,CType.DataName};
                 VariableType = ToLoad{m,CType.VarType}{p};
@@ -65,7 +64,6 @@ for m=1:1:size(ToLoad,1)             % Looping over filetypes
         end  
     end
 end
-cd(CodePath)
 %% Converting Raw data cell array to a strucutre
 for m=1:1:size(Data,1)
     Data{m,1}      = cell2struct(Data{m,1},ToLoad{m,CType.CodeVar});

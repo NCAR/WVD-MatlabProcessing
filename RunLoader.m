@@ -91,7 +91,7 @@ clear DataBase
 CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
-RawData = ReadMPDData(DataNames,Paths.Code,Paths.Data,Options);
+RawData = ReadMPDData(DataNames,Paths.Data,Options);
 clear DataNames
 % Removing bad data
 CWLogging('------------Remove bad data-----------\n',Options,'Main')

@@ -52,10 +52,7 @@ function [Order0] = CalculateAlpha0(Online,Offline,DeltaR,P,T,WV,Const,Options,S
 %% Standard DIAL derivative term
 A = (Online.*circshift(Offline,[1,0]))./(circshift(Online,[1,0]).*Offline);
 A = A(1:size(P,1),:);
-% A = (circshift(Online,[1,0]).*Offline)./(Online.*circshift(Offline,[1,0]));
-
 %% Number density of O2 (Total air - moisture = dry * QO2 = dry O2)
-% WV = WV.*0;
 WV(WV<0) = 0;
 NO2 = (P.*Const.Atm2Pa./Const.Kb./T - WV./(1e3.*Const.MWV)).*Const.QO2;
 %% Alpha0 and transmission from alpha0
@@ -64,9 +61,8 @@ Order0.Alpha.O2Online  = real(Order0.Alpha.O2Offline - log(A)./2./DeltaR);
 %% Looping over effective absorption to calculate further needed fields
 [~,FN] = RecursiveStruct2Cell(Order0.Alpha);
 for m=1:1:length(FN)
-    % Calculating transmittion as a function of (alt,time,frequency)...note
-    % that the absorption array (F) needs to be normalized because the
-    % alpha used will belong to each 
+    % Calculating transmittion as function of (alt,time,frequency)...note
+    % abs. array, F, is normalized because alpha used will belong to each
     F = Spectra.(FN{m}).Absorption;
     F = F./max(F,[],3);
     % Removing points where WV or A was not known

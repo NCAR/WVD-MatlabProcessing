@@ -20,43 +20,40 @@ end
 
 % This function fills data breaks with a single NaN so it won't interpolate
 % over breaks
-function [CellDataNew] = RecursiveFillBreaks(CellData, OldTime, BreakSize) 
+function [DataNew] = RecursiveFillBreaks(Data, OldTime, BreakSize)
 %                        
-% Inputs: CellData:      Cell array to recursively search for data breaks
+% Inputs: Data:          Cell array to recursively search for data breaks
 %         OldTime:       Cell array of time stamps from each cell level
 %         BreakSize:     Medians allowed before marking data break
 %                        
-% Outputs: CellDataNew:  Cell array with all data as before but with data 
+% Outputs: DataNew:      Cell array with all data as before but with data
 %                        breaks padded with NaNs
 %                        
 %% Recursively checking data contained within the cell array for breaks
-for m=1:1:size(CellData,1)
-   if iscell(CellData{m,1}) 
+for m=1:1:size(Data,1)
+   if iscell(Data{m,1})
        % Need to dive down further into the cell array
-       Temp = RecursiveFillBreaks(CellData{m,1},OldTime{m,1},BreakSize);
-       CellDataNew{m,1} = Temp; %#ok<*AGROW>
+       DataNew{m,1} = RecursiveFillBreaks(Data{m,1},OldTime{m,1},BreakSize);
    else
        % At the bottom of the cell tree so check data for breaks
-       if size(OldTime,1) == size(CellData{m,1},1)
+       if size(OldTime,1) == size(Data{m,1},1)
            % Identifying breaks larger than the allowable 
            Differences = diff(OldTime);
            MedDiff     = median(Differences);
-           Breaks      = find(Differences > MedDiff.*BreakSize);
-           if isempty(Breaks) == 0
+           B           = find(Differences > MedDiff.*BreakSize);
+           if isempty(B) == 0
                % Breaks found so fill them
-               IsTimeArray = all(OldTime == CellData{m,1}(:,1));
-               for n=1:1:length(Breaks)
-                   Element2FIll = nan(1,size(CellData{m,1},2));
-                   if IsTimeArray % Array is a timestamp so can't fill with nan
-                       Element2FIll = ones(size(Element2FIll)).* ...
-                                      CellData{m,1}(Breaks(n)+n-1)+MedDiff;
+               IsTimeArray = all(OldTime == Data{m,1}(:,1));
+               for n=1:1:length(B)
+                   ToFill = nan(1,size(Data{m,1},2));
+                   if IsTimeArray % Array is timestamp so can't fill with nan
+                       ToFill = ones(size(ToFill)).*Data{m,1}(B(n)+n-1)+MedDiff;
                    end
-                   CellData{m,1} = [CellData{m,1}(1:(Breaks(n)+n-1),:);Element2FIll;
-                                    CellData{m,1}((Breaks(n)+n):end,:)];
+                   Data{m,1} = [Data{m,1}(1:(B(n)+n-1),:);ToFill;Data{m,1}((B(n)+n):end,:)];
                end
            end
        end
-       CellDataNew{m,1} = CellData{m,1};
+       DataNew{m,1} = Data{m,1}; %#ok<*AGROW>
    end
 end
 end

@@ -137,9 +137,8 @@ function [Order2] = CalculateAlpha2(Order0,Order1,Spectra)
 %
 %
 %
-%% 
+%% Calculating 2nd order parameters for online and offline
 [~,FN] = RecursiveStruct2Cell(Order0.Alpha);
-
 for m=1:1:length(FN)
     % Normalized absorption line shape (normalization needs to be to the  
     % online max so that spectra are on the same scale and normalized to 1)
@@ -153,15 +152,6 @@ for m=1:1:length(FN)
                                trapz(Order1.Zeta.(FN{m}).*(1-f).*(1-Order1.Tm.(FN{m})),3)./IntZeta;
     
 end
-% % % %% Normalized absorption line shape
-% % % f = Spectra.Rebuilt.O2Online.Absorption./max(Spectra.Rebuilt.O2Online.Absorption,[],3);
-% % % %% Calculating common terms
-% % % IntZeta = trapz(Order1.Zeta.O2Online,3);
-% % % %% Calculating 2nd order terms used to build Alpha2
-% % % Order2.DeltaG = Order1.DeltaG.*trapz(Order1.Zeta.*(1-Order1.Tm),3)./IntZeta - ...
-% % %                                trapz(Order1.Eta.*(1-Order1.Tm),3)./IntZeta;               
-% % % Order2.DeltaW = trapz(Order1.Zeta.*(1-f),3).*trapz(Order1.Zeta.*(1-f).*(1-Order1.Tm),3)./(IntZeta.^2) - ...
-% % %                        trapz(Order1.Zeta.*(1-f).*(1-Order1.Tm),3)./IntZeta;
 %% Calculating the second order absoprtion 
 for m=1:1:length(FN)
     Order2.Alpha.(FN{m}) = (Order1.Alpha.(FN{m}).*Order1.DeltaW.(FN{m}) + ...

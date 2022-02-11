@@ -113,11 +113,6 @@ for m=1:1:length(FieldNames)
 end
 clear f E g dgdr
 %% Calculating the 1st order absorption coefficient & transmission
-% % Order1.Alpha = (Order0.Alpha.O2Online.*Order1.DeltaW.O2Online + Order1.DeltaG.O2Online - Order1.DeltaG.O2Offline)./2;
-% % % Getting rid of nan values so intergration is possible
-% % IsNanMap = isnan(Order1.Alpha);
-% % Order1.Alpha(IsNanMap) = 0;
-% Integrating 
 for m=1:1:length(FieldNames)
     % Calculating alpha
     Order1.Alpha.(FieldNames{m}) = (Order0.Alpha.(FieldNames{m}).*Order1.DeltaW.(FieldNames{m}) + Order1.DeltaG.O2Online - Order1.DeltaG.O2Offline)./2;

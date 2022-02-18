@@ -91,7 +91,7 @@ Data       = struct2cell(Data);
 NewData = cell(size(UniqueTypes,1),1);
 % Checking if file elements need to be broadcast to multple elements...this
 % happens when something writes multiple values per time stamp (like
-% current monitoring or 
+% current monitoring) 
 if size(AllTypes,2) ~= 1
     for m=1:1:size(Data,2)
         if size(Data{m,1},2) == 1

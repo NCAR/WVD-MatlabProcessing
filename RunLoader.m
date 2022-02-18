@@ -31,68 +31,21 @@ if nargin ~= 5
     ProcessHK  = false;
     ProcessRet = false;
 end
-%% Adding path to recursive functional utilities
+%% Adding path to recursive functional utilities and defining path info
 for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
     addpath(fullfile(pwd,el{1,1}))
 end
+Paths = DefinePaths(Date,System);
+%% Defining user specified options
+Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet);
 
-%% Defining options
-%%%%%%%%%%%%%%%%%%%%%%%%%% Defining user options %%%%%%%%%%%%%%%%%%%%%%%%%%
-Options.BreakSize     = 15;      % Medians allowed before marking databreak
-Options.Date          = Date;
-Options.InterpMethod  = 'linear';
-Options.Logging       = Logging; % Possibilities: 'Full', 'Skinny', 'None'
-Options.UploadFig     = ProcessHK;
-Options.SaveFigures   = ProcessHK | ProcessRet;
-Options.SaveQuickLoad = ProcessRet; 
-Options.System        = System;
-% Temperature retrieval options
-Options.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
-                                     % use to estimate background noise
-Options.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
-Options.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
-Options.Temp.Bootstrap   = false;
-Options.Temp.BootIters   = 50;       % Iterations to use when bootstraping
-Options.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
-Options.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
-Options.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
-Options.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
-Options.Temp.MinRange    = 150;                     % Start of retrievals     [meters] 
-Options.Temp.MinTime     = Options.Temp.BinTime./2; % Start of retrievals     [seconds]
-Options.Temp.Range       = Options.Temp.MinRange:Options.Temp.BinRange:Options.Temp.MaxRange;
-Options.Temp.TimeStamp   = Options.Temp.MinTime:Options.Temp.BinTime:Options.Temp.MaxTime;
-%%%%%%%%%%%%%%%%%%%%%%%% Defining default options %%%%%%%%%%%%%%%%%%%%%%%%%
-Options.Default.RangeRes = 250;                    % Units are nanosceconds
-Options.Default.Range    = 16e3;                   % Units are kilometers
-Options.TimeGrid1d       = ((30:60:86400)./3600)'; % Data every 60 seconds
-Options.TimeGridLidar    = ((0:60:86400)./3600)';  % Data every 60 seconds
-%%%%%%%%%%%%%%%%%%%%%%%%%% Defining data to read %%%%%%%%%%%%%%%%%%%%%%%%%%    
-DataNames = {'QuantumComposer';'Container';'Etalon';'Thermocouple';
-             'HumiditySensor';'Laser';'MCS';'Power';'UPS';'WeatherStation';
-             'Current'};  
-%% Defining filepaths
-if ismac
-    DataBase = '/Volumes/MPD_Data';
-    CalBase  = '/Users/stillwel/Documents/StillwellResearch/Code/Instrument/eol-lidar-calvals';
-elseif isunix
-    DataBase = '/export/fog1/rsfdata/MPD';
-    CalBase  = '/export/fog1/rsfdata/MPD/calibration/';
-end
-Paths.CalVal     = fullfile(CalBase,'calvals',['dial',System(end),'_calvals.json']);
-Paths.Code       = pwd;
-Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
-Paths.PythonData = fullfile(DataBase,[System,'_processed_data'],'Python',...
-                                [lower(erase(System,'_')),'.',Date,'.Python.nc']);
-Paths.Quickload  = fullfile(DataBase,[System,'_processed_data'],'Quickload','TempData');
-Paths.Quicklook  = fullfile(DataBase,[System,'_processed_data'],'Quicklook');
-clear CalBase DataBase
 %% Reading data and pre-processing 
 % Reading the calval files
+CWLogging('---------Loading Cal Val files--------\n',Options,'Main')
 CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
-RawData = ReadMPDData(DataNames,Paths.Data,Options);
-clear DataNames
+RawData = ReadMPDData(Paths.Data,Options);
 % Removing bad data
 CWLogging('------------Remove bad data-----------\n',Options,'Main')
 RawData = RemoveBadData(RawData);
@@ -132,9 +85,8 @@ if ProcessRet
     CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
     % Temperature Retrieval
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-
     [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.Dt,Retrievals.MaxChange,Retrievals.Python] = ...
-          RetrievalTemperature(Options,Options.Temp,Paths,Data);
+          RetrievalTemperature(Options,Paths,Data);
       
 %     % Plotting lidar data
 %     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);

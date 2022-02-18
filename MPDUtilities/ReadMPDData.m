@@ -2,21 +2,19 @@
 % Written For: NCAR
 % Modificication Info: Created March 19, 2020
 
-% This function is used to load micropulse dial lidar data.
-function [Data] = ReadMPDData(DataNames,DataPath,Options)
+function [Data] = ReadMPDData(DataPath,Options)
 %
-% Input: ToLoad:   A cell array of strings containing the types of files to
-%                  load
-%        CodePath: Full path of the location of the processing code
-%        DataPath: Full path of the location of the data
+% Input: DataPath: String containing the full path of the data
+%        Options:  A structure containing all user defined options desired
+%                  for processing MPD data
 %                  
-% Output: Data:    Cell array containing all of the requested data
+% Output: Data:    Structure containing all of the requested data if found
 %
 %% Defining the structure of the data information cell array
 CType.File     = 1; CType.DataName = 2; CType.FileVar  = 3;
 CType.CodeVar  = 4; CType.VarType  = 5;
 %% Determining the file structure
-ToLoad = DefineFileStructure(DataNames,CType);
+ToLoad = DefineFileStructure(Options.DataNames,CType);
 %% Loading data
 for m=1:1:size(ToLoad,1)                              % Looping over filetypes
     s = dir(fullfile(DataPath,ToLoad{m,CType.File})); % Finding availible files
@@ -66,10 +64,9 @@ for m=1:1:size(ToLoad,1)                              % Looping over filetypes
 end
 %% Converting Raw data cell array to a strucutre
 for m=1:1:size(Data,1)
-    Data{m,1}      = cell2struct(Data{m,1},ToLoad{m,CType.CodeVar});
-    DataNames{m,1} = ToLoad{m,CType.DataName};
+    Data{m,1} = cell2struct(Data{m,1},ToLoad{m,CType.CodeVar});
 end
-Data = cell2struct(Data,DataNames);
+Data = cell2struct(Data,Options.DataNames);
 end
 
 % This function is used to simply define the structure of all files needed
@@ -158,7 +155,7 @@ for m=1:1:length(Types)
             CodeName = {};
             Type     = {};
     end
-    % Populating cells with "-" variables with thier partner
+    % Populating cells with "-" variables with their partner
     CodeName(contains(CodeName,'-')==1) = Vars(contains(CodeName,'-')==1);
     Type(contains(Type,'-')==1) = {'Double'};
     % Storing data 

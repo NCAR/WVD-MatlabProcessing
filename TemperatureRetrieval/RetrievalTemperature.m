@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Options,Paths,Data)
+function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Paths,Data)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -13,14 +13,20 @@ function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Options,Path
 % Outputs:
 %
 %
+%% Checking if temperature processing can be run
+% Pulling out and loading needed data
+[Counts.Raw,Data1D,Possible] = IdentifyNeededInfo(Data);
+if not(Possible)
+    Temp = []; Variance = []; Dt = []; MaxChange = []; MPD = []; return
+end
 %% Temperature Pre-Process
 % Extra definitions
+Options                 = Op.Temp;
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'20GHzPCA';'RB20GHzPCA'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
-% Pulling out and loading needed data
-[Counts.Raw,Data1D]     = IdentifyNeededInfo(Data);
+% Loading python data for HSRL and WV data
 [Data1D.Surface,Data2D] = LoadPythonData(Paths.PythonData);
 MPD = Data2D.MPD;
 % Loading data needed for processing

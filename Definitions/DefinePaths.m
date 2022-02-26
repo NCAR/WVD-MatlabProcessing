@@ -18,6 +18,7 @@ elseif isunix
     DataBase = '/export/fog1/rsfdata/MPD';
     CalBase  = '/export/fog1/rsfdata/MPD/calibration/';
 end
+Paths.CalFiles   = fullfile(CalBase,'calfiles');
 Paths.CalVal     = fullfile(CalBase,'calvals',['dial',System(end),'_calvals.json']);
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);

@@ -63,6 +63,9 @@ CWLogging('---------Interpolate 1d data----------\n',Options,'Main')
 Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGrid1d,[],Options.InterpMethod,true);
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
+% Loading calibration scan information 
+CalInfo.ScanData = ReadMPDCalScanFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.CalFiles,CalInfo.ScanFile));
+
 %% Plotting field catalog infomation
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
@@ -86,7 +89,7 @@ if ProcessRet
     % Temperature Retrieval
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
     [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.Dt,Retrievals.MaxChange,Retrievals.Python] = ...
-          RetrievalTemperature(Options,Paths,Data);
+          RetrievalTemperature(Options,Paths,Data,CalInfo);
       
 %     % Plotting lidar data
 %     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);

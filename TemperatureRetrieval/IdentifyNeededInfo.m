@@ -6,6 +6,8 @@ function [Raw,Data1D,Availible] = IdentifyNeededInfo(Data)
 %
 %
 %
+%% Assuming the data will be found
+Availible = true;
 %%
 As = {'O2Online';'O2Offline'};
 for m=1:1:length(As)
@@ -21,6 +23,7 @@ for m=1:1:length(As)
     catch
         Raw = []; Data1D = [];
         Availible = false;
+        break
     end
 end
 end

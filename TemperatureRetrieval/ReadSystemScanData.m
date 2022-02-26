@@ -2,23 +2,29 @@
 % Written On: December 4, 2020
 % Written For: National Center for Atmospheric Research
 
-function [Spec] = ReadSystemScanData(Spectra,Const)
+function [Spec] = ReadSystemScanData(Sp,Scan,Const)
 %
-%
-%
-%
+% Input: Sp:    Structure containing all needed PCA spectra structures
+%        Scan:  Structure containing all the known calibration scan data
+%        Const: Structure containing assumed etalon properties
 %
 %% Modeling the etalon from known measured variables
 % Determining what the spectra to be built are
-[~,FN,~] = RecursiveStruct2Cell(Spectra);
+[~,FN,~] = RecursiveStruct2Cell(Sp);
 % Looping over all spectra to be built
 for m=1:1:length(FN)
-    Spec.(FN{m,1}).Etalon = ...
-        EtalonModel(Spectra.(FN{m,1}).Absorption.Lambda,Const);
+    try
+        Tr = interp1(Scan.(FN{m,1}).Wavelength,Scan.(FN{m,1}).Transmission, ...
+                     Sp.(FN{m,1}).Absorption.Lambda);
+        Spec.(FN{m,1}).Etalon.Lambda       = Sp.(FN{m,1}).Absorption.Lambda;
+        Spec.(FN{m,1}).Etalon.Transmission = Tr./max(Tr);
+    catch
+        Spec.(FN{m,1}).Etalon = EModel(Sp.(FN{m,1}).Absorption.Lambda,Const);
+    end
 end
 end
 
-function [E] = EtalonModel(Wavelength,Const)
+function [E] = EModel(Wavelength,Const)
 %
 % Inputs: Wavelength: An array or wavelength values for which etalon
 %                     parameters should be calculated

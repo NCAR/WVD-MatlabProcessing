@@ -43,5 +43,9 @@ for m=1:1:length(DesiredField)
     else
         System.(ToNameField{m}) = Value(abs(Away) == min(abs(Away)));
     end
+    % Modifying the cell behavior of some loaded data
+    if iscell(System.(ToNameField{m}))
+       System.(ToNameField{m}) = System.(ToNameField{m}){1};
+    end
 end
 end

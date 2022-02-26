@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Paths,Data)
+function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -15,7 +15,7 @@ function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Paths,Data)
 %
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
-[Counts.Raw,Data1D,Possible] = IdentifyNeededInfo(Data);
+[Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal);
 if not(Possible)
     Temp = []; Variance = []; Dt = []; MaxChange = []; MPD = []; return
 end
@@ -33,7 +33,7 @@ MPD = Data2D.MPD;
 Const       = DefineConstants;
 Spectra.PCA = ReadPCASpectra(Paths);
 % Reading Needed Data (Python HSRL and Receiver Scan)
-Spectra.Optics = ReadSystemScanData(Spectra.PCA,Const);                % Should load calibration scan data
+Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid

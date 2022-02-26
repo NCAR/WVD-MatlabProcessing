@@ -29,10 +29,11 @@ Op.SaveQuickLoad = ProcessRet;
 Op.System        = System;
 
 %% Defining default options
-Op.Default.RangeRes = 250;                    % Units are nanosceconds
-Op.Default.Range    = 16e3;                   % Units are kilometers
-Op.TimeGrid1d       = ((30:60:86400)./3600)'; % Data every 60 seconds
-Op.TimeGridLidar    = ((0:60:86400)./3600)';  % Data every 60 seconds    
+Op.Default.Frequency = linspace(-10,10,250);   % Units are gigahertz
+Op.Default.RangeRes  = 250;                    % Units are nanosceconds
+Op.Default.Range     = 16e3;                   % Units are kilometers
+Op.TimeGrid1d        = ((30:60:86400)./3600)'; % Data every 60 seconds
+Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 
 %% Defining Temperature retrieval options
 Op.Temp.BackgroundInd = 50;     % How many pre-integration bins to   

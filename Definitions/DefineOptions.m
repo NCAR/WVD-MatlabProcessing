@@ -38,16 +38,18 @@ Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 %% Defining Temperature retrieval options
 Op.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
                                 % use to estimate background noise
-Op.Temp.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Op.Temp.BinRange    = 4*37.5;   % Desired data range resolution          [meters]
 Op.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
+Op.Temp.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
+Op.Temp.BlankBSC    = 5e-5;     % Backscatter coefficient above which data is blanked
 Op.Temp.Bootstrap   = false;
 Op.Temp.BootIters   = 50;       % Iterations to use when bootstraping
 Op.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
-Op.Temp.SmoothTime  = 30*60;    % Desired smoothing time res             [seconds]
+Op.Temp.SmoothTime  = 10*60;    % Desired smoothing time res             [seconds]
 Op.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
 Op.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
-Op.Temp.MinRange    = 150;                     % Start of retrievals     [meters] 
-Op.Temp.MinTime     = Op.Temp.BinTime./2; % Start of retrievals     [seconds]
+Op.Temp.MinRange    = 150;                % Start of retrievals          [meters]
+Op.Temp.MinTime     = Op.Temp.BinTime./2; % Start of retrievals          [seconds]
 Op.Temp.Range       = Op.Temp.MinRange:Op.Temp.BinRange:Op.Temp.MaxRange;
 Op.Temp.TimeStamp   = Op.Temp.MinTime:Op.Temp.BinTime:Op.Temp.MaxTime;
 

@@ -1,4 +1,6 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
+% Modificication Info: Created January, 2020
 
 function [S] = ReadMPDCalScanFile(FieldNames,File)
 %

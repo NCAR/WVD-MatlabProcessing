@@ -34,11 +34,10 @@ end
 %% Adding path to recursive functional utilities and defining path info
 for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
     addpath(fullfile(pwd,el{1,1}))
-end
+end; clear el
 Paths = DefinePaths(Date,System);
 %% Defining user specified options
 Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet);
-
 %% Reading data and pre-processing 
 % Reading the calval files
 CWLogging('---------Loading Cal Val files--------\n',Options,'Main')
@@ -65,7 +64,6 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 % Loading calibration scan information 
 CalInfo.ScanData = ReadMPDCalScanFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.CalFiles,CalInfo.ScanFile));
-
 %% Plotting field catalog infomation
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')

@@ -101,6 +101,14 @@ CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 %% Convert absorption to temperature
 CWLogging('     Converting to temperature\n',Op,'Sub')
 [T,Dt] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,Type);
+%% Blanking low altitude data
+T.Value(T.Range<Options.BlankRange,:) = nan;
+%% Removing data in excess of the allowed backscatter coefficient
+% This removal is targeted at making sure cloud data is not brought into
+% the temperature data. Therefore, near clouds (i.e. where smoothed data
+% sees clouds) is removed.
+A = WeightedSmooth(Data2D.MPD.BSCoefficient.Value > Op.Temp.BlankBSC,Options);
+T.Value(A > 0.1) = nan;
 %% Smooth temperature
 CWLogging('     Smoothing temperature retrieval\n',Op,'Sub')
 T.Smoothed = WeightedSmooth(T.Value,Options);

@@ -44,16 +44,16 @@ Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Rang
 if Options.Bootstrap
     % Looping over bootstrap iterations
     for m=1:1:Options.BootIters
-        CWLogging(['Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
-        CWLogging('     Poisson Thinning & Background Subtracting\n',Op,'Sub')
+        CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
+        CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
         % Pre-allocating variance variables that will later be overwritten
         if m == 1
-            Var = []; VarSum = [];
+            Var = {}; VarSum = {};
         end
         % Loop over each set of thinned data
         for n=1:1:2
-            CWLogging('     Temperature pre-process\n',Op,'Sub')
+            CWLogging('        Temperature pre-process\n',Op,'Sub')
             Counts.BGSub = Thinned.(['PoissThined',num2str(n)]);
             % Define guess atmosphere (lapse rate is a random starting variable)
             GuessLapse =  -1*(0.0065 + rand.*(0.0098-0.0065));
@@ -63,7 +63,7 @@ if Options.Bootstrap
             [~,~,T{n,1},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Bootstrap');
         end
         % Calculating variance
-        [AvgTemp{m},Var,MaxChange(m,:)] = CalculateVariance(Op,m,T,Var,VarSum);
+        [AvgTemp{m},Var,VarSum,MaxChange(m,:)] = CalculateVariance(Op,Options,m,T,Var,VarSum);
     end
     % Parsing out data for returning
     Temp     = AvgTemp(:,1);
@@ -114,7 +114,7 @@ CWLogging('     Smoothing temperature retrieval\n',Op,'Sub')
 T.Smoothed = WeightedSmooth(T.Value,Options);
 end
 
-function [AvgTemp,Var,MaxChange] = CalculateVariance(Op, m, Temperature, Var, VarSum)
+function [AvgTemp,Var,VarSum,MaxChange] = CalculateVariance(Op,Options, m, Temperature, Var, VarSum)
 %
 %
 %
@@ -143,7 +143,7 @@ for el = {'Value','Smoothed'}
         Var{n,1} = (1./2).*VarSum{n,1};
     end
     % Calculate max change in variance for each iteration
-    MaxChange(1,n) = max(max(abs(Var{n,1} - VarOld{m,n})));
+    MaxChange(1,n) = max(max(abs(Var{n,1} - VarOld{1,n})));
     % Updating the loop counter
     n = n + 1;
 end

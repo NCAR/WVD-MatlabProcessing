@@ -63,6 +63,7 @@ Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGr
 % Making sure that no time series elements are NaNs
 Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.TimeGrid1d);
 % Loading calibration scan information 
+CWLogging('----------Loading Scan file-----------\n',Options,'Main')
 CalInfo.ScanData = ReadMPDCalScanFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.CalFiles,CalInfo.ScanFile));
 %% Plotting field catalog infomation
 if ProcessHK

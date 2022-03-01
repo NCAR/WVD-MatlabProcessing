@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [Temp,Variance,Dt,MaxChange,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
+function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -63,20 +63,34 @@ if Options.Bootstrap
             [~,~,T{n,1},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Bootstrap');
         end
         % Calculating variance
-        [AvgTemp{m},Var,VarSum,MaxChange(m,:)] = CalculateVariance(Op,Options,m,T,Var,VarSum);
+        [AvgTemp{m,1},Var,VarSum,MaxChange(m,:)] = CalculateVariance(Op,Options,m,T,Var,VarSum);
+    end
+    % Adding all bootstrap averages together
+    for m=1:1:size(AvgTemp,1)
+        for n=1:1:size(AvgTemp{m},2)
+            if m == 1
+                FinalTemp{n,1} = zeros(size(AvgTemp{m}{n}));
+            end
+            FinalTemp{n,1} = FinalTemp{n,1} + AvgTemp{m}{n};
+        end
     end
     % Parsing out data for returning
-    Temp     = AvgTemp(:,1);
-    Variance = Var{1,1};
-
+    Temp            = T{n,1};
+    Temp.Value      = FinalTemp{1,1}./size(AvgTemp,1);
+    Temp.Smoothed   = FinalTemp{2,1}./size(AvgTemp,1);
+    Temp.Variance   = Var{1,1};
+    Temp.VarianceSm = Var{2,1};
+    Temp.MaxChange  = MaxChange;
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
     [~,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
-    Variance  = [];
-    MaxChange = [];
+    % Making the output data structure
+    Temp.Dt        = Dt;
+    Temp.Variance  = [];
+    Temp.MaxChange = [];
 end
 
 end
@@ -133,7 +147,7 @@ for el = {'Value','Smoothed'}
     % Calculating the average temperature from this bootstrap iteration
     AvgTemp{1,n} = (Temperature{1,1}.(Element) + Temperature{2,1}.(Element))./2;
     % Saving the old variance
-    VarOld{1,n}  = Var{n,1};
+    VarOld  = Var{n,1};
     % Calculating the variance from this bootstrap iteration
     VarSum{n,1} = VarSum{n,1} + (Temperature{1,1}.(Element) - Temperature{2,1}.(Element)).^2;
     % Updating the current guess at variance
@@ -143,7 +157,7 @@ for el = {'Value','Smoothed'}
         Var{n,1} = (1./2).*VarSum{n,1};
     end
     % Calculate max change in variance for each iteration
-    MaxChange(1,n) = max(max(abs(Var{n,1} - VarOld{1,n})));
+    MaxChange(1,n) = max(max(abs(Var{n,1} - VarOld)));
     % Updating the loop counter
     n = n + 1;
 end

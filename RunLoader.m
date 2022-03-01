@@ -87,9 +87,7 @@ if ProcessRet
     CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
     % Temperature Retrieval
     CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-    [Retrievals.Temperature,Retrievals.TemperatureVar,Retrievals.Dt,Retrievals.MaxChange,Retrievals.Python] = ...
-          RetrievalTemperature(Options,Paths,Data,CalInfo);
-      
+    [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo);
 %     % Plotting lidar data
 %     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
 %     SaveFigure(FigNum,Options,Paths,'Retrievals')

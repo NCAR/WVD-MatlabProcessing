@@ -10,13 +10,12 @@ function [TCurrent,DTAll] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,O
 %
 %
 %% Constants used to run this function
-GuessLapse = -0.0098;
-Tolerance  = 0.05;
+GuessLapse = -0.0098;   % Lapse rate used to calculate pressure
+Tolerance  = 0.05;      % Threshold of average temperature change to exit
+MaxDt      = 2;         % Threshold of temperature change per iteration
 
 Qwv = 0;
 
-LoopNumber = 50;  % Number of times to run the temperature iterator
-To         = 296; % Hitran reference temperature
 %% Calculating constants
 Gamma = Const.G0*Const.MolMAir/Const.R;
 %% Iterating
@@ -35,7 +34,7 @@ else
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 end
 % Looping
-for m=1:1:LoopNumber
+for m=1:1:Options.TempIter
     % Calculating the absorption lineshape function (update with temp)
     PCA.O2Online.Absorption = Spectra.PCA.O2Online.Absorption;
     SpecNew = BuildSpectra(PCA,TCurrent,Data2D.NCIP.Pressure,Data1D.Wavelength,Op);
@@ -44,37 +43,32 @@ for m=1:1:LoopNumber
 %     Lapse = FittingLapseRate(TCurrent);
     Lapse = ones(1,length(Surf.Temperature.Value)).*GuessLapse; 
     % Calculating simplifying constants
-    [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,TCurrent.Value,To);
+    [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,TCurrent.Value);
     % Calculating the update temperature
     DeltaT = Alpha./(C1.*C2.*C3.*LineShape.*Const.QO2.*(1-Qwv)) - 1./C3;
     % Limiting the gradient possible
-    DeltaT(abs(DeltaT) > 2) = sign(DeltaT(abs(DeltaT) > 2)).*2;
+    DeltaT(abs(DeltaT)>MaxDt) = sign(DeltaT(abs(DeltaT)>MaxDt)).*MaxDt;
     % Outputting temperature state
     TempDiffAvg = mean(mean(abs(DeltaT),'omitnan'),'omitnan');
     DTAll(m) = TempDiffAvg; %#ok<AGROW>
-    
     CWLogging(sprintf('      Mean dT: %4.3f\n',TempDiffAvg),Op,'Retrievals')
-
     % Updating the current temperature
     TCurrent.Value = TCurrent.Value + DeltaT;
     if abs(TempDiffAvg) <= Tolerance
         break
     end
-%     % Plotting just to see whats going on
-%     figure(101);
-%     subplot(LoopNumber,1,m)
-%     pcolor(DeltaT); shading flat; colorbar; caxis([-2,2]); colormap(gca,redblue(64))
-
 % % %     % Plotting just to see whats going on
 % % %     if mod(m,5)==1
 % % %         figure(101);
-% % %         subplot(ceil(LoopNumber/5),1,floor(m/5)+1)
+% % %         subplot(ceil(Options.TempIter/5),1,floor(m/5)+1)
 % % %         pcolor(DeltaT); shading flat; colorbar; caxis([-2,2]); colormap(gca,redblue(64))
 % % %     end
 end
+%% Removing data where the Dt is clearly not reached a stable point
+TCurrent.Value(abs(DeltaT)==2) = nan;
 end
 
-function [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,Tc,To)
+function [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,Tc)
 %
 % Tc = temp current
 %
@@ -84,8 +78,8 @@ function [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,Tc,To)
 GL = Gamma./Lapse;
 %% Calculating the simplifying constant variables Kevin uses
 % Updates each time because the lapse rate updates
-C1 = Const.O2LineS.*To.*(Surf.Pressure.Value'.*Const.Atm2Pa).*exp(Const.Eo/Const.Kb/To)./...
-                                                   (Const.Kb.*Surf.Temperature.Value'.^(-GL));
+C1 = Const.O2LineS.*Const.HitranTo.*(Surf.Pressure.Value'.*Const.Atm2Pa).* ...
+     exp(Const.Eo/Const.Kb/Const.HitranTo)./(Const.Kb.*Surf.Temperature.Value'.^(-GL));
 % Updates each time because it depends on current iteration's temperature 
 C2 = Tc.^(-GL-2).*exp(-Const.Eo./Const.Kb./Tc);
 % Updates each time because it depends on current iteration's temperature

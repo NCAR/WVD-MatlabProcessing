@@ -30,7 +30,8 @@ Const.Etalon.CenterWave   = 769.7958;    % nanometers
 Const.Etalon.Length       = 0.00094896;  % Meters
 Const.Etalon.Reflectivity = 0.816072;    % Unitless
 %% Spectroscopy
-Const.Eo = 1420.7631*100;             % Ground state energy         [m^-1]
-Const.Eo = Const.Eo*Const.H*Const.C;  % Same converted to units of  [J]
-Const.O2LineS = 4.889e-26/100;        % Line strength of O2 line    [m/Mol]
+Const.Eo = 1420.7631*100;            % Ground state energy          [m^-1]
+Const.Eo = Const.Eo*Const.H*Const.C; % Same converted to units of   [J]
+Const.O2LineS  = 4.889e-26/100;      % Line strength of O2 line     [m/Mol]
+Const.HitranTo = 296;                % Hitran reference temperature [K]
 end

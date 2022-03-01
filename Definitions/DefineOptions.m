@@ -46,6 +46,7 @@ Op.Temp.Bootstrap   = false;
 Op.Temp.BootIters   = 50;       % Iterations to use when bootstraping
 Op.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Op.Temp.SmoothTime  = 10*60;    % Desired smoothing time res             [seconds]
+Op.Temp.TempIter    = 50;       % Iterations for temperature conversion
 Op.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
 Op.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
 Op.Temp.MinRange    = 150;                % Start of retrievals          [meters]

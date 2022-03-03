@@ -17,7 +17,7 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
 % Pulling out and loading needed data
 [Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal);
 if not(Possible)
-    Temp = []; Variance = []; Dt = []; MaxChange = []; MPD = []; return
+    Temp = []; MPD = []; return
 end
 %% Temperature Pre-Process
 % Extra definitions
@@ -60,16 +60,16 @@ if Options.Bootstrap
             ConstProfile = (Options.Range').*(GuessLapse);
             Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+Data1D.Surface.Temperature.Value';
             % Actually doing the nuts and bolts to retrieve temperature
-            [~,~,T{n,1},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Bootstrap');
+            [~,~,T{n,1},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap');
         end
         % Calculating variance
         [AvgTemp{m,1},Var,VarSum,MaxChange(m,:)] = CalculateVariance(Op,Options,m,T,Var,VarSum);
     end
     % Adding all bootstrap averages together
-    for m=1:1:size(AvgTemp,1)
-        for n=1:1:size(AvgTemp{m},2)
+    for m=1:1:size(AvgTemp,1)          % Looping over bootstrap iterations
+        for n=1:1:size(AvgTemp{m},2)   % Looping over smoothed/unsmoothed
             if m == 1
-                FinalTemp{n,1} = zeros(size(AvgTemp{m}{n}));
+                FinalTemp{n,1} = zeros(size(AvgTemp{m}{n})); %#ok<*AGROW>
             end
             FinalTemp{n,1} = FinalTemp{n,1} + AvgTemp{m}{n};
         end
@@ -78,6 +78,7 @@ if Options.Bootstrap
     Temp            = T{n,1};
     Temp.Value      = FinalTemp{1,1}./size(AvgTemp,1);
     Temp.Smoothed   = FinalTemp{2,1}./size(AvgTemp,1);
+    Temp.Dt         = cell2mat(reshape(Dt,size(Dt,1)*size(Dt,2),1));
     Temp.Variance   = Var{1,1};
     Temp.VarianceSm = Var{2,1};
     Temp.MaxChange  = MaxChange;
@@ -86,17 +87,18 @@ else
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
-    [~,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,'Standard');
+    GuessLapse = -0.0098;
+    [~,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Standard');
     % Making the output data structure
-    Temp.Dt        = Dt;
-    Temp.Variance  = [];
-    Temp.MaxChange = [];
+    Temp.Dt         = Dt;
+    Temp.Variance   = [];
+    Temp.VarianceSm = [];
+    Temp.MaxChange  = [];
+end
 end
 
-end
 
-
-function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,Type)
+function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,Type)
 %
 % Inputs:
 %          Type:        'Bootstrap'
@@ -114,7 +116,7 @@ CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 [Alpha,POrders] = PerturbativeRetrieval(Const,Counts,Data2D,Options,Spectra,Op);
 %% Convert absorption to temperature
 CWLogging('     Converting to temperature\n',Op,'Sub')
-[T,Dt] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,Type);
+[T,Dt] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,GuessLapse,Type);
 %% Blanking low altitude data
 T.Value(T.Range<Options.BlankRange,:) = nan;
 %% Removing data in excess of the allowed backscatter coefficient

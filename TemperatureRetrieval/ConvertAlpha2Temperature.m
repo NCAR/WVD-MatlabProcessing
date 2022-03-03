@@ -2,7 +2,7 @@
 
 
 
-function [TCurrent,DTAll] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Surf,Spectra,Op,StartCond)
+function [TCurrent,DTAll] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Surf,Spectra,Op,GuessLapse,StartCond)
 %
 %
 % Add moisture mixing ratio
@@ -10,7 +10,6 @@ function [TCurrent,DTAll] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,O
 %
 %
 %% Constants used to run this function
-GuessLapse = -0.0098;   % Lapse rate used to calculate pressure
 Tolerance  = 0.05;      % Threshold of average temperature change to exit
 MaxDt      = 2;         % Threshold of temperature change per iteration
 
@@ -61,7 +60,9 @@ for m=1:1:Options.TempIter
 % % %     if mod(m,5)==1
 % % %         figure(101);
 % % %         subplot(ceil(Options.TempIter/5),1,floor(m/5)+1)
-% % %         pcolor(DeltaT); shading flat; colorbar; caxis([-2,2]); colormap(gca,redblue(64))
+% % %         pcolor(TCurrent.TimeStamp./60./60,TCurrent.Range./1e3,DeltaT);
+% % %         shading flat; colorbar; caxis([-MaxDt,MaxDt]); colormap(gca,redblue(64));
+% % %         ylabel('Altitude [km]')
 % % %     end
 end
 %% Removing data where the Dt is clearly not reached a stable point

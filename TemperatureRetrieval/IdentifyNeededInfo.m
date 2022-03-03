@@ -24,7 +24,7 @@ for m=1:1:length(As)
         % Laoding wavelength scan info
         Scan.(As{m}) = Cal.ScanData.([As{m},Chan{m}]);
     catch
-        Raw = []; Data1D = []; Scan = []
+        Raw = []; Data1D = []; Scan = [];
         Availible = false;
         break
     end

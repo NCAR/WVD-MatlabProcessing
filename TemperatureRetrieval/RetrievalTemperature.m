@@ -15,7 +15,9 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
 %
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
-[Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal);
+As   = {'O2Online';'O2Offline'};
+Chan = {'Comb';    'Comb'};
+[Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
 if not(Possible)
     Temp = []; MPD = []; return
 end

@@ -1,7 +1,7 @@
 
 
 
-function [Raw,Data1D,Scan,Availible] = IdentifyNeededInfo(Data,Cal)
+function [Raw,Data1D,Scan,Availible] = IdentifyNeededInfo(Data,Cal,As,Chan)
 %
 %
 %
@@ -9,8 +9,6 @@ function [Raw,Data1D,Scan,Availible] = IdentifyNeededInfo(Data,Cal)
 %% Assuming the data will be found
 Availible = true;
 %%
-As   = {'O2Online';'O2Offline'};
-Chan = {'Comb';    'Comb'};
 for m=1:1:length(As)
     % Loading count profiles
     try
@@ -21,6 +19,10 @@ for m=1:1:length(As)
         % Loading wavelength info
         Data1D.Wavelength.(As{m}).TimeStamp = Data.TimeSeries.Laser.(As{m}).TimeStamp.*60.*60;
         Data1D.Wavelength.(As{m}).Value = Data.TimeSeries.Laser.(As{m}).WavelengthActual./1e9;
+        % Loading MCS info
+        Data1D.MCS.(As{m}) = Data.Lidar.Interp.(As{m});
+        Data1D.MCS.(As{m}) = rmfield(Data1D.MCS.(As{m}),'Data');
+        Data1D.MCS.(As{m}).TimeStamp = Data1D.MCS.(As{m}).TimeStamp.*60.*60;
         % Laoding wavelength scan info
         Scan.(As{m}) = Cal.ScanData.([As{m},Chan{m}]);
     catch

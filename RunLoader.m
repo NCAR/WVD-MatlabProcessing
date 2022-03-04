@@ -32,7 +32,7 @@ if nargin ~= 5
     ProcessRet = false;
 end
 %% Adding path to recursive functional utilities and defining path info
-for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities'}
+for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
 Paths = DefinePaths(Date,System);
@@ -83,6 +83,7 @@ if ProcessRet
     Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
     % WV Retrieval
     CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
+    [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
     % HSRL Retrieval
     CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
     % Temperature Retrieval

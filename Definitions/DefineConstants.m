@@ -24,7 +24,9 @@ Const.MolMAir = 0.0289644;     % Molar mass of Earth's air    [kg/mol]
 Const.No      = 2.47937e25;    % Loschmidt's number (@296K & 1 atm) [1/m^3]
 Const.QO2     = .2095;         % O2 dry mixing ratio          [unitless]
 %% Conversions
-Const.Atm2Pa  = 101325;        % Conversion from atmospheres to Pascals
+Const.Atm2Pa   = 101325;        % Conversion from atmospheres to Pascals
+Const.C2K      = 273.15;        % Conversion from Celsius to Kelvin
+Const.MBar2Atm = 1013.25;       % Conversion from millibar to atmospheres
 %% Optics
 Const.Etalon.CenterWave   = 769.7958;    % nanometers
 Const.Etalon.Length       = 0.00094896;  % Meters

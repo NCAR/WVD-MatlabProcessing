@@ -35,6 +35,23 @@ Op.Default.Range     = 16e3;                   % Units are kilometers
 Op.TimeGrid1d        = ((30:60:86400)./3600)'; % Data every 60 seconds
 Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 
+
+%% Defining Water Vapor retrieval options
+Op.WV.BackgroundInd = 50;     % How many pre-integration bins to
+                              % use to estimate background noise
+Op.WV.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Op.WV.BinTime     = 2*60;     % Desired data time resolution           [seconds]
+Op.WV.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
+Op.WV.GradFilt    = 10000;    % Relative count rate gradient to filter [ ]
+Op.WV.SmoothRange = 150;      % Desired smoothing range res            [meters]
+Op.WV.SmoothTime  = 5*60;     % Desired smoothing time res             [seconds]
+Op.WV.MaxRange    = 6.5e3;    % Max range to run retrievals to         [meters]
+Op.WV.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
+Op.WV.MinRange    = 150;                % Start of retrievals          [meters]
+Op.WV.MinTime     = Op.WV.BinTime./2;   % Start of retrievals          [seconds]
+Op.WV.Range       = Op.WV.MinRange:Op.WV.BinRange:Op.WV.MaxRange;
+Op.WV.TimeStamp   = Op.WV.MinTime:Op.WV.BinTime:Op.WV.MaxTime;
+
 %% Defining Temperature retrieval options
 Op.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
                                 % use to estimate background noise

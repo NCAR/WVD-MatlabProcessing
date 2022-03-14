@@ -47,6 +47,7 @@ CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
 [RawData,AnyData] = ReadMPDData(Paths.Data,Options);
 if not(AnyData)
+    CWLogging('--------No data found: exiting--------\n',Options,'Main')
     Data = []; Retrievals = []; RawData = []; RawTSData = [];
     return
 end
@@ -94,6 +95,7 @@ if ProcessRetF || ProcessRetS
         if Options.UploadFig
             FTPFigure(FigNum,Options,Paths,'Backscatter_WV')
         end
+        SaveFigure(FigNum,Options,Paths,'Backscatter_WV')
     end
     % HSRL Retrieval
     if ProcessRetF

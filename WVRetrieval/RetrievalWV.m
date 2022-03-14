@@ -1,7 +1,6 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
-% Modificication Info: Created December, 2020
-
+% Modificication Info: Created March, 2022
 
 function [WV] = RetrievalWV(Op,Paths,Data,Cal)
 %
@@ -16,7 +15,7 @@ function [WV] = RetrievalWV(Op,Paths,Data,Cal)
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
 As   = {'WVOnline';'WVOffline'};
-Chan = {'';    ''};
+Chan = {'';''};
 [Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
 if not(Possible)
     WV = []; return
@@ -51,6 +50,15 @@ Surface = RecursivelyInterpolate1DStructure(Surface,Options.TimeStamp,'linear');
 Surface.Temperature = Surface.Temperature + Const.C2K;
 Surface.Pressure    = Surface.Pressure./Const.MBar2Atm;
 
+%% Calculating relative backscatter
+% Scale term is (range Resolution x Shots Binned x Offline Duty Cycle)
+SwitchRate = Data1D.MCS.WVOffline.ProfilesPerHistogram./(Data1D.MCS.WVOnline.ProfilesPerHistogram+Data1D.MCS.WVOffline.ProfilesPerHistogram);
+Scale = Options.BinRange.*Options.BinTime.*Data1D.MCS.WVOffline.ProfilesPerHistogram.* (1 - SwitchRate);
+% Calculating overlap scalign factor
+Overlap = interp1(Cal.Overlap.Range,Cal.Overlap.Value,Counts.Binned.WVOffline.Range,'linear','extrap');
+% Calculating relative backscatter
+BS = Counts.Binned.WVOffline.Counts-Counts.BGSub.WVOffline.Background;
+Rb = BS.*(Counts.Binned.WVOffline.Range.^2)./Scale'./Overlap;
 
 %% Building an estimate of the atmosphere
 T = Counts.BGSub.WVOffline; P = Counts.BGSub.WVOffline;
@@ -73,11 +81,14 @@ Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
 WV.TimeStamp  = Counts.BGSub.WVOnline.TimeStamp;
 WV.Range      = Counts.BGSub.WVOnline.Range;
 WV.Value      = N.*Const.MWV.*1000;                   % molec/m^3 to g/m^3
-WV.Variance      = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
-WV.Smoothed      = WeightedSmooth(WV.Value,Options);
-% [WV.Smoothed2,~] = SmoothOld(WV.Value,WV.Variance ,Options);
-[WV.Smoothed2] = SmoothOld2(WV.Value,Options);
+WV.Variance   = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
+WV.Smoothed   = WeightedSmooth(WV.Value,Options);
+WV.Smoothed2  = SmoothOld2(WV.Value,Options);
 WV.VarianceSm = WeightedSmooth(WV.Variance,Options);
+
+WV.RB.TimeStamp = Counts.BGSub.WVOnline.TimeStamp;
+WV.RB.Range     = Counts.Binned.WVOffline.Range;
+WV.RB.Value     = Rb;
 
 %% Calculating data masks
 % remove non-physical watervapor values
@@ -85,13 +96,15 @@ MaskNP   = WV.Smoothed > 30 | WV.Smoothed < 0;
 % Removing high error regions
 MaskErr  = WV.Variance > 100;
 MaskErr2 = abs(WV.Variance./WV.Smoothed) > 60 & WV.Variance > 25;
-MaskErr = MaskErr | MaskErr2;
+MaskErr  = MaskErr | MaskErr2;
 % Gradient filter
-MaskGrad = GradientFilter(Counts.BGSub.WVOffline, Data1D.MCS.WVOffline, BinInfo, Options);
+MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
+% RB and are not the same size (in range) so downsize Gradient filter mask
+MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 % Remove high count rate regions
 MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 2e6;
 % Combining the masks
-Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
+WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
 % % Removing data that has really high amounts of bad data
 % Mask2 = DensityFiltering(Mask,5,0.2);
 % Mask  = Mask | Mask2;
@@ -123,8 +136,6 @@ Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
 % figure(5) 
 % pcolor(WV.TimeStamp,WV.Range,WV.Smoothed2); 
 % shading flat; colorbar; caxis([0,10]); colormap(gca,jet)
-
-
 
 end
 
@@ -172,7 +183,7 @@ RepScale   = Data.ProfilesPerHistogram.*BinInfo.BinNum(contains(BinInfo.BinDir,'
 RangeScale = Data.RangeResolution.*BinInfo.BinNum(contains(BinInfo.BinDir,'Range'))./250;
 
 %% Calculating the gradient and mask
-[~,Grad] = gradient(Offline.Counts);
+[~,Grad] = gradient(Offline);
 Mask = Grad > (RepScale.*RangeScale.*Options.GradFilt)';
 end
 

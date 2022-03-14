@@ -1,7 +1,7 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % 
-function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRet)
+function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRetF,ProcessRetS)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
 %         System:     String defining the system number to run of the form
@@ -24,12 +24,13 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %                     processed MPD time series data
 %
 %% Checking inputs and using default values if running as stand-alone
-if nargin ~= 5
-    Date       = '20210426';
-    System     = 'mpd_05';
-    Logging    = 'Skinny';
-    ProcessHK  = false;
-    ProcessRet = false;
+if nargin ~= 6
+    Date        = '20210426';
+    System      = 'mpd_05';
+    Logging     = 'Skinny';
+    ProcessHK   = false;
+    ProcessRetF = false;
+    ProcessRetS = false;
 end
 %% Adding path to recursive functional utilities and defining path info
 for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
@@ -37,7 +38,7 @@ for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilit
 end; clear el
 Paths = DefinePaths(Date,System);
 %% Defining user specified options
-Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet);
+Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS);
 %% Reading data and pre-processing 
 % Reading the calval files
 CWLogging('---------Loading Cal Val files--------\n',Options,'Main')
@@ -77,18 +78,28 @@ if ProcessHK
     SaveFigure(FigNum,Options,Paths,'Housekeeping')
 end
 %% Process lidar data retrievals and plotting
-if ProcessRet
+if ProcessRetF || ProcessRetS
     % Push lidar data onto a constant grid
     CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
     Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
     % WV Retrieval
-    CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
-    [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
+    if ProcessRetF
+        CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
+        [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
+        FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
+        if Options.UploadFig
+            FTPFigure(FigNum,Options,Paths,'Backscatter_WV')
+        end
+    end
     % HSRL Retrieval
-    CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
+    if ProcessRetF
+        CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
+    end
     % Temperature Retrieval
-    CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-    [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo);
+    if ProcessRetS
+        CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
+        [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo);
+    end
 %     % Plotting lidar data
 %     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
 %     SaveFigure(FigNum,Options,Paths,'Retrievals')
@@ -106,9 +117,10 @@ end
 %% Saving quickload information
 if Options.SaveQuickLoad
     CWLogging('---------Saving quickload data--------\n',Options,'Main')
-    cd(Paths.Quickload)
-    save([lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat'], ...
+    if ~exist(Paths.Quickload, 'dir')
+       mkdir(Paths.Quickload)
+    end
+    save(fullfile(Paths.Quickload,[lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat']), ...
                                             'Options','Retrievals')
-    cd(Paths.Code)
 end
 end

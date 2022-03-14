@@ -56,7 +56,7 @@ xlabel('Time (UTC)');
 ylabel('Height (km, AGL)');
 title({[Date,' ',Name]});
 %% Formatting axes
-set(gca,'xtick',0:2:24)
+set(gca,'xtick',0:2:24,'ytick',0:2:Op.MaxRange/1e3)
 %% Setting axis bounds
 xlim([0,24]); ylim([Op.MinRange,Op.MaxRange]./1e3);
 %% Formatting the colorbar

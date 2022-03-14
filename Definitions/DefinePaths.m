@@ -17,7 +17,7 @@ if ismac
     ProcBase = '/Volumes/MPD_ProcessedData';
 elseif isunix
     DataBase = '/export/fog1/rsfdata/MPD';
-    CalBase  = '/export/fog1/rsfdata/MPD/calibration/';
+    CalBase  = '/export/fog1/rsfdata/MPD/calibration/eol-lidar-calvals';
     ProcBase = DataBase;
 end
 Paths.CalFiles   = fullfile(CalBase,'calfiles');

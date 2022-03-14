@@ -40,7 +40,13 @@ for m=1:1:size(Data,1)
            % Identifying breaks larger than the allowable 
            Differences = diff(OldTime);
            MedDiff     = median(Differences);
-           B           = find(Differences > MedDiff.*BreakSize);
+           % Checking the break look time is not less than 2 minutes
+           if (MedDiff.*BreakSize)*60 > 2
+               BreakAllowed = MedDiff.*BreakSize;
+           else
+               BreakAllowed = 2/60; % 2 minute in units of hours
+           end
+           B           = find(Differences > BreakAllowed);
            if isempty(B) == 0
                % Breaks found so fill them
                IsTimeArray = all(OldTime == Data{m,1}(:,1));

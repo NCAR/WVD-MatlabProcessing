@@ -71,6 +71,17 @@ Op.Temp.MinTime     = Op.Temp.BinTime./2; % Start of retrievals          [second
 Op.Temp.Range       = Op.Temp.MinRange:Op.Temp.BinRange:Op.Temp.MaxRange;
 Op.Temp.TimeStamp   = Op.Temp.MinTime:Op.Temp.BinTime:Op.Temp.MaxTime;
 
+%% Defining plotting options
+Op.Plot.FontSize     = 18;
+
+Op.Plot.RB.MaxRange  = 14e3;
+Op.Plot.RB.MinRange  = 0;
+Op.Plot.RB.CAxis     = [1,6];
+
+Op.Plot.WV.MaxRange  = 6e3;
+Op.Plot.WV.MinRange  = 0;
+Op.Plot.WV.CAxis     = [0,10];
+
 %% Defining data to read 
 Op.DataNames = {'Container';'Current';'Etalon';'HumiditySensor';'Laser';'MCS';
                 'Power';'QuantumComposer';'Thermocouple';'UPS';'WeatherStation'}; 

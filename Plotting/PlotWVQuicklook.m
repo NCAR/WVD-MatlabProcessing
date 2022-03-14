@@ -52,9 +52,9 @@ function CB = FormatAxis(Date, Op, Name)
 %% Formatting the pcolor type
 shading interp
 %% Labeling plot
-xlabel('Time (UTC)','fontweight','b');
-ylabel('Height (km, AGL)','fontweight','b');
-title({[Date,' ',Name]},'fontweight','b');
+xlabel('Time (UTC)');
+ylabel('Height (km, AGL)');
+title({[Date,' ',Name]});
 %% Formatting axes
 set(gca,'xtick',0:2:24)
 %% Setting axis bounds

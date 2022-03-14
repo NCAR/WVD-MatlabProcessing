@@ -2,7 +2,7 @@
 % Written For: NCAR
 % Modificication Info: Created March 19, 2020
 
-function [Data] = ReadMPDData(DataPath,Options)
+function [Data,Found] = ReadMPDData(DataPath,Options)
 %
 % Input: DataPath: String containing the full path of the data
 %        Options:  A structure containing all user defined options desired
@@ -12,7 +12,7 @@ function [Data] = ReadMPDData(DataPath,Options)
 %
 %% Defining the structure of the data information cell array
 CType.File     = 1; CType.DataName = 2; CType.FileVar  = 3;
-CType.CodeVar  = 4; CType.VarType  = 5;
+CType.CodeVar  = 4; CType.VarType  = 5; Found = false;
 %% Determining the file structure
 ToLoad = DefineFileStructure(Options.DataNames,CType);
 %% Loading data
@@ -33,6 +33,7 @@ for m=1:1:size(ToLoad,1)                              % Looping over filetypes
             end
         end
     else
+        Found = true;
         % Looping over varaibles
         for p=1:1:size(ToLoad{m,CType.FileVar})
             % Writing logging information to the command window

@@ -45,7 +45,11 @@ CWLogging('---------Loading Cal Val files--------\n',Options,'Main')
 CalInfo = ReadMPDJSonFiles(Paths.CalVal,Options.Date);
 % Determining the file structure and reading the files
 CWLogging('-------------Loading Data-------------\n',Options,'Main')
-RawData = ReadMPDData(Paths.Data,Options);
+[RawData,AnyData] = ReadMPDData(Paths.Data,Options);
+if not(AnyData)
+    Data = []; Retrievals = []; RawData = []; RawTSData = [];
+    return
+end
 % Removing bad data
 CWLogging('------------Remove bad data-----------\n',Options,'Main')
 RawData = RemoveBadData(RawData);

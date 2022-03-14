@@ -18,7 +18,7 @@ RBColormap = importdata('NCAR_C_Map.mat');
 %% Formatting the figure as a whole
 FigNum = FindCurrentFigure + 1;
 figure(FigNum)
-set(gcf,'Position',[Sc(3)/20 Sc(4)/10 Sc(3)/1.5 Sc(4)/1.5]);
+set(gcf,'Position',[Sc(3)/20 Sc(4)/10 Sc(3)/1.5 Sc(4)/1.5],'PaperUnits', 'points', 'PaperPosition', [0 0 1280 800]);
 %% Plotting Relative Backscatter
 subplot(2,1,1)
 pcolor(WV.RB.TimeStamp./60./60,WV.RB.Range./1e3,real(log10(WV.RB.Value*5)));

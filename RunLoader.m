@@ -57,6 +57,10 @@ RawData = RemoveBadData(RawData);
 % Force timestamps to increase monotonically
 CWLogging('--Checking for monotonic time stamps--\n',Options,'Main')
 RawData = CheckMonotonicTimeStamps(RawData);
+% Applying wavemeter offset if possible
+if isfield(CalInfo,'WMOffset') && isfield(RawData,'Laser')
+    RawData.Laser = RecursiveOverwriteField(RawData.Laser,'WavelengthActual',[],-CalInfo.WMOffset);
+end
 % Unpacking the container/etalon/laser/MCS data to be useful
 CWLogging('------------Unpack raw data-----------\n',Options,'Main')
 [RawTSData, Data.Lidar] = UnpackRawData(RawData);

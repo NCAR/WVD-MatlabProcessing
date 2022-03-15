@@ -36,7 +36,7 @@ end
 for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
-Paths = DefinePaths(Date,System);
+[Paths,Server] = DefinePaths(Date,System);
 %% Defining user specified options
 Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS);
 %% Reading data and pre-processing 
@@ -75,11 +75,15 @@ CalInfo.ScanData = ReadMPDCalScanFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
     [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-    FTPFigure(FigNum,Options,Paths,'Status')
+    if Options.UploadFig && Server
+        FTPFigure(FigNum,Options,Paths,'Status')
+    end
     SaveFigure(FigNum,Options,Paths,'Status')
     CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
     FigNum = PlotHousekeepingFigure(Data,Options);
-    FTPFigure(FigNum,Options,Paths,'Housekeeping')
+    if Options.UploadFig && Server
+        FTPFigure(FigNum,Options,Paths,'Housekeeping')
+    end
     SaveFigure(FigNum,Options,Paths,'Housekeeping')
 end
 %% Process lidar data retrievals and plotting
@@ -92,7 +96,7 @@ if ProcessRetF || ProcessRetS
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
         [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
         FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
-        if Options.UploadFig
+        if Options.UploadFig && Server
             FTPFigure(FigNum,Options,Paths,'Backscatter_WV')
         end
         SaveFigure(FigNum,Options,Paths,'Backscatter_WV')
@@ -105,10 +109,9 @@ if ProcessRetF || ProcessRetS
     if ProcessRetS
         CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
         [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo);
+        FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+        SaveFigure(FigNum,Options,Paths,'Retrievals')
     end
-%     % Plotting lidar data
-%     FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
-%     SaveFigure(FigNum,Options,Paths,'Retrievals')
 else
     Retrievals = [];
 end

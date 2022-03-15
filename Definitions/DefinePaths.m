@@ -2,7 +2,7 @@
 % Written On: February 16, 2022
 % Written For: National Center for Atmospheric Research
 
-function [Paths] = DefinePaths(Date,System)
+function [Paths,Server] = DefinePaths(Date,System)
 %
 % Inputs: Date:   String containign desired date        (Ex: '20210426')
 %         System: String containing system name desired (Ex: 'mpd_05')
@@ -15,10 +15,12 @@ if ismac
     DataBase = '/Volumes/MPD_Data';
     CalBase  = '/Users/stillwel/Documents/StillwellResearch/Code/Instrument/eol-lidar-calvals';
     ProcBase = '/Volumes/MPD_ProcessedData';
+    Server   = false;
 elseif isunix
     DataBase = '/export/fog1/rsfdata/MPD';
     CalBase  = '/export/fog1/rsfdata/MPD/calibration/eol-lidar-calvals';
     ProcBase = DataBase;
+    Server   = true;
 end
 Paths.CalFiles   = fullfile(CalBase,'calfiles');
 Paths.CalVal     = fullfile(CalBase,'calvals',['dial',System(end),'_calvals.json']);

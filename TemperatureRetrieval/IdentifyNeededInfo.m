@@ -20,7 +20,7 @@ for m=1:1:length(As)
         Data1D.Wavelength.(As{m}).TimeStamp = Data.TimeSeries.Laser.(As{m}).TimeStamp.*60.*60;
         Data1D.Wavelength.(As{m}).Value = Data.TimeSeries.Laser.(As{m}).WavelengthActual./1e9;
         % Loading MCS info
-        Data1D.MCS.(As{m}) = Data.Lidar.Interp.(As{m});
+        Data1D.MCS.(As{m}) = Data.Lidar.Interp.([As{m},Chan{m}]);
         Data1D.MCS.(As{m}) = rmfield(Data1D.MCS.(As{m}),'Data');
         Data1D.MCS.(As{m}).TimeStamp = Data1D.MCS.(As{m}).TimeStamp.*60.*60;
         % Laoding wavelength scan info

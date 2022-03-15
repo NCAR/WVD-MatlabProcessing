@@ -35,6 +35,12 @@ AftTypes = {     ''    ;   ''   ;   ''  ;'_variance';'_mask'};
 SubAs    = {'TimeStamp';'Range' ;'Value';'Variance' ;'Mask' };
 % Loading data
 Data2D.MPD = LoadData(Types,ForTypes,AftTypes,As,SubAs,FileName);
+%% Reading range offsets (and removing if it can be found)
+Res = ReadAttribute(FileName,'range','range_resolution');
+Off = ReadAttribute(FileName,'range','bin_offset');
+if not(isnan(Res*Off))
+    Data2D.MPD = RecursiveOverwriteField(Data2D.MPD,'Range',[],-Res*Off);
+end
 end
 
 function [Data] = LoadData(Types,ForTypes,AftTypes,As,SubAs,FileName)
@@ -90,6 +96,35 @@ try
         A = ncread(Filename,FileVar);
     elseif strcmp(VariableType,'String')
         A = h5read(Filename,['/',FileVar]);
+    end
+catch
+    A = nan;
+end
+end
+
+% This function tries to read an attribute of interest. If the type is Double
+% it will typecast the variable, otherwise the type is maintained from the
+% netcdf file.
+function [A] = ReadAttribute(Filename,FileVar,Att,VariableType)
+%
+% Inputs: Filename:     String containing the desired file name
+%         FileVar:      NetCDF variable name to check
+%         Att:          Attribute of the FileVar to load
+%         VariableType: Data type of variable to read
+%
+% Outputs: A:           Loaded data
+%
+%% Checking data inputs
+if nargin == 4
+    VariableType = 'Double';
+end
+%% Loading data
+A = [];
+try
+    if strcmp(VariableType,'Double')
+        A = double(ncreadatt(Filename,FileVar,Att));
+    elseif strcmp(VariableType,'Native')
+        A = ncreadatt(Filename,FileVar,Att);
     end
 catch
     A = nan;

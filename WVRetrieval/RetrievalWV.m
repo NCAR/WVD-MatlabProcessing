@@ -29,6 +29,9 @@ catch
    Surface.Pressure    = ones(size(Surface.TimeStamp)).*0.83;
 end
 
+%% Loading in Python data as needed
+Python = LoadPythonData2(Paths.PythonData);
+
 %% Water Vapor Pre-Process
 % Extra definitions
 Options                 = Op.WV;
@@ -90,6 +93,7 @@ WV.RB.TimeStamp = Counts.BGSub.WVOnline.TimeStamp;
 WV.RB.Range     = Counts.Binned.WVOffline.Range;
 WV.RB.Value     = Rb;
 
+WV.Python       = Python.Online;
 %% Calculating data masks
 % remove non-physical watervapor values
 MaskNP   = WV.Smoothed > 30 | WV.Smoothed < 0;
@@ -108,35 +112,6 @@ WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
 % % Removing data that has really high amounts of bad data
 % Mask2 = DensityFiltering(Mask,5,0.2);
 % Mask  = Mask | Mask2;
-
-% 
-% figure(1); 
-% pcolor(WV.TimeStamp,WV.Range,WV.Smoothed); 
-% shading flat; colorbar; caxis([0,10])
-% 
-% figure(2);
-% pcolor(WV.TimeStamp,WV.Range,sqrt(WV.Variance)); 
-% shading flat; colorbar; caxis([0,10])
-% 
-% figure(3);
-% subplot(5,1,1);pcolor(WV.TimeStamp,WV.Range,double(MaskNP)); shading flat; colorbar; caxis([0,1])
-% subplot(5,1,2);pcolor(WV.TimeStamp,WV.Range,double(MaskErr)); shading flat; colorbar; caxis([0,1])
-% subplot(5,1,3);pcolor(WV.TimeStamp,WV.Range,double(MaskGrad)); shading flat; colorbar; caxis([0,1])
-% subplot(5,1,4);pcolor(WV.TimeStamp,WV.Range,double(MaskCntR)); shading flat; colorbar; caxis([0,1])
-% subplot(5,1,5);pcolor(WV.TimeStamp,WV.Range,double(Mask)); shading flat; colorbar; caxis([0,1])
-% 
-% 
-% WV.Smoothed(Mask) = nan;
-% WV.Smoothed2(Mask) = nan;
-% 
-% figure(4) 
-% pcolor(WV.TimeStamp,WV.Range,WV.Smoothed); 
-% shading flat; colorbar; caxis([0,10]); colormap(gca,jet)
-% 
-% figure(5) 
-% pcolor(WV.TimeStamp,WV.Range,WV.Smoothed2); 
-% shading flat; colorbar; caxis([0,10]); colormap(gca,jet)
-
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)

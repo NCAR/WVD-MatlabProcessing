@@ -52,6 +52,12 @@ for n=1:1:size(subs,1)
         % Vertical box lines
         TopPlot(XLims(m)*ones(1,Pts),linspace(YLims(1),YLims(2),Pts),'k','-',BoxWidth)
     end
+%     % Formatting legend
+%     legends = findobj('Tag','legend');
+%     set(legends,'box','on','FontSize',FontSize);
+    % Formatting colorbars
+    Colorbars = findobj('Tag','Colorbar');
+    set(Colorbars,'FontSize',FontSize);
 %     % Making sure axis doesn't resize
 %     axis tight
 end

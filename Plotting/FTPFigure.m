@@ -17,7 +17,7 @@ if Op.UploadFig
     print(FN, Name, '-dpng', '-r300') % set the resolution as 300 dpi
     % Opening up an FTP connection to the field catalog and uploading file
     test=ftp('catalog.eol.ucar.edu', 'anonymous', 'spuler@ucar.edu');
-    cd(test,'/pub/incoming/catalog/operations');
+    cd(test,Paths.FieldCat);
     mput(test, Name);
     cd(test);
     dir(test,'lidar*')

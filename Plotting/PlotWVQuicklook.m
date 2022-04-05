@@ -55,7 +55,7 @@ if AddCRLB
     xlabel('Time (UTC)'); ylabel('Wavelength (nm)');
     legend({'Observed','CRLB'},'location','north','orientation','horizontal','AutoUpdate','off');
     % Setting the plot bounds
-    xlim([0,24]); set(gca,'xtick',0:2:24); YL = ylim; MinYL = 0.015;
+    xlim([0,24]); set(gca,'xtick',0:2:24); YL = ylim; MinYL = 0.02;
     if (YL(2)-YL(1)) < MinYL; ylim(([-MinYL,MinYL]./2)+mean(YL)); end
     % Getting handle of CRLB plot
     Ax2 = gca;

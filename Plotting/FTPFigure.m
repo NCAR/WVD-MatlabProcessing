@@ -19,8 +19,8 @@ if Op.UploadFig
     test=ftp('catalog.eol.ucar.edu', 'anonymous', 'spuler@ucar.edu');
     cd(test,Paths.FieldCat);
     mput(test, Name);
-    cd(test);
-    dir(test,'lidar*')
+%     cd(test);
+%     dir(test,'lidar*')
     close(test);
     % Removing the temp file so as not to clog up the working directory
     delete(Name)

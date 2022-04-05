@@ -62,13 +62,13 @@ if AddCRLB
 end
 %% Formatting figure
 FormatFigures;
+%% Making it so the figure doesn't resize when saving
+set(gcf, 'PaperPositionMode', 'auto');
 %% Setting the axis location to compensate for width of colorbars
 if AddCRLB
     Pos = get(Ax1,'position'); Pos2 = get(Ax2,'position');
     set(Ax2,'position',[Pos2(1),Pos2(2),Pos(3),Pos2(4)],'LineWidth',2);
 end
-%% Making it so the figure doesn't resize when saving
-set(gcf, 'PaperPositionMode', 'auto');
 end
 
 function CB = FormatAxis(Date, Op, Name,Subplots,Range)

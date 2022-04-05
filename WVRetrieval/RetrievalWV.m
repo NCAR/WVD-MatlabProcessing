@@ -95,11 +95,11 @@ WV.RB.Value     = Rb;
 
 WV.Python       = Python.Online;
 %% Calculating data masks
-% remove non-physical watervapor values
-MaskNP   = WV.Smoothed > 30 | WV.Smoothed < 0;
+% remove non-physical water vapor values
+MaskNP   = WV.Smoothed > 30;
 % Removing high error regions
 MaskErr  = WV.Variance > 100;
-MaskErr2 = abs(WV.Variance./WV.Smoothed) > 60 & WV.Variance > 25;
+MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed) > 1 & WV.Variance > 25;
 MaskErr  = MaskErr | MaskErr2;
 % Gradient filter
 MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
@@ -109,9 +109,9 @@ MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 2e6;
 % Combining the masks
 WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
-% % Removing data that has really high amounts of bad data
-% Mask2 = DensityFiltering(Mask,5,0.2);
-% Mask  = Mask | Mask2;
+% Removing data with high amounts of bad data neighbors (speckle filtering)
+Mask2   = DensityFiltering(WV.Mask,5,0.5);
+WV.Mask = WV.Mask | Mask2;
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)

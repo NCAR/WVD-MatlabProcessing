@@ -11,7 +11,7 @@ function FigNum = PlotWVQuicklook(WV,Options,Op)
 % Outputs: none
 %
 %% Setting up needed variables
-Sc   = get(0,'ScreenSize');
+Sc = [1,1,2560,1416];
 Date = datestr(datenum(Op.Date,'yyyymmdd'), 'dd mmm yyyy');
 %% Loading colormap 
 RBColormap = importdata('NCAR_C_Map.mat');

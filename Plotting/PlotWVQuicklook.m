@@ -24,7 +24,7 @@ figure(FigNum)
 set(gcf,'Position',[Sc(3)/20 Sc(4)/10 Sc(3)/1.5 Sc(4)/1.5],'PaperUnits', 'points', 'PaperPosition', [0 0 1280 800]);
 %% Plotting Relative Backscatter
 if AddCRLB; Subs = 5; Range = 1:2; else; Subs = 4; Range = 1:2; end
-subplot(Subs,1,Range);
+Ax(1) = subplot(Subs,1,Range);
 pcolor(WV.RB.TimeStamp./60./60,WV.RB.Range./1e3,real(log10(WV.RB.Value*5)));
 colormap(gca,RBColormap)
 % Formatting the subplot
@@ -39,17 +39,15 @@ set(cb,'ytick',C,'yticklabel',B)
 WV.Smoothed2(WV.Mask) = nan;
 % Plotting
 if AddCRLB; Subs = 5; Range = 3:4; else; Subs = 4; Range = 3:4; end
-subplot(Subs,1,Range);
+Ax(2) = subplot(Subs,1,Range);
 pcolor(WV.TimeStamp./60./60,WV.Range./1e3,WV.Smoothed2);
 colormap(gca,'jet')
 % Formatting the subplot
 FormatAxis(Date, Options.WV, 'Water Vapor (g/m^3)',Subs,Range);
 %% Plotting Cramer Rao Lower Bound online wavelength
 if AddCRLB
-    % Getting handle of WV contour
-    Ax1 = gca;
     % Plotting the wavelengths of interst
-    subplot(5,1,5); hold on;
+    Ax(3) = subplot(5,1,5); hold on;
     plot(Py.TimeStamp./60./60,Py.ActualWavelength,'k',Py.TimeStamp./60./60,Py.OptimalWavelength,'r','linewidth',2);
     % Labeling the plot
     xlabel('Time (UTC)'); ylabel('Wavelength (nm)');
@@ -57,8 +55,6 @@ if AddCRLB
     % Setting the plot bounds
     xlim([0,24]); set(gca,'xtick',0:2:24); YL = ylim; MinYL = 0.02;
     if (YL(2)-YL(1)) < MinYL; ylim(([-MinYL,MinYL]./2)+mean(YL)); end
-    % Getting handle of CRLB plot
-    Ax2 = gca;
 end
 %% Formatting figure
 FormatFigures;
@@ -66,8 +62,13 @@ FormatFigures;
 set(gcf, 'PaperPositionMode', 'auto');
 %% Setting the axis location to compensate for width of colorbars
 if AddCRLB
-    Pos = get(Ax1,'position'); Pos2 = get(Ax2,'position');
-    set(Ax2,'position',[Pos2(1),Pos2(2),Pos(3),Pos2(4)],'LineWidth',2);
+    for m=1:1:length(Ax)
+        Pos(m,:) = get(Ax(m),'position');
+    end
+    Width = min(Pos(:,3));
+    for m=1:1:length(Ax)
+        set(Ax(m),'position',[Pos(m,1),Pos(m,2),Width,Pos(m,4)],'LineWidth',2);
+    end
 end
 end
 

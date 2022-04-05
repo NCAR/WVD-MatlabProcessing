@@ -74,7 +74,7 @@ Op.Temp.TimeStamp   = Op.Temp.MinTime:Op.Temp.BinTime:Op.Temp.MaxTime;
 %% Defining plotting options
 Op.Plot.FontSize     = 18;
 
-Op.Plot.RB.MaxRange  = 14e3;
+Op.Plot.RB.MaxRange  = 12e3;
 Op.Plot.RB.MinRange  = 0;
 Op.Plot.RB.CAxis     = [1,6];
 

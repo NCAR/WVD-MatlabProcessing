@@ -10,6 +10,8 @@ function FigNum = PlotWVQuicklook(WV,Options,Op)
 %
 % Outputs: none
 %
+%% Checking for weird figure settings
+Options = OverwriteColorbar(Options,Op.Date,Op.System);
 %% Setting up needed variables
 Sc = [1,1,2560,1416];
 Date = datestr(datenum(Op.Date,'yyyymmdd'), 'dd mmm yyyy');
@@ -86,7 +88,7 @@ if any(ismember(Range,Subplots))
 end
 ylabel('Height (km, AGL)');
 if any(ismember(Range,1))
-    title({[Date,' MPD Data']});
+    title({[Date,' MPD Data',Op.ExtraName]});
 end
 %% Formatting axes
 set(gca,'xtick',0:2:24,'ytick',0:2:Op.MaxRange/1e3)
@@ -97,3 +99,21 @@ caxis(Op.CAxis); CB = colorbar('EastOutside');
 ylabel(CB,Name)
 end
 
+function Options = OverwriteColorbar(Options, Date, System)
+%
+%
+%
+%
+%%
+if any(strcmp(System,{'mpd_02','mpd_03','mpd_04'}))            &&  ...
+    datenum(Date,'yyyymmdd') >= datenum('20220520','yyyymmdd') &&  ...
+    datenum(Date,'yyyymmdd') <= datenum('20220901','yyyymmdd')
+    % Precip
+    Options.WV.CAxis = [0,25];
+    Options.RB.ExtraName = ' (PRECIP)';
+    Options.WV.ExtraName = '';
+else
+    Options.RB.ExtraName = '';
+    Options.WV.ExtraName = '';
+end
+end

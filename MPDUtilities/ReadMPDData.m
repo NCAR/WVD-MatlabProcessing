@@ -180,6 +180,11 @@ function [Data] = SpecialInsructions(Data,Filename,FileVar,FileType)
 %
 % Outputs: Data:    Modified loaded data per the belwo instructions
 %
+%%
+if strcmp(FileType,'Current') && strcmp(FileVar,'Current')
+    % Current is written in the file is half the actual value
+    Data = Data.*2;
+end
 %% MCS Channel (also load the channel map and convert raw data with it)
 if strcmp(FileType,'MCS') && strcmp(FileVar,'Channel')
     % Loading the channel map

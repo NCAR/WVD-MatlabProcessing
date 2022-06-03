@@ -86,7 +86,6 @@ WV.Range      = Counts.BGSub.WVOnline.Range;
 WV.Value      = N.*Const.MWV.*1000;                   % molec/m^3 to g/m^3
 WV.Variance   = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
 WV.Smoothed   = WeightedSmooth(WV.Value,Options);
-WV.Smoothed2  = SmoothOld2(WV.Value,Options);
 WV.VarianceSm = WeightedSmooth(WV.Variance,Options);
 
 WV.RB.TimeStamp = Counts.BGSub.WVOnline.TimeStamp;
@@ -98,9 +97,11 @@ WV.Python       = Python.Online;
 % remove non-physical water vapor values
 MaskNP   = WV.Smoothed > 30;
 % Removing high error regions
-MaskErr  = WV.Variance > 100;
-MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed) > 1 & WV.Variance > 25;
-MaskErr  = MaskErr | MaskErr2;
+MaskErr1  = WV.Variance > (20^2);
+%MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed2) > 5 & WV.Variance > 3^2;
+MaskErr2 = 0.*MaskErr1;
+MaskErr  = MaskErr1 | MaskErr2;
+
 % Gradient filter
 MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
 % RB and are not the same size (in range) so downsize Gradient filter mask
@@ -112,6 +113,10 @@ WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
 % Removing data with high amounts of bad data neighbors (speckle filtering)
 Mask2   = DensityFiltering(WV.Mask,5,0.5);
 WV.Mask = WV.Mask | Mask2;
+%% Calculating smoothed profile for plotting
+PreMask = WV.Value;
+PreMask(WV.Mask == 1) = nan;
+WV.Smoothed2  = SmoothOld2(PreMask,Options);
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)

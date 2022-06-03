@@ -108,9 +108,15 @@ function Options = OverwriteColorbar(Options, Date, System)
 if any(strcmp(System,{'mpd_02','mpd_03','mpd_04'}))            &&  ...
     datenum(Date,'yyyymmdd') >= datenum('20220520','yyyymmdd') &&  ...
     datenum(Date,'yyyymmdd') <= datenum('20220901','yyyymmdd')
+    switch System
+        case 'mpd_02'; Loc = 'NCU';
+        case 'mpd_03'; Loc = 'Yilan';
+        case 'mpd_04'; Loc = 'Hsinchu';
+        otherwise; Loc = '';
+    end
     % Precip
     Options.WV.CAxis = [0,25];
-    Options.RB.ExtraName = ' (PRECIP)';
+    Options.RB.ExtraName = [' (PRECIP -- ',Loc,')'];
     Options.WV.ExtraName = '';
 else
     Options.RB.ExtraName = '';

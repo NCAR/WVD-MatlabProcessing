@@ -32,8 +32,23 @@ Const.Etalon.CenterWave   = 769.7958;    % nanometers
 Const.Etalon.Length       = 0.00094896;  % Meters
 Const.Etalon.Reflectivity = 0.816072;    % Unitless
 %% Spectroscopy
-Const.Eo = 1420.7631*100;            % Ground state energy          [m^-1]
-Const.Eo = Const.Eo*Const.H*Const.C; % Same converted to units of   [J]
-Const.O2LineS  = 4.889e-26/100;      % Line strength of O2 line     [m/Mol]
-Const.HitranTo = 296;                % Hitran reference temperature [K]
+% Const.Eo  = [1420.766].*100;      % Ground state energy          [m^-1]
+% Const.O2LineS = [4.86e-26]./100;  % Line strength of O2 line     [m/Mol]
+Const.Eo  = [1420.766;1635.0686].*100;      % Ground state energy          [m^-1]
+Const.O2LineS = [4.86e-26;3.749e-27]./100;  % Line strength of O2 line     [m/Mol]
+Const.Eo  = Const.Eo*Const.H*Const.C;       % Same converted to units of   [J]
+Const.HitranTo = 296;                       % Hitran reference temperature [K]
+%% Reshaping Line parameters
+Const.Eo      = PushTo3d(Const.Eo);
+Const.O2LineS = PushTo3d(Const.O2LineS);
+end
+
+function [ThreeD] = PushTo3d(OneD)
+%
+% Input: OneD: Array of line parameters as 1d array
+%
+% Output: ThreeD: Array reshaped such that the line parameters occupy the
+%                 3rd array position. Will be used as (time,range,line)
+%%
+ThreeD = reshape(OneD,[1,1,length(OneD)]);
 end

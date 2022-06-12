@@ -45,7 +45,11 @@ for m=1:1:Options.TempIter
     % Calculating simplifying constants
     [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,TCurrent.Value);
     % Calculating the update temperature
-    DeltaT = Alpha./(C1.*C2.*C3.*LineShape.*Const.QO2.*(1-Qwv)) - 1./C3;
+%     DeltaT = Alpha./(C1.*C2.*C3.*LineShape.*Const.QO2.*(1-Qwv)) - 1./C3;
+    DeltaT = (Alpha - C1(:,:,1).*C2(:,:,1).*LineShape(:,:,1).*Const.QO2.*(1-Qwv) - ...
+                      C1(:,:,2).*C2(:,:,2).*LineShape(:,:,2).*Const.QO2.*(1-Qwv))./...
+                     (C1(:,:,1).*C2(:,:,1).*C3(:,:,1).*LineShape(:,:,1).*Const.QO2.*(1-Qwv) + ...
+                      C1(:,:,2).*C2(:,:,2).*C3(:,:,2).*LineShape(:,:,2).*Const.QO2.*(1-Qwv));
     % Limiting the gradient possible
     DeltaT(abs(DeltaT)>MaxDt) = sign(DeltaT(abs(DeltaT)>MaxDt)).*MaxDt;
     % Outputting temperature state

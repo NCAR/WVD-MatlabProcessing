@@ -37,11 +37,11 @@ Python = LoadPythonData2(Paths.PythonData);
 Options                 = Op.WV;
 Paths.PCASpec           = fullfile(Paths.Code,'WVRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'WVOnline';'WVOffline'};    % Base wavelengths
-Paths.PCA.Spectra       = {'20GHzPCA'};   % Spectra to load
+Paths.PCA.Spectra       = {'WV'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption'}; % Name of spectra in code
 % Loading data needed for processing
 Const       = DefineConstants;
-Spectra.PCA = ReadPCASpectra(Paths);
+Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
 % Reading Needed Data (Python HSRL and Receiver Scan)
 Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
 % Bin lidar data to desired analysis resolution and background substracting

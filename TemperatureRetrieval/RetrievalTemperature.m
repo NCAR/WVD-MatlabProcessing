@@ -29,12 +29,11 @@ MPD = Data2D.MPD;
 Options                 = Op.Temp;
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
-Paths.PCA.Spectra       = {'20GHzPCA';'RB20GHzPCA'};   % Spectra to load
+Paths.PCA.Spectra       = {'O2';'RB'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
-
 % Loading data needed for processing
 Const       = DefineConstants;
-Spectra.PCA = ReadPCASpectra(Paths);
+Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
 % Reading Needed Data (Python HSRL and Receiver Scan)
 Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
 % Bin lidar data to desired analysis resolution

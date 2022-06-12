@@ -101,7 +101,6 @@ MaskErr1  = WV.Variance > (20^2);
 %MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed2) > 5 & WV.Variance > 3^2;
 MaskErr2 = 0.*MaskErr1;
 MaskErr  = MaskErr1 | MaskErr2;
-
 % Gradient filter
 MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
 % RB and are not the same size (in range) so downsize Gradient filter mask
@@ -117,6 +116,8 @@ WV.Mask = WV.Mask | Mask2;
 PreMask = WV.Value;
 PreMask(WV.Mask == 1) = nan;
 WV.Smoothed2  = SmoothOld2(PreMask,Options);
+% %% Plotting
+% PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)
@@ -259,5 +260,35 @@ Navg(isnan(N)) = nan;
 
 Navg = movmean(Navg,SpatialAverage(1)/Options.BinRange.*2,1,'omitnan');
 Navg(isnan(N)) = nan;
+
+end
+
+function PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
+%
+% Inputs: WV:       Data structure containing all of the WV data to be
+%                   passed back to the main program
+%         MaskNP:   Mask of non-physical water vapor values
+%         MaskErr1: Mask of high-variance water vapor values
+%         MaskErr2: Mask of weird variance water vapor values
+%         MaskGrad: Mask calculated from the gradient filter
+%         MaskCntR: Mask calculated from the count rate
+%         Mask2:    Mask calculated from the speckle filter
+%
+% Outputs: none
+%
+%% Plotting masks
+figure(100)
+subplot(6,1,1); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskNP));
+shading flat; colorbar; caxis([0,1]); title('High Value')
+subplot(6,1,2); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr1));
+shading flat; colorbar; caxis([0,1]); title('High Variance')
+subplot(6,1,3); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr2));
+shading flat; colorbar; caxis([0,1]); title('Weird Variance')
+subplot(6,1,4); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskGrad));
+shading flat; colorbar; caxis([0,1]); title('Gradient Filter')
+subplot(6,1,5); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskCntR));
+shading flat; colorbar; caxis([0,1]); title('Count Rate')
+subplot(6,1,6); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(Mask2));
+shading flat; colorbar; caxis([0,1]); title('Speckle')
 
 end

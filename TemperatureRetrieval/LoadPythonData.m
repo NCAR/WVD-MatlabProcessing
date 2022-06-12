@@ -1,10 +1,21 @@
 
 
-function [Data1D,Data2D] = LoadPythonData(FileName)
+function [Data1D,Data2D,Found] = LoadPythonData(FileName,Op)
 %
 %
 %
 %
+%% Checking if python file exists...if not escape
+Found = false;
+[~, FName, FExt] = fileparts(FileName);
+if isfile(FileName)
+    [~, FName, FExt] = fileparts(FileName);
+    CWLogging(['    Loading: ',[FName,FExt],'\n'],Op,'Main')
+else
+    Data1D = []; Data2D = [];
+    CWLogging(['    ** Error: ',[FName,FExt],' can''t be found.\n'],Op,'Main')
+    return
+end
 %% Loading NCIP Data
 % Map from file names (Types) to code names (As)
 Types    = {'Temperature_Model';'Pressure_Model'};
@@ -41,6 +52,8 @@ Off = ReadAttribute(FileName,'range','bin_offset');
 if not(isnan(Res*Off))
     Data2D.MPD = RecursiveOverwriteField(Data2D.MPD,'Range',[],-Res*Off);
 end
+%% 
+Found = true;
 end
 
 function [Data] = LoadData(Types,ForTypes,AftTypes,As,SubAs,FileName)

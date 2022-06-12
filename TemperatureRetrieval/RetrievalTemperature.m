@@ -18,9 +18,12 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
 As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
 [Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
-if not(Possible)
+% Loading python data for HSRL and WV data
+[Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
+if not(Possible) || not(Found)
     Temp = []; MPD = []; return
 end
+MPD = Data2D.MPD;
 %% Temperature Pre-Process
 % Extra definitions
 Options                 = Op.Temp;
@@ -28,9 +31,7 @@ Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'20GHzPCA';'RB20GHzPCA'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
-% Loading python data for HSRL and WV data
-[Data1D.Surface,Data2D] = LoadPythonData(Paths.PythonData);
-MPD = Data2D.MPD;
+
 % Loading data needed for processing
 Const       = DefineConstants;
 Spectra.PCA = ReadPCASpectra(Paths);

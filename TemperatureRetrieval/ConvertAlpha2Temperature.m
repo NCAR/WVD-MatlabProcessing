@@ -37,7 +37,8 @@ for m=1:1:Options.TempIter
     % Calculating the absorption lineshape function (update with temp)
     PCA.O2Online.Absorption = Spectra.PCA.O2Online.Absorption;
     SpecNew = BuildSpectra(PCA,TCurrent,Data2D.NCIP.Pressure,Data1D.Wavelength,Op);
-    LineShape = SpecNew.O2Online.AbsorptionObserved./Const.O2LineS;
+    LS = CalculateLineStrength(Const, Const.Eo./Const.H./Const.C./100, Const.O2LineS.*100, 296, TCurrent.Value);
+    LineShape = SpecNew.O2Online.AbsorptionObserved./LS;
     % Calculating lapse rate of the current temperature profile 
 %     Lapse = FittingLapseRate(TCurrent);
     Lapse = ones(1,length(Surf.Temperature.Value)).*GuessLapse; 
@@ -69,6 +70,28 @@ end
 TCurrent.Value(abs(DeltaT)==2) = nan;
 end
 
+function [LS] = CalculateLineStrength(Const, Energy, LS0, RefT, Temperature)
+%
+% Inputs: Const:       A structure containing needed universal constants in
+%                      standard MKS units
+%         Energy:      The energy of the selected transition with units of
+%                      [cm^-1]
+%         LS0:         The tabulated line strength of the transition from
+%                      Hitran at standard temperature and pressure
+%         RefT:        The reference pressure of the tabulated Lorentz
+%                      broadening halfwidth with units of [K]
+%         Temperature: The temperature of the desired Lorentz broadeding
+%                      calculation with units of [K]
+%
+% Outputs: LS:         The line strength of the transition at the desired
+%                      temperature (units of......)
+%
+%% Calculating the line strength
+LS = (LS0.*((RefT./Temperature).^1.5).*exp((100.*Const.H.*Const.C./Const.Kb) ...
+                                     .*Energy.*(1./RefT - 1./Temperature)))./100;
+end
+
+
 function [C1,C2,C3] = CalculateConstants(Const,Surf,Gamma,Lapse,Tc)
 %
 % Tc = temp current
@@ -84,7 +107,6 @@ C1 = Const.O2LineS.*Const.HitranTo.*(Surf.Pressure.Value'.*Const.Atm2Pa).* ...
 % Updates each time because it depends on current iteration's temperature 
 C2 = Tc.^(-GL-2).*exp(-Const.Eo./Const.Kb./Tc);
 % Updates each time because it depends on current iteration's temperature
-%%%%%%%%%%%%%%%% Kevin and I vary here by a negative sign %%%%%%%%%%%%%%%%%
 C3 = (-GL - 2)./Tc + Const.Eo./Const.Kb./(Tc.^2);
 end
 

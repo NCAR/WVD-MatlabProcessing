@@ -29,6 +29,6 @@ Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
 Paths.FieldCat   = '/pub/incoming/catalog/operations';
 Paths.PythonData = fullfile(ProcBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
-Paths.Quickload  = fullfile(ProcBase,[System,'_processed_data'],'Quickload','TempData');
+Paths.Quickload  = fullfile(ProcBase,[System,'_processed_data'],'Quickload','FullProcessing');
 Paths.Quicklook  = fullfile(ProcBase,[System,'_processed_data'],'Quicklook');
 end

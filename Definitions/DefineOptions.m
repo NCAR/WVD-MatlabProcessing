@@ -35,14 +35,13 @@ Op.Default.Range     = 16e3;                   % Units are kilometers
 Op.TimeGrid1d        = ((30:60:86400)./3600)'; % Data every 60 seconds
 Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 
-
 %% Defining Water Vapor retrieval options
-Op.WV.BackgroundInd = 50;     % How many pre-integration bins to
+Op.WV.BackgroundInd = 10;     % How many pre-integration bins to
                               % use to estimate background noise
 Op.WV.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
 Op.WV.BinTime     = 4*60;     % Desired data time resolution           [seconds]
 Op.WV.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
-Op.WV.GradFilt    = 1000;    % Relative count rate gradient to filter [ ]
+Op.WV.GradFilt    = 1000;     % Relative count rate gradient to filter [ ]
 Op.WV.SmoothRange = 150;      % Desired smoothing range res            [meters]
 Op.WV.SmoothTime  = 4*60;     % Desired smoothing time res             [seconds]
 Op.WV.MaxRange    = 6.5e3;    % Max range to run retrievals to         [meters]
@@ -53,16 +52,17 @@ Op.WV.Range       = Op.WV.MinRange:Op.WV.BinRange:Op.WV.MaxRange;
 Op.WV.TimeStamp   = Op.WV.MinTime:Op.WV.BinTime:Op.WV.MaxTime;
 
 %% Defining Temperature retrieval options
-Op.Temp.BackgroundInd = 50;     % How many pre-integration bins to   
-                                % use to estimate background noise
+Op.Temp.Method      = 'LBL';    % Options: 'LBL' (line-by-line) or 'PCA'
+Op.Temp.BackgroundInd = 10;     % How many pre-integration bins to use to
+                                % estimate background noise
 Op.Temp.BinRange    = 4*37.5;   % Desired data range resolution          [meters]
 Op.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
 Op.Temp.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
 Op.Temp.BlankBSC    = 5e-5;     % Backscatter coefficient above which data is blanked
 Op.Temp.Bootstrap   = false;
-Op.Temp.BootIters   = 50;       % Iterations to use when bootstraping
+Op.Temp.BootIters   = 20;       % Iterations to use when bootstraping
 Op.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
-Op.Temp.SmoothTime  = 10*60;    % Desired smoothing time res             [seconds]
+Op.Temp.SmoothTime  = 15*60;    % Desired smoothing time res             [seconds]
 Op.Temp.TempIter    = 50;       % Iterations for temperature conversion
 Op.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
 Op.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]

@@ -136,6 +136,6 @@ if Options.SaveQuickLoad
        mkdir(Paths.Quickload)
     end
     save(fullfile(Paths.Quickload,[lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat']), ...
-                                            'Options','Retrievals')
+                                          'CalInfo','Options','Retrievals')
 end
 end

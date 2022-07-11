@@ -28,6 +28,7 @@ MPD = Data2D.MPD;
 % Extra definitions
 Options                 = Op.Temp;
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
+Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'O2';'RB'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
@@ -68,45 +69,40 @@ if Options.Bootstrap
             ConstProfile = (Options.Range').*(GuessLapse);
             Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+Data1D.Surface.Temperature.Value';
             % Actually doing the nuts and bolts to retrieve temperature
-            [~,~,T{n,1},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap');
+            [~,~,T{m,n},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap',Paths);
         end
-        % Calculating variance
-        [AvgTemp{m,1},Var,VarSum,MaxChange(m,:)] = CalculateVariance(Op,Options,m,T,Var,VarSum);
     end
     % Adding all bootstrap averages together
-    for m=1:1:size(AvgTemp,1)          % Looping over bootstrap iterations
-        for n=1:1:size(AvgTemp{m},2)   % Looping over smoothed/unsmoothed
-            if m == 1
-                FinalTemp{n,1} = zeros(size(AvgTemp{m}{n})); %#ok<*AGROW>
-            end
-            FinalTemp{n,1} = FinalTemp{n,1} + AvgTemp{m}{n};
-        end
-    end
+    [TComb,VarComb] = CalculateTempAndVariance(T);
     % Parsing out data for returning
-    Temp            = T{n,1};
-    Temp.Value      = FinalTemp{1,1}./size(AvgTemp,1);
-    Temp.Smoothed   = FinalTemp{2,1}./size(AvgTemp,1);
-    Temp.Dt         = cell2mat(reshape(Dt,size(Dt,1)*size(Dt,2),1));
-    Temp.Variance   = Var{1,1};
-    Temp.VarianceSm = Var{2,1};
-    Temp.MaxChange  = MaxChange;
+    Temp             = T{n,1};
+    Temp.Value       = TComb.Value;
+    Temp.Smoothed    = TComb.Smoothed;
+    Temp.Dt          = cell2mat(reshape(Dt,size(Dt,1)*size(Dt,2),1));
+    Temp.Variance    = VarComb.Value;
+    Temp.VarianceSm  = VarComb.Smoothed;
+    Temp.MaxChange   = VarComb.ValueMaxChange;
+    Temp.MaxChangeSm = VarComb.SmoothedMaxChange;
+    Temp.BootStrapSteps = T;
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
     GuessLapse = -0.0098;
-    [~,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Standard');
+    [Alpha,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Standard',Paths);
     % Making the output data structure
-    Temp.Dt         = Dt;
-    Temp.Variance   = [];
-    Temp.VarianceSm = [];
-    Temp.MaxChange  = [];
+    Temp.Dt          = Dt;
+    Temp.Variance    = [];
+    Temp.VarianceSm  = [];
+    Temp.MaxChange   = [];
+    Temp.MaxChangeSm = [];
+    Temp.Alpha       = Alpha;
 end
 end
 
 
-function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,Type)
+function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,Type,Paths)
 %
 % Inputs:
 %          Type:        'Bootstrap'
@@ -124,7 +120,7 @@ CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 [Alpha,POrders] = PerturbativeRetrieval(Const,Counts,Data2D,Options,Spectra,Op);
 %% Convert absorption to temperature
 CWLogging('     Converting to temperature\n',Op,'Sub')
-[T,Dt] = ConvertAlpha2Temperature(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,GuessLapse,Type);
+[T,Dt] = ConvertAlpha(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,GuessLapse,Type,Paths);
 %% Blanking low altitude data
 T.Value(T.Range<Options.BlankRange,:) = nan;
 %% Removing data in excess of the allowed backscatter coefficient
@@ -137,39 +133,3 @@ T.Value(A > 0.1) = nan;
 CWLogging('     Smoothing temperature retrieval\n',Op,'Sub')
 T.Smoothed = WeightedSmooth(T.Value,Options);
 end
-
-function [AvgTemp,Var,VarSum,MaxChange] = CalculateVariance(Op,Options, m, Temperature, Var, VarSum)
-%
-%
-%
-%
-%% Calculate temperature average and variance from poisson thinned profiles
-CWLogging('     Calculating variance\n',Op,'Sub')
-% Looping over the raw and smoothed data set
-n = 1;
-for el = {'Value','Smoothed'}
-    if m == 1
-        % Pre-allocating the arrays to hold current and total variance
-        VarSum{n,1} = zeros(length(Options.Range),length(Options.TimeStamp));
-        Var{n,1}    = zeros(length(Options.Range),length(Options.TimeStamp));
-    end
-    Element = el{1};
-    % Calculating the average temperature from this bootstrap iteration
-    AvgTemp{1,n} = (Temperature{1,1}.(Element) + Temperature{2,1}.(Element))./2;
-    % Saving the old variance
-    VarOld  = Var{n,1};
-    % Calculating the variance from this bootstrap iteration
-    VarSum{n,1} = VarSum{n,1} + (Temperature{1,1}.(Element) - Temperature{2,1}.(Element)).^2;
-    % Updating the current guess at variance
-    if m >= 2
-        Var{n,1} = (1./(2.*(m-1))).*VarSum{n,1};
-    else
-        Var{n,1} = (1./2).*VarSum{n,1};
-    end
-    % Calculate max change in variance for each iteration
-    MaxChange(1,n) = max(max(abs(Var{n,1} - VarOld)));
-    % Updating the loop counter
-    n = n + 1;
-end
-end
-

@@ -10,6 +10,7 @@ function [Const] = DefineConstants
 %                 constants needed for temperature analysis
 %
 %% Universal constants
+Const.Av      = 6.0221408e23;   % Avogadros number          [molec/mole]
 Const.C       = 299792458;      % Speed of light            [m/s] 
 Const.H       = 6.626e-34;      % Planck's constant         [Js]
 Const.Kb      = 1.38065e-23;    % Boltzman's constant       [m^2 kg/s^2/K]
@@ -32,8 +33,6 @@ Const.Etalon.CenterWave   = 769.7958;    % nanometers
 Const.Etalon.Length       = 0.00094896;  % Meters
 Const.Etalon.Reflectivity = 0.816072;    % Unitless
 %% Spectroscopy
-% Const.Eo  = [1420.766].*100;      % Ground state energy          [m^-1]
-% Const.O2LineS = [4.86e-26]./100;  % Line strength of O2 line     [m/Mol]
 Const.Eo  = [1420.766;1635.0686].*100;      % Ground state energy          [m^-1]
 Const.O2LineS = [4.86e-26;3.749e-27]./100;  % Line strength of O2 line     [m/Mol]
 Const.Eo  = Const.Eo*Const.H*Const.C;       % Same converted to units of   [J]

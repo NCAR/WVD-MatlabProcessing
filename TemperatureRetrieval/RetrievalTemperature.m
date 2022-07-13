@@ -69,7 +69,7 @@ if Options.Bootstrap
             ConstProfile = (Options.Range').*(GuessLapse);
             Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+Data1D.Surface.Temperature.Value';
             % Actually doing the nuts and bolts to retrieve temperature
-            [~,~,T{m,n},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap',Paths);
+            [Alpha{m,n},~,T{m,n},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap',Paths);
         end
     end
     % Adding all bootstrap averages together
@@ -84,6 +84,7 @@ if Options.Bootstrap
     Temp.MaxChange   = VarComb.ValueMaxChange;
     Temp.MaxChangeSm = VarComb.SmoothedMaxChange;
     Temp.BootStrapSteps = T;
+    Temp.Alpha       = Alpha;
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')

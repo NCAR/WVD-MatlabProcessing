@@ -37,10 +37,6 @@ for CalcType = {'Value','Smoothed'}
             for m=1:1:size(T,1)
                 ValNew = SumCalc(StepStore{m,1},StepStore{m,2},In);
                 ValNew(ValNew==inf) = nan;
-                
-                figure(10);
-                pcolor(sqrt(ValNew)); shading flat; colorbar; caxis([0,10])
-                
                 % Calculate max change in variance for each iteration
                 A.Var.([CT,'MaxChange'])(1,m) = max(max(abs(ValNew - ValOld)));
                 % Updating variance

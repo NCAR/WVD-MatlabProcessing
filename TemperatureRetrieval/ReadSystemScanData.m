@@ -14,12 +14,13 @@ function [Spec] = ReadSystemScanData(Sp,Scan,Const)
 % Looping over all spectra to be built
 for m=1:1:length(FN)
     try
+        SubField = fields(Sp.(FN{m,1}));
         Tr = interp1(Scan.(FN{m,1}).Wavelength,Scan.(FN{m,1}).Transmission, ...
-                     Sp.(FN{m,1}).Absorption.Lambda);
-        Spec.(FN{m,1}).Etalon.Lambda       = Sp.(FN{m,1}).Absorption.Lambda;
+                     Sp.(FN{m,1}).(SubField{1}).Lambda);
+        Spec.(FN{m,1}).Etalon.Lambda       = Sp.(FN{m,1}).(SubField{1}).Lambda;
         Spec.(FN{m,1}).Etalon.Transmission = Tr./max(Tr);
     catch
-        Spec.(FN{m,1}).Etalon = EModel(Sp.(FN{m,1}).Absorption.Lambda,Const);
+        Spec.(FN{m,1}).Etalon = EModel(Sp.(FN{m,1}).(SubField{1}).Lambda,Const);
     end
 end
 end

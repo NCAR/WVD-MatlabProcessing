@@ -18,7 +18,7 @@ for m=1:1:length(As)
         Raw.(As{m}).Value = Data.Lidar.Interp.([As{m},Chan{m}]).Data';
         % Loading wavelength info
         Data1D.Wavelength.(As{m}).TimeStamp = Data.TimeSeries.Laser.(As{m}).TimeStamp.*60.*60;
-        Data1D.Wavelength.(As{m}).Value   = Data.TimeSeries.Laser.(As{m}).WavelengthActual./1e9;
+        Data1D.Wavelength.(As{m}).Value     = Data.TimeSeries.Laser.(As{m}).WavelengthActual./1e9;
         % Interpolating wavelength to handle wavemeter dropouts
         Data1D.Wavelength.(As{m}).Value = InterpolateWavelength(Data1D.Wavelength.(As{m}).TimeStamp,...
                                                                 Data1D.Wavelength.(As{m}).Value);

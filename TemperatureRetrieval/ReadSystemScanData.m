@@ -18,7 +18,6 @@ for m=1:1:length(FN)
         Tr = interp1(Scan.(FN{m,1}).Wavelength,Scan.(FN{m,1}).Transmission, ...
                      Sp.(FN{m,1}).(SubField{1}).Lambda);
         Spec.(FN{m,1}).Lambda       = Sp.(FN{m,1}).(SubField{1}).Lambda;
-%         Spec.(FN{m,1}).Etalon.Transmission = Tr./max(Tr);
         Spec.(FN{m,1}).Transmission = Tr;
     catch
         Spec.(FN{m,1}) = EModel(Sp.(FN{m,1}).(SubField{1}).Lambda,Const);

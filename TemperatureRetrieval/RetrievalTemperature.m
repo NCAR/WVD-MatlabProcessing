@@ -3,7 +3,7 @@
 % Modificication Info: Created December, 2020
 
 
-function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal)
+function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal,Retrievals)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -23,7 +23,10 @@ Chan = {'Comb';    'Comb'};
 if not(Possible) || not(Found)
     Temp = []; MPD = []; return
 end
-MPD = Data2D.MPD;
+% Putting info in a form handy for data files and access for processing
+MPD           = Data2D;
+Data2D.Spuler = Retrievals.HSRL;
+
 %% Temperature Pre-Process
 % Extra definitions
 Options                 = Op.Temp;

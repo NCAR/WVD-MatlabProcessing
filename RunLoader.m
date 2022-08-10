@@ -33,7 +33,7 @@ if nargin ~= 6
     ProcessRetS = false;
 end
 %% Adding path to recursive functional utilities and defining path info
-for el = {'Definitions','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
+for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
 [Paths,Server] = DefinePaths(Date,System);
@@ -108,11 +108,14 @@ if ProcessRetF || ProcessRetS
     % HSRL Retrieval
     if ProcessRetF
         CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
+        Retrievals.HSRL = RetrievalHSRL(Options,Paths,Data,CalInfo);
+    else
+        Retrievals.HSRL = [];
     end
     % Temperature Retrieval
     if ProcessRetS
         CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
-        [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo);
+        [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo,Retrievals);
         if not(isempty(Retrievals.Temperature))
             FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
             SaveFigure(FigNum,Options,Paths,'Retrievals')

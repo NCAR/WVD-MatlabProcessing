@@ -18,6 +18,7 @@ As   = {'WVOnline';'WVOffline'};
 Chan = {'';''};
 [Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
 if not(Possible)
+    CWLogging('***** All WV Data not availible ******\n',Op,'Main')
     WV = []; return
 end
 try
@@ -31,7 +32,6 @@ end
 
 %% Loading in Python data as needed
 Python = LoadPythonData2(Paths.PythonData);
-
 %% Water Vapor Pre-Process
 % Extra definitions
 Options                 = Op.WV;
@@ -42,8 +42,6 @@ Paths.PCA.SpectraLabels = {'Absorption'}; % Name of spectra in code
 % Loading data needed for processing
 Const       = DefineConstants;
 Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
-% Reading Needed Data (Python HSRL and Receiver Scan)
-Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
 % Bin lidar data to desired analysis resolution and background substracting
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);

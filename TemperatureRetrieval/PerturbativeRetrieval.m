@@ -93,7 +93,7 @@ for m=1:1:length(FieldNames)
     % online max so that spectra are on the same scale and normalized to 1)
     Order1.f.(FieldNames{m}) = Spectra.Rebuilt.(FieldNames{m}).Absorption./max(Spectra.Rebuilt.O2Online.Absorption,[],3);
     % Receiver optical transmission
-    E = permute(Spectra.Optics.(FieldNames{m}).Etalon.Transmission,[1,3,2]);
+    E = permute(Spectra.Optics.(FieldNames{m}).Transmission,[1,3,2]);
     % Lineshape of the backscattered light
     g = (1-IBSR).*Spectra.Rebuilt.(FieldNames{m}).Aerosol + ...
         IBSR .*Spectra.Rebuilt.(FieldNames{m}).RayleighBr;

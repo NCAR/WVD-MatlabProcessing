@@ -51,6 +51,22 @@ Op.WV.MinTime     = Op.WV.BinTime./2;   % Start of retrievals          [seconds]
 Op.WV.Range       = Op.WV.MinRange:Op.WV.BinRange:Op.WV.MaxRange;
 Op.WV.TimeStamp   = Op.WV.MinTime:Op.WV.BinTime:Op.WV.MaxTime;
 
+%% Defining HSRL retrieval options
+Op.HSRL.BackgroundInd = 10;     % How many pre-integration bins to
+                                % use to estimate background noise
+Op.HSRL.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Op.HSRL.BinTime     = 2*60;     % Desired data time resolution           [seconds]
+Op.HSRL.BlankRange  = 250;      % Altitude below which data is blanked   [meters]
+
+Op.HSRL.SmoothRange = 2*37.5;      % Desired smoothing range res            [meters]
+Op.HSRL.SmoothTime  = 2*60;     % Desired smoothing time res             [seconds]
+Op.HSRL.MaxRange    = 8e3;    % Max range to run retrievals to         [meters]
+Op.HSRL.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
+Op.HSRL.MinRange    = 0;                % Start of retrievals          [meters]
+Op.HSRL.MinTime     = Op.HSRL.BinTime./2;   % Start of retrievals          [seconds]
+Op.HSRL.Range       = Op.HSRL.MinRange:Op.HSRL.BinRange:Op.HSRL.MaxRange;
+Op.HSRL.TimeStamp   = Op.HSRL.MinTime:Op.HSRL.BinTime:Op.HSRL.MaxTime;
+
 %% Defining Temperature retrieval options
 Op.Temp.Method      = 'LBL';    % Options: 'LBL' (line-by-line) or 'PCA'
 Op.Temp.BackgroundInd = 10;     % How many pre-integration bins to use to

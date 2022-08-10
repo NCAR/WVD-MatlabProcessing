@@ -14,13 +14,13 @@ function [System] = ReadMPDJSonFiles(File,DDate)
 JSon=loadjson(File,'SimplifyCell',1);
 %% Defining file information desired
 % Structure element in JSon where the data is found
-DesiredField = {'Receiver_Scan_File','Wavemeter_offset','Location','Location','Location','Location','Location'};
+DesiredField = {'Afterpulse_File','Receiver_Scan_File','Wavemeter_offset','Location','Location','Location','Location','Location'};
 % Substructure field name where the data is stored
-DesiredValue = {'value','value','location','elevation','latitude','longitude','Project'};
+DesiredValue = {'value','value','value','location','elevation','latitude','longitude','Project'};
 % How the user desires saving the fields
-ToNameField  = {'ScanFile','WMOffset','Site','SiteAlt','SiteLat','SiteLon','Project'};
+ToNameField  = {'AfterpulseFile','ScanFile','WMOffset','Site','SiteAlt','SiteLat','SiteLon','Project'};
 % Default values to use
-DefaultVal   = {'Unknown',0,'Assumed Boulder',1613,40.0386,-105.2390,{'none'}};
+DefaultVal   = {'Unknown','Unknown',0,'Assumed Boulder',1613,40.0386,-105.2390,{'none'}};
 %% Looping and loading data
 for m=1:1:length(DesiredField)
     % Extracting structure information to use quickly

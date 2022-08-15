@@ -50,23 +50,23 @@ for m=1:1:size(CellData,1)
            if all([size(OldTime(:),1),size(OldRange(:),1)] == size(CellData{m,1}))
                % Data needs to be transposed
                CellData{m,1} = CellData{m,1}';
-           elseif all([size(OldRange(:),1),size(OldTime(:),1)] == size(CellData{m,1})) ~= 1
+           elseif ~all([size(OldRange(:),1),size(OldTime(:),1)] == size(CellData{m,1}))
                % Data size is weird
                12
            end
            % Downsample data in time
            A = OldTime(:); B = NewTime(:);
            Downsample = ceil((B(2)-B(1))/(A(2)-A(1)));
-           OldTime = movmean(A,Downsample,1) - Downsample*(A(2)-A(1));
+           OldTimeDS = movmean(A,Downsample,1) - Downsample*(A(2)-A(1));
            CellData{m,1} = movmean(CellData{m,1},Downsample,1);
            % Downsample data in range
            A = OldRange(:); B = NewRange(:);
            Downsample = floor((B(2)-B(1))/(A(2)-A(1)));
-           OldRange = movmean(A,Downsample) - Downsample*(A(2)-A(1));
+           OldRangeDS = movmean(A,Downsample) - Downsample*(A(2)-A(1));
            CellData{m,1} = movmean(CellData{m,1},Downsample,2);
            % Interpolating in 2D
            [C,D] = meshgrid(NewTime,NewRange);
-           CellData{m,1} = interp2(OldTime,OldRange,CellData{m,1},C,D);
+           CellData{m,1} = interp2(OldTimeDS,OldRangeDS,double(CellData{m,1}),C,D);
        end
        CellDataNew{m,1} = CellData{m,1};
    end

@@ -22,8 +22,8 @@ PO.FontSize = 16;
 
 % Applying an optical depth filter to remove bad data above clouds
 LidarRatio = 30;
-Beta     = Python.BSCoefficient.Value;
-Altitude = Python.BSCoefficient.Range;
+Beta     = Python.MPD.BSCoefficient.Value;
+Altitude = Python.MPD.BSCoefficient.Range;
 % Calculating optical depth
 Beta(isnan(Beta)) = 0;
 OD =  double(2.*LidarRatio.*cumsum(Beta).*(Altitude(2)-Altitude(1)));
@@ -31,9 +31,9 @@ OD =  double(2.*LidarRatio.*cumsum(Beta).*(Altitude(2)-Altitude(1)));
 Python.BSCoefficient.Value(OD>0.25) = nan;
 
 %% Copying HSRL and WV masks for Temperature
-TempMask = isnan(Python.BSCoefficient.Value) | isnan(Python.Humidity.Mask);
+TempMask = isnan(Python.MPD.BSCoefficient.Value) | isnan(Python.MPD.Humidity.Mask);
 % Interpolating Python grid to temperature grid
-[X,Y] = meshgrid(Python.BackRatio.TimeStamp, Python.BackRatio.Range);
+[X,Y] = meshgrid(Python.MPD.BackRatio.TimeStamp, Python.MPD.BackRatio.Range);
 [x,y] = meshgrid(Retrievals.Temperature.TimeStamp,Retrievals.Temperature.Range);
 TempMaskInt = ceil(interp2(X,Y,double(TempMask),x,y));
 % Applying mask
@@ -49,7 +49,7 @@ Hot = flipud(colormap('hot'));
 %% Plotting retrieved data
 % Water vapor data
 subplot(7,1,1:2);
-pcolor(Python.Humidity.TimeStamp./60./60,Python.Humidity.Range./1e3,ApplyMask(Python.Humidity));
+pcolor(Python.MPD.Humidity.TimeStamp./60./60,Python.MPD.Humidity.Range./1e3,ApplyMask(Python.MPD.Humidity));
 shading flat; colorbar; caxis([0,10]); colormap(gca,'parula')
 xlim([0,24]);ylim([0,6]);
 set(gca,'xtick',0:6:24,'ytick',0:1:6)
@@ -59,7 +59,7 @@ ylabel('Altitude [km]')
 
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
-pcolor(Python.BackRatio.TimeStamp./60./60,Python.BackRatio.Range./1e3,real(log10(ApplyMask(Python.BSCoefficient))));
+pcolor(Python.MPD.BackRatio.TimeStamp./60./60,Python.MPD.BackRatio.Range./1e3,real(log10(ApplyMask(Python.MPD.BSCoefficient))));
 shading flat; CB = colorbar; caxis([-8,-4]);
 xlim([0,24]);ylim([0,6]);
 set(gca,'xtick',0:6:24,'ytick',0:1:6)

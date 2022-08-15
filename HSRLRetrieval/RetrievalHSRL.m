@@ -69,15 +69,15 @@ Surf.Pressure    = Surf.Pressure./Const.MBar2Atm;
 % Building an estimate of the atmosphere
 HSRL.TimeStamp = Counts.BGSub.O2OfflineComb.TimeStamp;
 HSRL.Range     = Counts.BGSub.O2OfflineComb.Range;
-HSRL.T         = (Surf.Temperature-0.0065.*Options.Range)';           % Kelvin
-HSRL.P         = (Surf.Pressure.*(Surf.Temperature./HSRL.T').^-5.5)'; % Atmospheres
+HSRL.TGuess    = (Surf.Temperature-0.0065.*Options.Range)';           % Kelvin
+HSRL.PGuess    = (Surf.Pressure.*(Surf.Temperature./HSRL.TGuess').^-5.5)'; % Atmospheres
 
-T = ExtractAtmoStructs(HSRL,'T');
-P = ExtractAtmoStructs(HSRL,'P');
+T = ExtractAtmoStructs(HSRL,'TGuess');
+P = ExtractAtmoStructs(HSRL,'PGuess');
 
 
 %% Calculate HSRL Data (Spuler's way)
-[HSRL.Value,HSRL.Mask] = HSRLCalc(Counts.BGSub,HSRL.T,HSRL.P,Spectra,Const);
+[HSRL.Value,HSRL.Mask] = HSRLCalc(Counts.BGSub,HSRL.TGuess,HSRL.PGuess,Spectra,Const);
 
 %% Calculating HSRL per Stillwell et al. 2020
 Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
@@ -93,6 +93,7 @@ A(HSRL.Mask) = nan;
 HSRL.Smoothed  = WeightedSmooth(A,Options);
 
 A = HSRL.ValueV2;
+A(HSRL.Mask) = nan;
 HSRL.SmoothedV2  = WeightedSmooth(A,Options);
 end
 
@@ -105,7 +106,7 @@ function [A] = ExtractAtmoStructs(HSRL,Type)
 %%
 A = HSRL;
 A.Value = A.(Type);
-A = rmfield(A,{'T','P'});
+A = rmfield(A,{'TGuess','PGuess'});
 end
 
 function [Out] = ReorganizeStruct(In)

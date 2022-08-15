@@ -2,7 +2,7 @@
 % Written For: NCAR
 % Modificication Info: Created August 20th, 2020
 
-function [InterpData] = BinLidarData(RawData,Times,DefaultOptions)
+function [InterpData] = BinLidarData(RawData,Afterpulse,Times,DefaultOptions)
 %
 %
 %
@@ -14,6 +14,19 @@ function [InterpData] = BinLidarData(RawData,Times,DefaultOptions)
 ResCheck  = {'RangeResolution';'NBins'};       % Variables to define resolution
 ToAverage = {ResCheck{:},'RTime'}'; %#ok<CCAT> % Variables to average over 
 ToSum     = {'Data';'ProfilesPerHistogram'};   % Variables to sum over
+%% Applying the afterpulse correction to the raw data
+for m = fields(RawData)'
+    % Interpolating the afterpulse contour to current range grid if needed
+    if size(Afterpulse.(m{1}).Afterpulse,1) == size(RawData.(m{1}).Data,2)
+        AP = Afterpulse.(m{1}).Afterpulse'      .* ... % Rate     [Hz ]
+             RawData.(m{1}).ProfilesPerHistogram.*...  % Shots    [   ]
+             (RawData.(m{1}).RangeResolution.*1e-9);   % BinWidth [sec]
+    else
+        fprintf(['     Failed to apply afterpulse correction: ',m{1},'\n'])
+        AP = zeros(size(RawData.(m{1}).Data));
+    end
+   RawData.(m{1}).Data = RawData.(m{1}).Data - AP;
+end
 %% Converting count structure to cell array
 FieldNames = fieldnames(RawData);
 RawData    = struct2cell(RawData);

@@ -75,6 +75,8 @@ Data.TimeSeries = RecursiveOverwriteField(Data.TimeSeries,'TimeStamp',Options.Ti
 % Loading calibration scan information 
 CWLogging('----------Loading Scan file-----------\n',Options,'Main')
 CalInfo.ScanData = ReadMPDCalScanFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.CalFiles,CalInfo.ScanFile));
+CWLogging('-------Loading Afterpulse file--------\n',Options,'Main')
+CalInfo.AfterpulseData = ReadMPDAfterpulseFile(fieldnames(Data.Lidar.Raw),fullfile(Paths.CalFiles,CalInfo.AfterpulseFile));
 %% Plotting field catalog infomation
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
@@ -93,8 +95,8 @@ end
 %% Process lidar data retrievals and plotting
 if ProcessRetF || ProcessRetS
     % Push lidar data onto a constant grid
-    CWLogging('-----Push lidar data to known grid----\n',Options,'Main')
-    Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,Options.TimeGridLidar,Options.Default);
+    CWLogging('--Push data to grid & AP Correcting---\n',Options,'Main')
+    Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,CalInfo.AfterpulseData,Options.TimeGridLidar,Options.Default);
     % WV Retrieval
     if ProcessRetF
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')

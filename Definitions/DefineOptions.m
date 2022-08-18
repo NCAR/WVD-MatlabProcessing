@@ -35,57 +35,46 @@ Op.Default.Range     = 16e3;                   % Units are kilometers
 Op.TimeGrid1d        = ((30:60:86400)./3600)'; % Data every 60 seconds
 Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 
+Def.BackgroundInd = 10;       % How many pre-integration bins to use to estimate background noise
+Def.MaxTime       = 24*60*60; % Max time to run retrievals to          [seconds]
+Def.BinRange      = 2*37.5;   % Desired data range resolution          [meters]
+Def.MinRange      = 0;        % Start of retrievals                    [meters]
+Def.BlankRange    = 450;      % Altitude below which data is blanked   [meters]
+
 %% Defining Water Vapor retrieval options
-Op.WV.BackgroundInd = 10;     % How many pre-integration bins to
-                              % use to estimate background noise
-Op.WV.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Op.WV             = Def;
 Op.WV.BinTime     = 4*60;     % Desired data time resolution           [seconds]
-Op.WV.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
 Op.WV.GradFilt    = 1000;     % Relative count rate gradient to filter [ ]
 Op.WV.SmoothRange = 150;      % Desired smoothing range res            [meters]
 Op.WV.SmoothTime  = 4*60;     % Desired smoothing time res             [seconds]
 Op.WV.MaxRange    = 6.5e3;    % Max range to run retrievals to         [meters]
-Op.WV.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
-Op.WV.MinRange    = 150;                % Start of retrievals          [meters]
-Op.WV.MinTime     = Op.WV.BinTime./2;   % Start of retrievals          [seconds]
-Op.WV.Range       = Op.WV.MinRange:Op.WV.BinRange:Op.WV.MaxRange;
-Op.WV.TimeStamp   = Op.WV.MinTime:Op.WV.BinTime:Op.WV.MaxTime;
+Op.WV.MinRange    = 150;      % Start of retrievals                    [meters]
+Op.WV             = MakeArrays(Op.WV);
 
 %% Defining HSRL retrieval options
-Op.HSRL.BackgroundInd = 10;     % How many pre-integration bins to
-                                % use to estimate background noise
-Op.HSRL.BinRange    = 2*37.5;   % Desired data range resolution          [meters]
+Op.HSRL             = Def;
 Op.HSRL.BinTime     = 2*60;     % Desired data time resolution           [seconds]
 Op.HSRL.BlankRange  = 250;      % Altitude below which data is blanked   [meters]
-
 Op.HSRL.SmoothRange = 2*37.5;      % Desired smoothing range res            [meters]
 Op.HSRL.SmoothTime  = 2*60;     % Desired smoothing time res             [seconds]
 Op.HSRL.MaxRange    = 8e3;    % Max range to run retrievals to         [meters]
-Op.HSRL.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
 Op.HSRL.MinRange    = 0;                % Start of retrievals          [meters]
-Op.HSRL.MinTime     = Op.HSRL.BinTime./2;   % Start of retrievals          [seconds]
-Op.HSRL.Range       = Op.HSRL.MinRange:Op.HSRL.BinRange:Op.HSRL.MaxRange;
-Op.HSRL.TimeStamp   = Op.HSRL.MinTime:Op.HSRL.BinTime:Op.HSRL.MaxTime;
+Op.HSRL             = MakeArrays(Op.HSRL);
 
 %% Defining Temperature retrieval options
+Op.Temp             = Def;
 Op.Temp.Method      = 'LBL';    % Options: 'LBL' (line-by-line) or 'PCA'
-Op.Temp.BackgroundInd = 10;     % How many pre-integration bins to use to
-                                % estimate background noise
 Op.Temp.BinRange    = 4*37.5;   % Desired data range resolution          [meters]
 Op.Temp.BinTime     = 5*60;     % Desired data time resolution           [seconds]
-Op.Temp.BlankRange  = 450;      % Altitude below which data is blanked   [meters]
 Op.Temp.BlankBSC    = 5e-5;     % Backscatter coefficient above which data is blanked
 Op.Temp.Bootstrap   = false;
 Op.Temp.BootIters   = 20;       % Iterations to use when bootstraping
 Op.Temp.SmoothRange = 300;      % Desired smoothing range res            [meters]
 Op.Temp.SmoothTime  = 15*60;    % Desired smoothing time res             [seconds]
 Op.Temp.TempIter    = 50;       % Iterations for temperature conversion
-Op.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]
-Op.Temp.MaxTime     = 24*60*60; % Max time to run retrievals to          [seconds]
+Op.Temp.MaxRange    = 6e3;      % Max range to run retrievals to         [meters]=
 Op.Temp.MinRange    = 150;                % Start of retrievals          [meters]
-Op.Temp.MinTime     = Op.Temp.BinTime./2; % Start of retrievals          [seconds]
-Op.Temp.Range       = Op.Temp.MinRange:Op.Temp.BinRange:Op.Temp.MaxRange;
-Op.Temp.TimeStamp   = Op.Temp.MinTime:Op.Temp.BinTime:Op.Temp.MaxTime;
+Op.Temp             = MakeArrays(Op.Temp);
 
 %% Defining plotting options
 Op.Plot.FontSize     = 18;
@@ -101,4 +90,18 @@ Op.Plot.WV.CAxis     = [0,10];
 %% Defining data to read 
 Op.DataNames = {'Container';'Current';'Etalon';'HumiditySensor';'Laser';'MCS';
                 'Power';'QuantumComposer';'Thermocouple';'UPS';'WeatherStation'}; 
+end
+
+function [S] = MakeArrays(S)
+%
+% Input: S: A strucutre containing user defined options
+%
+% Outputs: S: A stucutre modified with default time and range arrays
+%
+%% Adding arrays
+S.MinTime   = S.BinTime./2;                      % Retrieval start  [sec]
+S.Range     = S.MinRange:S.BinRange:S.MaxRange;  % Range array
+S.TimeStamp = S.MinTime:S.BinTime:S.MaxTime;     % Time array
+%% Forcing fields to be ordered
+S = orderfields(S);
 end

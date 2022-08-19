@@ -116,6 +116,9 @@ PreMask(WV.Mask == 1) = nan;
 WV.Smoothed2  = SmoothOld2(PreMask,Options);
 % %% Plotting
 % PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
+%% Calculating WV uptime
+A = all(isnan(WV.RB.Value));
+WV.UpTime = 1 - sum(A)./size(A,2);
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)

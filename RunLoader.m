@@ -80,15 +80,11 @@ CalInfo.AfterpulseData = ReadMPDAfterpulseFile(fieldnames(Data.Lidar.Raw),fullfi
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
     [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-    if Options.UploadFig && Server
-        FTPFigure(FigNum,Options,Paths,'Status')
-    end
+    FTPFigure(FigNum,Options,Paths,Server,'Status')
     SaveFigure(FigNum,Options,Paths,'Status')
     CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
     FigNum = PlotHousekeepingFigure(Data,Options);
-    if Options.UploadFig && Server
-        FTPFigure(FigNum,Options,Paths,'Housekeeping')
-    end
+    FTPFigure(FigNum,Options,Paths,Server,'Housekeeping')
     SaveFigure(FigNum,Options,Paths,'Housekeeping')
 end
 %% Process lidar data retrievals and plotting
@@ -101,9 +97,7 @@ if ProcessRetF || ProcessRetS
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
         [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
         FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
-        if Options.UploadFig && Server
-            FTPFigure(FigNum,Options,Paths,'Backscatter_WV')
-        end
+        FTPFigure(FigNum,Options,Paths,Server,'Backscatter_WV')
         SaveFigure(FigNum,Options,Paths,'Backscatter_WV')
     end
     % HSRL Retrieval

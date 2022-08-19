@@ -46,12 +46,7 @@ for n=1:1:size(subs,1)
         TopPlot(linspace(XLims(1),XLims(2),Pts),YTickLoc(m)*ones(1,Pts),GridColor,'--',GridWidth)
     end
     % Plotting outside box lines
-    for m=1:1:2
-        % Horizontal box lines
-        TopPlot(linspace(XLims(1),XLims(2),Pts),YLims(m)*ones(1,Pts),'k','-',BoxWidth)
-        % Vertical box lines
-        TopPlot(XLims(m)*ones(1,Pts),linspace(YLims(1),YLims(2),Pts),'k','-',BoxWidth)
-    end
+    set(gca,'box','on','linewidth',BoxWidth,'Layer', 'Top')
 %     % Formatting legend
 %     legends = findobj('Tag','legend');
 %     set(legends,'box','on','FontSize',FontSize);

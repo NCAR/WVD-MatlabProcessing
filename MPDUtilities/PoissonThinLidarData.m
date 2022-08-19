@@ -43,3 +43,14 @@ P{1,1} = arrayfun(@(x) binornd(x,0.5),CData.Counts);
 P{2,1} = CData.Counts - P{1,1};
 end
 
+% % function [P] = PythonThinning(CData)
+% % %
+% % % Inputs: CData: Structure containing all lidar data from a given channel
+% % %
+% % % Outputs: P:    Cell array containing 2 Poisson thinned arrays
+% % %
+% % %%
+% % P{1,1} = double(pyrunfile('PoissThin.py','F',x=int64(CData.Counts)));
+% % P{2,1} = CData.Counts - P{1,1};
+% % end
+

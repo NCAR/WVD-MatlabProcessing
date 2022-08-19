@@ -1,6 +1,5 @@
-
-
-
+% Written By: Robert Stillwell
+% Written For: NCAR
 
 function [FigNum] = PlotRetrievals(Retrievals,Python,Options,WS,FigNum)
 %
@@ -17,18 +16,17 @@ PO.TextXLoc = 0.01;
 PO.TextYLoc = 0.9;
 PO.FontSize = 16;
 
-%% Applying data masks and making my own 
-% Python = RecursivelyApplyMask(Python);
-
-% Applying an optical depth filter to remove bad data above clouds
+%% Applying optical depth filter to HSRL data
+% Approximating backscatter coefficient
 LidarRatio = 30;
-Beta     = Python.MPD.BSCoefficient.Value;
-Altitude = Python.MPD.BSCoefficient.Range;
-% Calculating optical depth
+[BetaM,~] = RayleighBackscatterCoeff(770.1085e-9,Retrievals.HSRL.PGuess.*1013.25,Retrievals.HSRL.TGuess);
+BSR = Retrievals.HSRL.SmoothedV2;
+Beta = BetaM.*(BSR-1);
 Beta(isnan(Beta)) = 0;
-OD =  double(2.*LidarRatio.*cumsum(Beta).*(Altitude(2)-Altitude(1)));
+% Calculating optical depth from backscatter coefficient
+OD = double(2.*LidarRatio.*cumsum(Beta).*(Retrievals.HSRL.Range(2)-Retrievals.HSRL.Range(1)));
 % Applying an optical depth filter
-Python.BSCoefficient.Value(OD>0.25) = nan;
+Retrievals.HSRL.SmoothedV2(OD>3.0) = nan;
 
 %% Copying HSRL and WV masks for Temperature
 TempMask = isnan(Python.MPD.BSCoefficient.Value) | isnan(Python.MPD.Humidity.Mask);
@@ -38,51 +36,28 @@ TempMask = isnan(Python.MPD.BSCoefficient.Value) | isnan(Python.MPD.Humidity.Mas
 TempMaskInt = ceil(interp2(X,Y,double(TempMask),x,y));
 % Applying mask
 Retrievals.Temperature.Smoothed(TempMaskInt==1) = nan;
-
 %% Plotting retrieved data
 figure(FigNum);
 set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
-
-%% Setting up Colormaps
-Hot = flipud(colormap('hot'));
-
 %% Plotting retrieved data
 % Water vapor data
 subplot(7,1,1:2);
-pcolor(Python.MPD.Humidity.TimeStamp./60./60,Python.MPD.Humidity.Range./1e3,ApplyMask(Python.MPD.Humidity));
-shading flat; colorbar; caxis([0,10]); colormap(gca,'parula')
-xlim([0,24]);ylim([0,6]);
-set(gca,'xtick',0:6:24,'ytick',0:1:6)
-title([upper(erase(Options.System,'_')),' Retrievals (',Options.Date,')'])
-AddPlotText(PO.TextXLoc,PO.TextYLoc,'Python Moisture [g/m^3]',PO.FontSize)
-ylabel('Altitude [km]')
-
+pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,Retrievals.WaterVapor.Smoothed2)
+FormatAxis([0,10],CM_viridis(64),Options,PO,'Absolute Humidity [g/m^3]','Retrievals',[],[0,24],[0,6]);
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
-pcolor(Python.MPD.BackRatio.TimeStamp./60./60,Python.MPD.BackRatio.Range./1e3,real(log10(ApplyMask(Python.MPD.BSCoefficient))));
-shading flat; CB = colorbar; caxis([-8,-4]);
-xlim([0,24]);ylim([0,6]);
-set(gca,'xtick',0:6:24,'ytick',0:1:6)
-AddPlotText(PO.TextXLoc,PO.TextYLoc,'Python Aerosol Backscatter Coefficient [m^{-1}sr^{-1}]',PO.FontSize)
-ylabel('Altitude [km]')
-colormap(gca,'jet')
-
+pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.SmoothedV2)))
+CB = FormatAxis([0,3],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitless]',[],[],[0,24],[0,6]);
 % Temperature
 subplot(7,1,5:6);
 pcolor(Retrievals.Temperature.TimeStamp./60./60,Retrievals.Temperature.Range./1e3,Retrievals.Temperature.Smoothed-273.15);
-shading flat; colorbar; caxis([-5,25])
-xlim([0,24]);ylim([0,6]);
-set(gca,'xtick',0:6:24,'ytick',0:1:6)
-AddPlotText(PO.TextXLoc,PO.TextYLoc,'Temperature [^\circ C]',PO.FontSize)
-ylabel('Altitude [km]')
-colormap(gca,'parula')
+FormatAxis([-5,25],CM_cividis(64),Options,PO,'Temperature [^\circ C]',[],[],[0,24],[0,6]);
 DesiredPos = get(gca,'Position');
-
+% Surface station
 subplot(7,1,7)
 plot(WS.TimeStamp,WS.Temperature);
-xlim([0,24]);set(gca,'xtick',0:6:24)
-AddPlotText(PO.TextXLoc,PO.TextYLoc,'Surface Temperature [^\circ C]',PO.FontSize)
-xlabel('Hours UTC');ylabel('Temp [^\circ C]')
+FormatAxis([],[],Options,PO,'Surface Temperature [^\circ C]',[],'Temp [^\circ C]',[0,24],ylim);
+xlabel('Hours UTC');
 Current = get(gca,'Position');
 set(gca,'Position',[Current(1:2),DesiredPos(3),Current(4)])
 
@@ -105,7 +80,38 @@ YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
 text(XLoc,YLoc,Text,'Fontsize',FontSize,'Fontweight','bold')
 end
 
-function [Data] = ApplyMask(Struct)
-Data = Struct.Value;
-Data(Struct.Mask==1) = nan;
+function [CB] = FormatAxis(CBounds,CMap,Op,PO,Text,Title,YLabel,XLim,YLim)
+% Setting up the color and colorbar
+if ~isempty(CBounds)
+    shading flat; CB = colorbar; caxis(CBounds); colormap(gca,CMap)
+end
+% Setting up the x/y axis and bounds
+xlim(XLim);ylim(YLim);
+set(gca,'xtick',XLim(1):6:XLim(2))
+% Labeling
+if~isempty(Title)
+    title([upper(erase(Op.System,'_')),' ',Title,' (',Op.Date,')'])
+end
+AddPlotText(PO.TextXLoc,PO.TextYLoc,Text,PO.FontSize)
+if isempty(YLabel)
+    YLabel = 'Altitude [km]';
+end
+ylabel(YLabel)
+end
+
+function [Beta,BetaTotal] = RayleighBackscatterCoeff (Lambda,Press,Temp)
+%
+% Inputs: Lambda:     Laser wavelength                   [meters]
+%         Press:      Atmospheric pressure               [millibar]
+%         Temp:       Atmospheric temperature            [Kelvin]
+%
+% Outputs: Beta:      The backscatter coefficient        [1/m/sr]
+%          BetaTotal: The total scattering coefficient   [1/m]
+%
+%% Rayleigh Efficiency angular relationship
+P = @(Theta) 0.7629.*(1+0.9324.*cosd(Theta).*cosd(Theta));
+%% Calculating backscatter coeff
+Beta = (2.938e-32).*(Press./Temp).*(1./(Lambda.^4.0117));   % Eq. (5.14)
+%% Calculating the total scatter coefficient
+BetaTotal = (Beta.*4.*pi)./P(180);                          % Eq. (5.15)
 end

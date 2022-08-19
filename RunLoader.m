@@ -32,13 +32,12 @@ if nargin ~= 6
     ProcessRetF = false;
     ProcessRetS = false;
 end
-%% Adding path to recursive functional utilities and defining path info
+%% Adding path to utilities, defining options, and defining path info
 for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
-[Paths,Server] = DefinePaths(Date,System);
-%% Defining user specified options
 Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS);
+[Paths,Server] = DefinePaths(Date,Options,System);
 %% Reading data and pre-processing 
 % Reading the calval files
 CWLogging('---------Loading Cal Val files--------\n',Options,'Main')

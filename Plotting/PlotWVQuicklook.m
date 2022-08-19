@@ -16,7 +16,7 @@ Options = OverwriteColorbar(Options,Op.Date,Op.System);
 Sc = [1,1,2560,1416];
 Date = datestr(datenum(Op.Date,'yyyymmdd'), 'dd mmm yyyy');
 %% Loading colormap 
-RBColormap = importdata('NCAR_C_Map.mat');
+RBColormap = importdata('CM_NCAR.mat');
 %% Checking for python data (to add Cramer Rao lower bound info to plot)
 [AddCRLB,Py] = RecursivelyCheckIsField(WV, 'Python');
 if AddCRLB; AddCRLB = not(isequal(size(Py.TimeStamp),[1,1])); end

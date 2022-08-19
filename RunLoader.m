@@ -80,12 +80,10 @@ CalInfo.AfterpulseData = ReadMPDAfterpulseFile(fieldnames(Data.Lidar.Raw),fullfi
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
     [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
-    FTPFigure(FigNum,Options,Paths,Server,'Status')
-    SaveFigure(FigNum,Options,Paths,'Status')
+    SaveUpload(FigNum,Options,Paths,Server,'Status');
     CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
     FigNum = PlotHousekeepingFigure(Data,Options);
-    FTPFigure(FigNum,Options,Paths,Server,'Housekeeping')
-    SaveFigure(FigNum,Options,Paths,'Housekeeping')
+    SaveUpload(FigNum,Options,Paths,Server,'Housekeeping');
 end
 %% Process lidar data retrievals and plotting
 if ProcessRetF || ProcessRetS
@@ -97,8 +95,7 @@ if ProcessRetF || ProcessRetS
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
         [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
         FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
-        FTPFigure(FigNum,Options,Paths,Server,'Backscatter_WV')
-        SaveFigure(FigNum,Options,Paths,'Backscatter_WV')
+        SaveUpload(FigNum,Options,Paths,Server,'Backscatter_WV')
     end
     % HSRL Retrieval
     if ProcessRetF
@@ -136,4 +133,18 @@ if Options.SaveQuickLoad
     save(fullfile(Paths.Quickload,[lower(erase(Options.System,'_')),'.',Date,'.Matlab.mat']), ...
                                           'CalInfo','Options','Retrievals')
 end
+end
+
+% Function to simplify repeated calls when making quicklooks
+function SaveUpload(FN,Op,Paths,Serv,Type)
+%
+% Inputs: FN:    The figure number to save and close
+%         Op:    A structure containing all of the user defined options
+%         Paths: A structure containing all the user defined file path info
+%         Serv:  A boolean indicating if code is running on the server
+%         Type:  A string containing the type of figure to be saved
+%
+%%
+FTPFigure(FN,Op,Paths,Serv,Type)
+SaveFigure(FN,Op,Paths,Type)
 end

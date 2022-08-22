@@ -62,6 +62,8 @@ Op.Temp             = Def;
 Op.Temp.Bootstrap   = false;  % Boolean to turn bootstrapping on
 Op.Temp.BootIters   = 20;     % Iterations to use when bootstraping
 Op.Temp.TempIter    = 50;     % Iterations for temperature conversion
+Op.Temp.HSRLType    = 'On';   % Options: 'Py' (Python), 'On' (Calculated onboard),
+                              % 'PyP' (Python Prefered if availible else onboard)
 Op.Temp.Method      = 'LBL';  % Options: 'LBL' (line-by-line) or 'PCA'
 Op.Temp.BinRange    = 4*37.5; % Desired data range resolution         [m]
 Op.Temp.BinTime     = 5*60;   % Desired data time resolution          [sec]

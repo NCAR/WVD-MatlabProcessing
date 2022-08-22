@@ -47,7 +47,7 @@ FormatAxis([0,10],CM_viridis(64),Options,PO,'Absolute Humidity [g/m^3]','Retriev
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
 pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.SmoothedV2)))
-CB = FormatAxis([0,3],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitless]',[],[],[0,24],[0,6]);
+CB = FormatAxis([0,2],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitless]',[],[],[0,24],[0,6]);
 % Temperature
 subplot(7,1,5:6);
 pcolor(Retrievals.Temperature.TimeStamp./60./60,Retrievals.Temperature.Range./1e3,Retrievals.Temperature.Smoothed-273.15);

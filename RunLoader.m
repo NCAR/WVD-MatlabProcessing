@@ -90,19 +90,16 @@ if ProcessRetF || ProcessRetS
     % Push lidar data onto a constant grid
     CWLogging('--Push data to grid & AP Correcting---\n',Options,'Main')
     Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,CalInfo.AfterpulseData,Options.TimeGridLidar,Options.Default);
-    % WV Retrieval
+    % WV Retrieval and HSRL Retrieval
     if ProcessRetF
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
         [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
         FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
         SaveUpload(FigNum,Options,Paths,Server,'Backscatter_WV')
-    end
-    % HSRL Retrieval
-    if ProcessRetF
         CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
         Retrievals.HSRL = RetrievalHSRL(Options,Paths,Data,CalInfo);
     else
-        Retrievals.HSRL = [];
+        Retrievals.WaterVapor = []; Retrievals.HSRL = [];
     end
     % Temperature Retrieval
     if ProcessRetS
@@ -112,6 +109,8 @@ if ProcessRetF || ProcessRetS
             FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
             SaveFigure(FigNum,Options,Paths,'Retrievals')
         end
+    else
+        Retrievals.Temperature = []; Retrievals.Python = [];
     end
 else
     Retrievals = [];

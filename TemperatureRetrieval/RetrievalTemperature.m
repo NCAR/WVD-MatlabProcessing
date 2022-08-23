@@ -53,12 +53,6 @@ Const       = DefineConstants;
 Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
 % Reading Needed Data (Python HSRL and Receiver Scan)
 Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Temp %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Spectra.Optics.O2Offline.Etalon.Transmission = ones(size(Spectra.Optics.O2Offline.Etalon.Transmission));
-% Spectra.Optics.O2Online.Etalon.Transmission = ones(size(Spectra.Optics.O2Online.Etalon.Transmission));
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid

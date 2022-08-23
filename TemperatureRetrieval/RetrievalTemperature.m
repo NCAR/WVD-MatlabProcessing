@@ -2,7 +2,6 @@
 % Written For: NCAR
 % Modificication Info: Created December, 2020
 
-
 function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal,Retrievals)
 %
 % Inputs: Op:      Full options structure
@@ -12,24 +11,38 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal,Retrievals)
 %
 % Outputs:
 %
-%
+%% Extracting just the temperature options for simplicity
+Options = Op.Temp;
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
 As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
 [Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
-% Loading python data for HSRL and WV data
-[Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
-if not(Possible) || not(Found)
-    Temp = []; MPD = []; return
+% Loading python data for HSRL and WV data or using onboard
+if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
+    [Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
+else
+    Found = false;
 end
-% Putting info in a form handy for data files and access for processing
-MPD           = Data2D;
-Data2D.Spuler = Retrievals.HSRL;
-
+% Checking if more data handling is needed
+if not(Possible) 
+    CWLogging('*** Temperature Data not availible ***\n',Op,'Main')
+    Temp = []; MPD = []; return
+elseif not(Found)
+    MPD = [];
+    Op.Temp.HSRLType = 'On';
+    % Mimicking Matt's surface information Seconds, Kelvin, and Atmo are the units needed)
+    Data1D.Surface.Temperature = BuildSimpleStruct(Data.TimeSeries.WeatherStation,'Temperature',60*60,1,273.15);
+    Data1D.Surface.Pressure    = BuildSimpleStruct(Data.TimeSeries.WeatherStation,'Pressure',60*60,1./1013.25,0);
+    % Mimicking NCIP information
+    Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
+    Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
+end
+%% Putting info in a form handy for data files and access for processing
+Data2D.Onboard.HSRL = Retrievals.HSRL;
+Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
 %% Temperature Pre-Process
 % Extra definitions
-Options                 = Op.Temp;
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
 Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
@@ -105,6 +118,18 @@ else
 end
 end
 
+function [Out] = BuildSimpleStruct(In,Label,TimeMult,ValMult,ValAdd)
+%% Checking if the default is to preserve the structure of convert 
+if nargin == 2
+    TimeMult = 1; ValMult = 1; ValAdd = 0;
+end
+%% Creating structure
+Out.TimeStamp = In.TimeStamp.*TimeMult;
+if RecursivelyCheckIsField(In, {'Range'})
+    Out.Range     = In.Range;
+end
+Out.Value     = In.(Label).*ValMult + ValAdd;
+end
 
 function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,Type,Paths)
 %
@@ -117,8 +142,18 @@ function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,
 %          T           Temperature
 %          Dt
 %
+%% Checking which data inputs to use
+if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'Py')
+    T    = Data2D.NCIP.Temperature;
+    P    = Data2D.NCIP.Pressure;
+    ABC  = Data2D.MPD.BSCoefficient.Value;
+else
+    T    = Data2D.Guess.Temperature;
+    P    = Data2D.Guess.Pressure;
+    ABC  = Data2D.Onboard.HSRL.ABC;
+end
 %% Constructing the needed spectra for processing
-Spectra.Rebuilt = BuildSpectra(Spectra.PCA,Data2D.NCIP.Temperature,Data2D.NCIP.Pressure,Data1D.Wavelength,Op);
+Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
 %% Run the Perterbative Retrieval
 CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 [Alpha,POrders] = PerturbativeRetrieval(Const,Counts,Data2D,Options,Spectra,Op);
@@ -131,7 +166,7 @@ T.Value(T.Range<Options.BlankRange,:) = nan;
 % This removal is targeted at making sure cloud data is not brought into
 % the temperature data. Therefore, near clouds (i.e. where smoothed data
 % sees clouds) is removed.
-A = WeightedSmooth(Data2D.MPD.BSCoefficient.Value > Op.Temp.BlankBSC,Options);
+A = WeightedSmooth(ABC > Op.Temp.BlankBSC,Options);
 T.Value(A > 0.1) = nan;
 %% Smooth temperature
 CWLogging('     Smoothing temperature retrieval\n',Op,'Sub')

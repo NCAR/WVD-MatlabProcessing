@@ -13,19 +13,31 @@ MaxDt      = 2;         % Threshold of temperature change per iteration
 
 %% Pulling out the water vapor contour to modify the number density of O2
 [IsField,Humidity] = RecursivelyCheckIsField(Data2D, {'MPD','Humidity'});
-[IsField2,NCIP   ] = RecursivelyCheckIsField(Data2D, {'NCIP'});
+[IsField2,Atmo   ] = RecursivelyCheckIsField(Data2D, {'NCIP'});
 if IsField && IsField2
     % Applying the humidity mask
     Humidity.Value(ceil(Humidity.Mask)==1 | Humidity.Value<0) = 0;
-    % Converting from g/m^3 to molecules per m^3
-    Humidity.Value = Humidity.Value./Const.MWV/1000;
-    % Calculating the number of molecules period
-    A = NCIP.Pressure.Value.*Const.Atm2Pa.*Const.Av./Const.R./NCIP.Temperature.Value;
-    % Calculating the mixing ratio of water vapor
-    Qwv = Humidity.Value./A;
+%     % Converting from g/m^3 to molecules per m^3
+%     Humidity.Value = Humidity.Value./Const.MWV/1000;
+%     % Calculating the number of molecules period
+%     A = Atmo.Pressure.Value.*Const.Atm2Pa.*Const.Av./Const.R./Atmo.Temperature.Value;
+%     % Calculating the mixing ratio of water vapor
+%     Qwv = Humidity.Value./A;
 else
-    Qwv = 0;
+    [~,Humidity] = RecursivelyCheckIsField(Data2D, {'Onboard','WV'});
+    [~,Atmo    ] = RecursivelyCheckIsField(Data2D, {'Guess'});
+%     Qwv = 0;
 end
+
+%% Preparing atmospheric parameters
+% Converting from g/m^3 to molecules per m^3
+Humidity.Value = Humidity.Value./Const.MWV/1000;
+% Calculating the number of molecules period
+A = Atmo.Pressure.Value.*Const.Atm2Pa.*Const.Av./Const.R./Atmo.Temperature.Value;
+% Calculating the mixing ratio of water vapor
+Qwv = Humidity.Value./A;
+
+
 Humidity.Value(Qwv>=0.1) = nan;
 Qwv(Qwv>=0.1) = nan;
 
@@ -40,14 +52,14 @@ Gamma = Const.G0*Const.MolMAir/Const.R;
 % Seeding the loop with initial guesses of temperature and lapse rate
 ConstProfile = (Options.Range').*(GuessLapse);
 % Creating current temperature structure
-TCurrent.TimeStamp = Data2D.NCIP.Temperature.TimeStamp;
-TCurrent.Range     = Data2D.NCIP.Temperature.Range;
+TCurrent.TimeStamp = Atmo.Temperature.TimeStamp;
+TCurrent.Range     = Atmo.Temperature.Range;
 if strcmp(StartCond,'Cold')
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 240;
 elseif strcmp(StartCond,'Warm')
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))*0 + 330;
 elseif strcmp(StartCond,'Bootstrap')
-    TCurrent.Value     = Data2D.NCIP.Temperature.Value; % Reset previously
+    TCurrent.Value     = Atmo.Temperature.Value; % Reset previously
 else
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 end
@@ -55,10 +67,10 @@ end
 for m=1:1:Options.TempIter
     % Calculating the change in temperature by either method
     if strcmp(Options.Method,'PCA')
-        DeltaT = ConvertPCA(Alpha,Const,Spectra.PCA,Data2D.NCIP.Pressure,...
+        DeltaT = ConvertPCA(Alpha,Const,Spectra.PCA,Atmo.Pressure,...
                             TCurrent,Humidity.Value,Data1D.Wavelength,Op);
     else
-        DeltaT = ConvertLineByLine(Alpha,Const,Spectra.PCA,Data2D.NCIP.Pressure,...
+        DeltaT = ConvertLineByLine(Alpha,Const,Spectra.PCA,Atmo.Pressure,...
                                    TCurrent,Qwv,Data1D.Wavelength,Op,GuessLapse,Surf,Gamma,Hitran);
     end
     % Limiting the gradient possible

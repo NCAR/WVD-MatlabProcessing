@@ -13,11 +13,23 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal,Retrievals)
 %
 %% Extracting just the temperature options for simplicity
 Options = Op.Temp;
+%% Defining needed extra path information
+Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
+Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
+Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
+Paths.PCA.Spectra       = {'O2';'RB'};   % Spectra to load
+Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
 As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
-[Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
+[Const,Counts.Raw,Data1D,Scan,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
+% Data1D.Surface = Surface;
+
+
+Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
+Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
+
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
     [Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
@@ -31,9 +43,6 @@ if not(Possible)
 elseif not(Found)
     MPD = [];
     Op.Temp.HSRLType = 'On';
-    % Mimicking Matt's surface information Seconds, Kelvin, and Atmo are the units needed)
-    Data1D.Surface.Temperature = BuildSimpleStruct(Data.TimeSeries.WeatherStation,'Temperature',60*60,1,273.15);
-    Data1D.Surface.Pressure    = BuildSimpleStruct(Data.TimeSeries.WeatherStation,'Pressure',60*60,1./1013.25,0);
     % Mimicking NCIP information
     Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
     Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
@@ -41,22 +50,12 @@ end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;
 Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
-%% Temperature Pre-Process
-% Extra definitions
-Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
-Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
-Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
-Paths.PCA.Spectra       = {'O2';'RB'};   % Spectra to load
-Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
-% Loading data needed for processing
-Const       = DefineConstants;
-Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
+%% Temperature Data Pre-Process 
 % Reading Needed Data (Python HSRL and Receiver Scan)
 Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid
-Data1D = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
 Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');
 
 %% Bootstrapping

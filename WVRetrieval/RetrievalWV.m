@@ -12,45 +12,26 @@ function [WV] = RetrievalWV(Op,Paths,Data,Cal)
 % Outputs:
 %
 %
-%% Checking if temperature processing can be run
-% Pulling out and loading needed data
-As   = {'WVOnline';'WVOffline'};
-Chan = {'';''};
-[Counts.Raw,Data1D,Scan,Possible] = IdentifyNeededInfo(Data,Cal,As,Chan);
-if not(Possible)
-    CWLogging('***** All WV Data not availible ******\n',Op,'Main')
-    WV = []; return
-end
-try
-   Surface             = Data.TimeSeries.WeatherStation;
-   Surface.TimeStamp   = Surface.TimeStamp.*60.*60;
-catch
-   Surface.TimeStamp   = Op.WV.TimeStamp;
-   Surface.Temperature = ones(size(Surface.TimeStamp)).*15;
-   Surface.Pressure    = ones(size(Surface.TimeStamp)).*0.83;
-end
-
-%% Loading in Python data as needed
-Python = LoadPythonData2(Paths.PythonData);
-%% Water Vapor Pre-Process
-% Extra definitions
-Options                 = Op.WV;
+%% Extracting just the water vapor options for simplicity
+Options = Op.WV;
+%% Defining needed extra path information
 Paths.PCASpec           = fullfile(Paths.Code,'WVRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'WVOnline';'WVOffline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'WV'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption'}; % Name of spectra in code
-% Loading data needed for processing
-Const       = DefineConstants;
-Spectra.PCA = ReadPCASpectra(Paths,Data1D.Wavelength,Op);
-% Bin lidar data to desired analysis resolution and background substracting
+%% Checking if temperature processing can be run
+As   = {'WVOnline';'WVOffline'};
+Chan = {'';''};
+[Const,Counts.Raw,Data1D,~,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
+if not(Possible)
+    CWLogging('***** All WV Data not availible ******\n',Op,'Main')
+    WV = []; return
+end
+%% Loading in Python data as needed
+Python = LoadPythonData2(Paths.PythonData);
+%% Water Vapor Pre-Process
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
-% Downsample and interpolate ancillary data to known MPD grid
-Data1D  = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
-Surface = RecursivelyInterpolate1DStructure(Surface,Options.TimeStamp,'linear');
-Surface.Temperature = Surface.Temperature + Const.C2K;
-Surface.Pressure    = Surface.Pressure./Const.MBar2Atm;
-
 %% Calculating relative backscatter
 % Scale term is (range Resolution x Shots Binned x Offline Duty Cycle)
 SwitchRate = Data1D.MCS.WVOffline.ProfilesPerHistogram./(Data1D.MCS.WVOnline.ProfilesPerHistogram+Data1D.MCS.WVOffline.ProfilesPerHistogram);

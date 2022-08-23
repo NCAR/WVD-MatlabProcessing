@@ -17,25 +17,9 @@ PO.TextYLoc = 0.9;
 PO.FontSize = 16;
 
 %% Applying optical depth filter to HSRL data
-% Approximating backscatter coefficient
-LidarRatio = 30;
-[BetaM,~] = RayleighBackscatterCoeff(770.1085e-9,Retrievals.HSRL.PGuess.*1013.25,Retrievals.HSRL.TGuess);
-BSR = Retrievals.HSRL.SmoothedV2;
-Beta = BetaM.*(BSR-1);
-Beta(isnan(Beta)) = 0;
-% Calculating optical depth from backscatter coefficient
-OD = double(2.*LidarRatio.*cumsum(Beta).*(Retrievals.HSRL.Range(2)-Retrievals.HSRL.Range(1)));
-% Applying an optical depth filter
-Retrievals.HSRL.SmoothedV2(OD>3.0) = nan;
+Retrievals.HSRL.Smoothed(Retrievals.HSRL.OD>3.0) = nan;
+Retrievals.HSRL.Smoothed(Retrievals.HSRL.Mask) = nan;
 
-%% Copying HSRL and WV masks for Temperature
-TempMask = isnan(Python.MPD.BSCoefficient.Value) | isnan(Python.MPD.Humidity.Mask);
-% Interpolating Python grid to temperature grid
-[X,Y] = meshgrid(Python.MPD.BackRatio.TimeStamp, Python.MPD.BackRatio.Range);
-[x,y] = meshgrid(Retrievals.Temperature.TimeStamp,Retrievals.Temperature.Range);
-TempMaskInt = ceil(interp2(X,Y,double(TempMask),x,y));
-% Applying mask
-Retrievals.Temperature.Smoothed(TempMaskInt==1) = nan;
 %% Plotting retrieved data
 figure(FigNum);
 set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
@@ -46,7 +30,7 @@ pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,
 FormatAxis([0,10],CM_viridis(64),Options,PO,'Absolute Humidity [g/m^3]','Retrievals',[],[0,24],[0,6]);
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
-pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.SmoothedV2)))
+pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.Smoothed)))
 CB = FormatAxis([0,2],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitless]',[],[],[0,24],[0,6]);
 % Temperature
 subplot(7,1,5:6);

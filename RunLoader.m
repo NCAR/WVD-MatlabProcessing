@@ -33,7 +33,7 @@ if nargin ~= 6
     ProcessRetS = false;
 end
 %% Adding path to utilities, defining options, and defining path info
-for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','TemperatureRetrieval','Utilities','WVRetrieval'}
+for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','RetrievalCommon','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
 Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS);

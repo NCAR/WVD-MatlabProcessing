@@ -2,19 +2,22 @@
 % Written For: NCAR
 % Modificication Info: Created August 20th, 2020
 
-function [InterpData] = BinLidarData(RawData,Afterpulse,Times,DefaultOptions)
+function [InterpData] = BinLidarData(RawData,Afterpulse,Op)
 %
 %
 %
 %
 %
 %
-%
+%% Parsing out options
+Times          = Op.TimeGridLidar;
+DefaultOptions = Op.Default;
 %% Defining processing variables
 ResCheck  = {'RangeResolution';'NBins'};       % Variables to define resolution
 ToAverage = {ResCheck{:},'RTime'}'; %#ok<CCAT> % Variables to average over 
 ToSum     = {'Data';'ProfilesPerHistogram'};   % Variables to sum over
 %% Applying the afterpulse correction to the raw data
+if Op.Afterpulse
 for m = fields(RawData)'
     % Interpolating the afterpulse contour to current range grid if needed
     if size(Afterpulse.(m{1}).Afterpulse,1) == size(RawData.(m{1}).Data,2)
@@ -26,6 +29,7 @@ for m = fields(RawData)'
         AP = zeros(size(RawData.(m{1}).Data));
     end
    RawData.(m{1}).Data = RawData.(m{1}).Data - AP;
+end
 end
 %% Converting count structure to cell array
 FieldNames = fieldnames(RawData);

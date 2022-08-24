@@ -89,7 +89,7 @@ end
 if ProcessRetF || ProcessRetS
     % Push lidar data onto a constant grid
     CWLogging('--Push data to grid & AP Correcting---\n',Options,'Main')
-    Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,CalInfo.AfterpulseData,Options.TimeGridLidar,Options.Default);
+    Data.Lidar.Interp = BinLidarData(Data.Lidar.Raw,CalInfo.AfterpulseData,Options);
     % WV Retrieval and HSRL Retrieval
     if ProcessRetF
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')

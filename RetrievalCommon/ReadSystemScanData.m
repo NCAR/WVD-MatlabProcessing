@@ -12,7 +12,7 @@ function [Spec] = ReadSystemScanData(Sp,Scan,Const)
 % Determining what the spectra to be built are
 [~,FN,~] = RecursiveStruct2Cell(Sp);
 % Looping over all spectra to be built
-for m=1:1:length(FN)
+for m=1:1:size(FN,1)
     try
         SubField = fields(Sp.(FN{m,1}));
         Tr = interp1(Scan.(FN{m,1}).Wavelength,Scan.(FN{m,1}).Transmission, ...

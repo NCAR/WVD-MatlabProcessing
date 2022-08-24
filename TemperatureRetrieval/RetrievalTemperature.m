@@ -24,6 +24,10 @@ Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
 As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
 [Const,Counts.Raw,Data1D,Scan,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
+if not(Possible)
+    CWLogging('*** Temperature Data not availible ***\n',Op,'Main')
+    Temp = []; MPD = []; return
+end
 Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
 Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 
@@ -36,10 +40,7 @@ else
     Found = false;
 end
 % Checking if more data handling is needed
-if not(Possible) 
-    CWLogging('*** Temperature Data not availible ***\n',Op,'Main')
-    Temp = []; MPD = []; return
-elseif not(Found)
+if not(Found)
     MPD = [];
     Op.Temp.HSRLType = 'On';
     % Mimicking NCIP information
@@ -50,8 +51,8 @@ end
 Data2D.Onboard.HSRL = Retrievals.HSRL;
 Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
 %% Temperature Data Pre-Process 
-% Reading Needed Data (Python HSRL and Receiver Scan)
-Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);                % Should load calibration scan data
+% Reading Needed Data (Receiver Scan)
+Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid

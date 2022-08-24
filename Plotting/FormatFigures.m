@@ -1,12 +1,17 @@
 
 
 
-function FormatFigures()
+function FormatFigures(Fig)
 %
 %
 %
-%%
-Figures = sort(double(findall(0,'type','figure')));
+%% Checking if wants to format a single figure or all figures
+if nargin == 0
+    Figures = sort(double(findall(0,'type','figure')));
+else
+    Figures = Fig.Number;
+end
+%% Formatting figures
 for m=1:1:length(Figures)
     set(0,'CurrentFigure',Figures(m));
     AddSolidOutlines(gcf)

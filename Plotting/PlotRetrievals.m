@@ -46,7 +46,7 @@ Current = get(gca,'Position');
 set(gca,'Position',[Current(1:2),DesiredPos(3),Current(4)])
 
 %% Format Figures
-FormatFigures;
+FormatFigures(gcf);
 
 %% Formatting colorbars
 ColorbarTicks = get(CB,'yticklabel');

@@ -64,7 +64,7 @@ if AddCRLB
     if (YL(2)-YL(1)) < MinYL; ylim(([-MinYL,MinYL]./2)+mean(YL)); end
 end
 %% Formatting figure
-FormatFigures;
+FormatFigures(gcf);
 %% Making it so the figure doesn't resize when saving
 set(gcf, 'PaperPositionMode', 'auto');
 %% Setting the axis location to compensate for width of colorbars

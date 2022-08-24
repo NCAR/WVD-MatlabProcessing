@@ -58,12 +58,12 @@ P = ExtractAtmoStructs(HSRL,'PGuess');
 Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
 [HSRL.Cmm,HSRL.Cmc,HSRL.Cam,HSRL.Cac] = CalculateHSRLEfficiencies(Spectra.Optics,Spectra.Rebuilt);
 HSRL.Value = HSRLCalc(Counts.BGSub,HSRL);
-% Calculating optical depth and backscatter coefficient
-[HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
-% %% Calculate HSRL Data (Spuler's way)
+% Calculate HSRL Data (Spuler's way)
 [~,HSRL.Mask] = HSRLCalcSpuler(Counts.BGSub,HSRL.TGuess,HSRL.PGuess,Spectra,Const);
 %% Blanking low altitude data
 HSRL.Value(HSRL.Range<Options.BlankRange,:) = nan;
+%% Calculating optical depth and backscatter coefficient
+[HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Smoothing
 A = HSRL.Value;
 A(HSRL.Mask) = nan;

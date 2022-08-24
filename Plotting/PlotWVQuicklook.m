@@ -48,12 +48,17 @@ colormap(gca,'jet')
 FormatAxis(Date, Options.WV, 'Water Vapor (g/m^3)',Subs,Range);
 %% Plotting Cramer Rao Lower Bound online wavelength
 if AddCRLB
+   % Mask to remove data without valid relative backscatter in the column
+    A = double(all(isnan(WV.RB.Value)));
+    Mask = interp1(WV.RB.TimeStamp,A,Py.TimeStamp) > 0;
+    Py.ActualWavelength(Mask) = nan;
+    Py.OptimalWavelength(Mask) = nan;
     % Plotting the wavelengths of interst
     Ax(3) = subplot(5,1,5); hold on;
     plot(Py.TimeStamp./60./60,Py.ActualWavelength,'k',Py.TimeStamp./60./60,Py.OptimalWavelength,'r','linewidth',2);
     % Labeling the plot
     xlabel('Time (UTC)'); ylabel('Wavelength (nm)');
-    legend({'Observed','CRLB'},'location','north','orientation','horizontal','AutoUpdate','off');
+    legend({'Observed','CRLB'},'location','south','orientation','horizontal','AutoUpdate','off');
     % Setting the plot bounds
     xlim([0,24]); set(gca,'xtick',0:2:24); YL = ylim; MinYL = 0.02;
     if (YL(2)-YL(1)) < MinYL; ylim(([-MinYL,MinYL]./2)+mean(YL)); end

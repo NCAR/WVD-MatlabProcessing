@@ -16,7 +16,7 @@ function [HSRL] = RetrievalHSRL(Op,Paths,Data,Cal)
 Options = Op.HSRL;
 %% Defining needed extra path information
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
-Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
+Paths.PCA.Wavelengths   = {'O2Offline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'RB'};   % Spectra to load
 Paths.PCA.SpectraLabels = {'RayleighBr'}; % Name of spectra in code
 %% Checking if temperature processing can be run
@@ -24,7 +24,7 @@ As   = {'O2Online';'O2Offline'};
 Chan = {'Mol'     ;'Mol'      };
 [Const,C.Mol,Data1D,S.Mol,Spectra,Surf,PossibleMol] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
 Chan = {'Comb'    ;'Comb'     };
-[C.Comb,~,S.Comb,PossibleComb] = IdentifyNeededInfo(Data,Cal,As,Chan);
+[C.Comb,~,S.Comb,PossibleComb] = IdentifyNeededInfo(Data,Cal,As,Chan,Const);
 % Checking if processing is possible
 if not(PossibleMol & PossibleComb)
     CWLogging('**** All HSRL Data not availible *****\n',Op,'Main')
@@ -106,7 +106,7 @@ function [S] = NormalizeReceiverScan(S)
 % Outputs: S: Structure containing normalized receiver scan information
 %
 %% Normalizing scan parameters
-for m = {'O2Online','O2Offline'}
+for m = {'O2Offline'}
     A = S.([m{1},'Comb']).Transmission./S.([m{1},'Mol']).Transmission; 
     S.([m{1},'Mol']).Transmission = S.([m{1},'Mol']).Transmission.*(median(A));
 end

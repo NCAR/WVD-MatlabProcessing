@@ -24,15 +24,14 @@ Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
 As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
 [Const,Counts.Raw,Data1D,Scan,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
-% Data1D.Surface = Surface;
-
-
 Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
 Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
     [Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
+    Data1D  = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
+    MPD = Data2D;
 else
     Found = false;
 end

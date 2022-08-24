@@ -24,7 +24,7 @@ As   = {'WVOnline';'WVOffline'};
 Chan = {'';''};
 [Const,Counts.Raw,Data1D,~,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
 if not(Possible)
-    CWLogging('***** All WV Data not availible ******\n',Op,'Main')
+    CWLogging('******** WV data not availible *******\n',Op,'Main')
     WV = []; return
 end
 %% Loading in Python data as needed

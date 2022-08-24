@@ -1,7 +1,7 @@
 
 
 
-function [Raw,Data1D,Scan,Availible] = IdentifyNeededInfo(Data,Cal,As,Chan)
+function [Raw,Data1D,Scan,Availible] = IdentifyNeededInfo(Data,Cal,As,Chan,Const)
 %
 %
 %
@@ -14,7 +14,7 @@ for m=1:1:length(As)
     try
         Raw.(As{m}).TimeStamp = Data.Lidar.Interp.([As{m},Chan{m}]).TimeStamp.*60.*60;
         Raw.(As{m}).Range     = (0:size(Data.Lidar.Interp.([As{m},Chan{m}]).Data,2)-1)'...
-                                 .*mean(Data.Lidar.Interp.([As{m},Chan{m}]).RangeResolution.*299792458*1e-9/2,'omitnan');
+                                 .*mean(Data.Lidar.Interp.([As{m},Chan{m}]).RangeResolution.*Const.C*1e-9/2,'omitnan');
         Raw.(As{m}).Value = Data.Lidar.Interp.([As{m},Chan{m}]).Data';
         % Loading wavelength info
         Data1D.Wavelength.(As{m}).TimeStamp = Data.TimeSeries.Laser.(As{m}).TimeStamp.*60.*60;

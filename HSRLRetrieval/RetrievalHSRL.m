@@ -27,7 +27,7 @@ Chan = {'Comb'    ;'Comb'     };
 [C.Comb,~,S.Comb,PossibleComb] = IdentifyNeededInfo(Data,Cal,As,Chan,Const);
 % Checking if processing is possible
 if not(PossibleMol & PossibleComb)
-    CWLogging('**** All HSRL Data not availible *****\n',Op,'Main')
+    CWLogging('******* HSRL data not availible ******\n',Op,'Main')
     HSRL = []; return
 end
 clear As Chan PossibleComb PossibleMol

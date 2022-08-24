@@ -25,7 +25,7 @@ As   = {'O2Online';'O2Offline'};
 Chan = {'Comb';    'Comb'};
 [Const,Counts.Raw,Data1D,Scan,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
 if not(Possible)
-    CWLogging('*** Temperature Data not availible ***\n',Op,'Main')
+    CWLogging('*** Temperature data not availible ***\n',Op,'Main')
     Temp = []; MPD = []; return
 end
 Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');

@@ -25,7 +25,7 @@ for m = fields(RawData)'
              RawData.(m{1}).ProfilesPerHistogram.*...  % Shots    [   ]
              (RawData.(m{1}).RangeResolution.*1e-9);   % BinWidth [sec]
     else
-        fprintf(['     Failed to apply afterpulse correction: ',m{1},'\n'])
+        fprintf(['!!!!!!Failed to apply afterpulse correction: ',m{1},'!!!!!!\n'])
         AP = zeros(size(RawData.(m{1}).Data));
     end
    RawData.(m{1}).Data = RawData.(m{1}).Data - AP;

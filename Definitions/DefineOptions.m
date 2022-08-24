@@ -19,6 +19,7 @@ function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet)
 %                     desired for processing MPD data
 %
 %% Defining user options 
+Op.Afterpulse    = true;
 Op.BreakSize     = 15;          % Medians allowed before marking databreak
 Op.Date          = Date;
 Op.InterpMethod  = 'linear';

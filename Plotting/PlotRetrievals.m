@@ -82,20 +82,3 @@ if isempty(YLabel)
 end
 ylabel(YLabel)
 end
-
-function [Beta,BetaTotal] = RayleighBackscatterCoeff (Lambda,Press,Temp)
-%
-% Inputs: Lambda:     Laser wavelength                   [meters]
-%         Press:      Atmospheric pressure               [millibar]
-%         Temp:       Atmospheric temperature            [Kelvin]
-%
-% Outputs: Beta:      The backscatter coefficient        [1/m/sr]
-%          BetaTotal: The total scattering coefficient   [1/m]
-%
-%% Rayleigh Efficiency angular relationship
-P = @(Theta) 0.7629.*(1+0.9324.*cosd(Theta).*cosd(Theta));
-%% Calculating backscatter coeff
-Beta = (2.938e-32).*(Press./Temp).*(1./(Lambda.^4.0117));   % Eq. (5.14)
-%% Calculating the total scatter coefficient
-BetaTotal = (Beta.*4.*pi)./P(180);                          % Eq. (5.15)
-end

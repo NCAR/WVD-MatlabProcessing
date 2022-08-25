@@ -22,7 +22,7 @@ try   % Try using onboard weather station to approximate atmosphere
    Surface             = Data.TimeSeries.WeatherStation;
    Surface.TimeStamp   = Surface.TimeStamp.*60.*60;
 catch % Using a default atmosphere if on can not be found
-   Surface.TimeStamp   = Op.WV.TimeStamp;
+   Surface.TimeStamp   = Op.WV.TimeStamp';
    Surface.Temperature = ones(size(Surface.TimeStamp)).*15; % [Celcius]
    Surface.Pressure    = ones(size(Surface.TimeStamp)).*841;% [Millibar]
 end

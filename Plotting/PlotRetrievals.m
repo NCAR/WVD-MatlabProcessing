@@ -26,7 +26,11 @@ set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
 %% Plotting retrieved data
 % Water vapor data
 subplot(7,1,1:2);
-pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,Retrievals.WaterVapor.Smoothed2)
+try
+    pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,Retrievals.WaterVapor.Smoothed2)
+catch
+    pcolor(Options.WV.TimeStamp./60./60,Options.WV.Range./1e3,zeros(size(Options.WV.Range,2),size(Options.WV.TimeStamp,2)).*nan)
+end
 FormatAxis([0,10],CM_viridis(64),Options,PO,'Absolute Humidity [g/m^3]','Retrievals',[],[0,24],[0,6]);
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
@@ -39,7 +43,11 @@ FormatAxis([-5,25],CM_cividis(64),Options,PO,'Temperature [^\circ C]',[],[],[0,2
 DesiredPos = get(gca,'Position');
 % Surface station
 subplot(7,1,7)
-plot(WS.TimeStamp,WS.Temperature);
+try
+    plot(WS.TimeStamp,WS.Temperature);
+catch
+    plot(Options.Temp.TimeStamp,Options.Temp.TimeStamp.*nan);
+end
 FormatAxis([],[],Options,PO,'Surface Temperature [^\circ C]',[],'Temp [^\circ C]',[0,24],ylim);
 xlabel('Hours UTC');
 Current = get(gca,'Position');

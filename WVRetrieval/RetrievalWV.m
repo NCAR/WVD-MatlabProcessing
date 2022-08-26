@@ -36,12 +36,11 @@ Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 % Scale term is (range Resolution x Shots Binned x Offline Duty Cycle)
 SwitchRate = Data1D.MCS.WVOffline.ProfilesPerHistogram./(Data1D.MCS.WVOnline.ProfilesPerHistogram+Data1D.MCS.WVOffline.ProfilesPerHistogram);
 Scale = Options.BinRange.*Options.BinTime.*Data1D.MCS.WVOffline.ProfilesPerHistogram.* (1 - SwitchRate);
-% Calculating overlap scalign factor
+% Calculating overlap scaling factor
 Overlap = interp1(Cal.Overlap.Range,Cal.Overlap.Value,Counts.Binned.WVOffline.Range,'linear','extrap');
 % Calculating relative backscatter
 BS = Counts.Binned.WVOffline.Counts-Counts.BGSub.WVOffline.Background;
 Rb = BS.*(Counts.Binned.WVOffline.Range.^2)./Scale'./Overlap;
-
 %% Building an estimate of the atmosphere
 T = Counts.BGSub.WVOffline; P = Counts.BGSub.WVOffline;
 T.Value = Surface.Temperature'-0.0065.*T.Range;                      % Kelvin

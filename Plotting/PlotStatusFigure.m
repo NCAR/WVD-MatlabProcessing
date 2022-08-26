@@ -218,7 +218,7 @@ switch Type
 %         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'HSRL'};
 %         LabelInfo.Etalons       = {'WVEtalon';'HSRLEtalon';'HSRLEtalon2'};
 %         LabelInfo.Environmental = {'WVEtalonHeatSink';'RbEtalonHeatSink';'Bench';'RbOven';'Humidity'};
-    case 'mpd_05'
+    case {'mpd_00','mpd_01','mpd_05'}
         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'O2Online';'O2Offline'};
         LabelInfo.Etalons       = {'WVEtalon';'O2Etalon'};
         LabelInfo.Environmental = {'WVEtalonHeatSink';'O2EtalonHeatSink';'Bench';'KOven';'Humidity'};

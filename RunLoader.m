@@ -106,7 +106,11 @@ if ProcessRetF || ProcessRetS
         CWLogging('-----Running Temperature Retrieval----\n',Options,'Main')
         [Retrievals.Temperature,Retrievals.Python] = RetrievalTemperature(Options,Paths,Data,CalInfo,Retrievals);
         if not(isempty(Retrievals.Temperature))
-            FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+            try
+                FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,Data.TimeSeries.WeatherStation);
+            catch
+                FigNum = PlotRetrievals(Retrievals,Retrievals.Python,Options,[]);
+            end
             SaveFigure(FigNum,Options,Paths,'Retrievals')
         end
     else

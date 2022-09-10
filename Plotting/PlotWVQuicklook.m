@@ -51,8 +51,16 @@ if AddCRLB
    % Mask to remove data without valid relative backscatter in the column
     A = double(all(isnan(WV.RB.Value)));
     Mask = interp1(WV.RB.TimeStamp,A,Py.TimeStamp) > 0;
-    Py.ActualWavelength(Mask) = nan;
-    Py.OptimalWavelength(Mask) = nan;
+    if all(size(Mask) == size(Py.ActualWavelength))
+        Py.ActualWavelength(Mask) = nan;
+    else
+        Py.ActualWavelength = nan.*Mask;
+    end
+    if all(size(Mask) == size(Py.OptimalWavelength))
+        Py.OptimalWavelength(Mask) = nan;
+    else
+        Py.OptimalWavelength = nan.*Mask;
+    end
     % Plotting the wavelengths of interst
     Ax(3) = subplot(5,1,5); hold on;
     plot(Py.TimeStamp./60./60,Py.ActualWavelength,'k',Py.TimeStamp./60./60,Py.OptimalWavelength,'r','linewidth',2);

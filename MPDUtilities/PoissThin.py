@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug 19 11:02:24 2022
-
 @author: stillwel
 """
 
@@ -15,5 +14,4 @@ def PoissThin(a):
     return(f)
 
 if __name__ == '__main__':
-    F = PoissThin([1, 2, 3, 4])
-    print(F)
+    F = PoissThin(x)

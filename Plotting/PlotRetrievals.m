@@ -40,7 +40,8 @@ CB = FormatAxis([0,2],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitle
 subplot(7,1,5:6);
 pcolor(Retrievals.Temperature.TimeStamp./60./60,Retrievals.Temperature.Range./1e3,Retrievals.Temperature.Smoothed-273.15);
 FormatAxis([-5,25],CM_cividis(64),Options,PO,'Temperature [^\circ C]',[],[],[0,24],[0,6]);
-DesiredPos = get(gca,'Position');
+DesiredAxis = gca;
+
 % Surface station
 subplot(7,1,7)
 try
@@ -50,11 +51,15 @@ catch
 end
 FormatAxis([],[],Options,PO,'Surface Temperature [^\circ C]',[],'Temp [^\circ C]',[0,24],ylim);
 xlabel('Hours UTC');
-Current = get(gca,'Position');
-set(gca,'Position',[Current(1:2),DesiredPos(3),Current(4)])
+CurrentAxis = gca;
 
 %% Format Figures
 FormatFigures(gcf);
+
+%% Moving bottom axis to match up x-axes bounds
+DesiredPos = get(DesiredAxis,'Position');
+Current    = get(CurrentAxis,'Position');
+set(CurrentAxis,'Position',[Current(1:2),DesiredPos(3),Current(4)])
 
 %% Formatting colorbars
 ColorbarTicks = get(CB,'yticklabel');

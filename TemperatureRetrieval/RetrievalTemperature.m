@@ -76,7 +76,7 @@ if Options.Bootstrap
             % Define guess atmosphere (lapse rate is a random starting variable)
             GuessLapse =  -1*(0.0065 + rand.*(0.0098-0.0065));
             ConstProfile = (Options.Range').*(GuessLapse);
-            Data2D.NCIP.Temperature.Value = repmat(ConstProfile,1,size(Data2D.NCIP.Temperature.Value,2))+Data1D.Surface.Temperature.Value';
+            Data2D.NCIP.Temperature.Value = ConstProfile+Data1D.Surface.Temperature.Value';
             % Actually doing the nuts and bolts to retrieve temperature
             [Alpha{m,n},~,T{m,n},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap',Paths);
         end

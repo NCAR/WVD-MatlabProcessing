@@ -17,16 +17,9 @@ MaxDt      = 2;         % Threshold of temperature change per iteration
 if IsField && IsField2
     % Applying the humidity mask
     Humidity.Value(ceil(Humidity.Mask)==1 | Humidity.Value<0) = 0;
-%     % Converting from g/m^3 to molecules per m^3
-%     Humidity.Value = Humidity.Value./Const.MWV/1000;
-%     % Calculating the number of molecules period
-%     A = Atmo.Pressure.Value.*Const.Atm2Pa.*Const.Av./Const.R./Atmo.Temperature.Value;
-%     % Calculating the mixing ratio of water vapor
-%     Qwv = Humidity.Value./A;
 else
     [~,Humidity] = RecursivelyCheckIsField(Data2D, {'Onboard','WV'});
     [~,Atmo    ] = RecursivelyCheckIsField(Data2D, {'Guess'});
-%     Qwv = 0;
 end
 
 %% Preparing atmospheric parameters
@@ -64,6 +57,7 @@ else
     TCurrent.Value     = repmat(ConstProfile,1,size(Alpha,2))+Surf.Temperature.Value';
 end
 % Looping
+DTAll = zeros(1,Options.TempIter).*nan;
 for m=1:1:Options.TempIter
     % Calculating the change in temperature by either method
     if strcmp(Options.Method,'PCA')
@@ -77,7 +71,7 @@ for m=1:1:Options.TempIter
     DeltaT(abs(DeltaT)>MaxDt) = sign(DeltaT(abs(DeltaT)>MaxDt)).*MaxDt;
     % Outputting temperature state
     TempDiffAvg = mean(mean(abs(DeltaT),'omitnan'),'omitnan');
-    DTAll(m) = TempDiffAvg; %#ok<AGROW>
+    DTAll(m) = TempDiffAvg; 
     CWLogging(sprintf('      Mean dT: %4.3f\n',TempDiffAvg),Op,'Retrievals')
     % Updating the current temperature
     TCurrent.Value = TCurrent.Value + DeltaT;

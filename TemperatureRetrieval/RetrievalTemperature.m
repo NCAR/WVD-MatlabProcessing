@@ -49,7 +49,12 @@ if not(Found)
 end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;
-Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
+try
+    Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
+catch
+    % If no WV processing is availible, assume WV is 0
+    Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.HSRL,'Smoothed',1,0,0);
+end
 %% Temperature Data Pre-Process 
 % Reading Needed Data (Receiver Scan)
 Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);
@@ -99,7 +104,7 @@ else
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Actually doing the nuts and bolts to retrieve temperature
-    GuessLapse = -0.0098;
+    GuessLapse = -0.008;
     [Alpha,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Standard',Paths);
     % Making the output data structure
     Temp.Dt          = Dt;

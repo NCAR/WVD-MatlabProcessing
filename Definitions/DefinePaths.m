@@ -18,8 +18,8 @@ if ismac
     ProcBase = '/Volumes/MPD_ProcessedData';
     Server   = false;
 elseif isunix
-    DataBase = '/export/fog1/rsfdata/MPD';
-    CalBase  = '/export/fog1/rsfdata/MPD/calibration/eol-lidar-calvals';
+    DataBase = '/scr/fog1/rsfdata/MPD';
+    CalBase  = '/scr/fog1/rsfdata/MPD/calibration/eol-lidar-calvals';
     ProcBase = DataBase;
     Server   = true;
 end

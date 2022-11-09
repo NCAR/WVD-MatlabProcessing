@@ -61,7 +61,7 @@ Op.HSRL             = MakeArrays(Op.HSRL);
 %% Defining Temperature retrieval options
 Op.Temp             = Def;
 Op.Temp.Bootstrap   = false;  % Boolean to turn bootstrapping on
-Op.Temp.BootIters   = 20;     % Iterations to use when bootstraping
+Op.Temp.BootIters   = 30;     % Iterations to use when bootstraping
 Op.Temp.TempIter    = 50;     % Iterations for temperature conversion
 Op.Temp.HSRLType    = 'On';   % Options: 'Py' (Python), 'On' (Calculated onboard),
                               % 'PyP' (Python Prefered if availible else onboard)

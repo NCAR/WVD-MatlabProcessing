@@ -2,7 +2,7 @@
 % Written On: February 16, 2022
 % Written For: National Center for Atmospheric Research
 
-function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet)
+function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet,BSOverwrite)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
 %         System:     String defining the system number to run of the form
@@ -13,7 +13,9 @@ function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet)
 %                       'None':   See nothing from this function or below
 %         ProcessHK:  A boolean value: true runs housekeeping figures,
 %                     false does not
-%         ProcessRet: A boolean value: true runs retrievals, false does not 
+%         ProcessRet: A boolean value: true runs retrievals, false does not
+%         BSOverwrite:A boolean value: true forces temperature processing, 
+%                     false allows default settings
 %
 % Outputs: Op:        A structure containing all user defined options
 %                     desired for processing MPD data
@@ -74,6 +76,12 @@ Op.Temp.MinRange    = 150;    % Start of retrievals                   [m]
 Op.Temp.SmoothRange = 300;    % Desired smoothing range res           [m]
 Op.Temp.SmoothTime  = 15*60;  % Desired smoothing time res            [sec]
 Op.Temp             = MakeArrays(Op.Temp);
+
+if BSOverwrite
+    Op.Temp.Bootstrap   = true;
+    Op.Temp.Method      = 'PyP';
+end
+
 %% Defining plotting options
 Op.Plot.FontSize    = 18;     % Font size to be applied to all figures
 Op.Plot.RB.MaxRange = 12e3;   % Max range to plot for field catalog   [m]

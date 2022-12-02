@@ -3,13 +3,14 @@
 %% Setting up runtime environment
 close all; clear; clc;
 %% Options to define what systems and when to analyze MPD data
-Dates2Process   = {'20210623';'20211205'};
-% Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
-Systems2Process = {'mpd_05'};
+Dates2Process   = {'20221202';'20221202'};
+Systems2Process = {'mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'};
+% Systems2Process = {'mpd_01'};
 %% Options to define what to process
 ProcessHousekeeping  = false;  % Process housekeeping figures
 ProcessRetrievalsF   = true;   % Process retrievals that go quickly
-ProcessRetrievalsS   = true;   % Process retrievals that are slow
+ProcessRetrievalsS   = false;  % Process retrievals that are slow
+BootStrapOverwrite   = false;  % Forcing temp processing bootstrapping
 %% Processing all required data
 DateNum = datenum(Dates2Process,'yyyymmdd');
 TStart = tic;
@@ -19,7 +20,7 @@ for n=DateNum(1):1:DateNum(2)
         fprintf(['Processing ',upper(erase(Systems2Process{m},'_')),': ',DateString,' (',datestr(now,'HH:MM:SS'),')\n'])
         try
             [~,~,~,~,~] = RunLoader(DateString,Systems2Process{m},'Skinny', ...
-                ProcessHousekeeping,ProcessRetrievalsF,ProcessRetrievalsS);
+                ProcessHousekeeping,ProcessRetrievalsF,ProcessRetrievalsS,BootStrapOverwrite);
         catch
             fprintf('************Processing Failed************\n')
         end

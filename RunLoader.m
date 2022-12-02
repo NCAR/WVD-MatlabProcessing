@@ -1,7 +1,7 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % 
-function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRetF,ProcessRetS)
+function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRetF,ProcessRetS,BSOverwrite)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
 %         System:     String defining the system number to run of the form
@@ -13,6 +13,8 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %         ProcessHK:  A boolean value: true runs housekeeping figures,
 %                     false does not
 %         ProcessRet: A boolean value: true runs retrievals, false does not
+%         BSOverwrite:A boolean value: true forces temperature processing, 
+%                     false allows default settings
 %                     
 % Outputs: Data:      Structure containing all of the loaded and processed
 %                     MPD data 
@@ -24,19 +26,20 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %                     processed MPD time series data
 %
 %% Checking inputs and using default values if running as stand-alone
-if nargin ~= 6
+if nargin ~= 7
     Date        = '20210426';
     System      = 'mpd_05';
     Logging     = 'Skinny';
     ProcessHK   = false;
     ProcessRetF = false;
     ProcessRetS = false;
+    BSOverwrite = false;
 end
 %% Adding path to utilities, defining options, and defining path info
 for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','RetrievalCommon','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
-Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS);
+Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS,BSOverwrite);
 [Paths,Server] = DefinePaths(Date,Options,System);
 %% Reading data and pre-processing 
 % Reading the calval files

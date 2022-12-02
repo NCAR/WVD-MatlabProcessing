@@ -79,7 +79,7 @@ Op.Temp             = MakeArrays(Op.Temp);
 
 if BSOverwrite
     Op.Temp.Bootstrap   = true;
-    Op.Temp.Method      = 'PyP';
+    Op.Temp.HSRLType    = 'PyP';
 end
 
 %% Defining plotting options

@@ -141,7 +141,7 @@ function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,
 %          Dt
 %
 %% Checking which data inputs to use
-if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'Py')
+if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
     T    = Data2D.NCIP.Temperature;
     P    = Data2D.NCIP.Pressure;
     ABC  = Data2D.MPD.BSCoefficient.Value;

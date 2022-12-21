@@ -14,4 +14,8 @@ def PoissThin(a):
     return(f)
 
 if __name__ == '__main__':
+    try:
+        x
+    except:
+        x = [10,10,10]
     F = PoissThin(x)

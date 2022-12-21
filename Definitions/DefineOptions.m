@@ -74,7 +74,7 @@ Op.Temp.BlankBSC    = 5e-5;   % Blank data from 0 to this range       [m]
 Op.Temp.MaxRange    = 6e3;    % Max range to run retrievals to        [m]
 Op.Temp.MinRange    = 150;    % Start of retrievals                   [m]
 Op.Temp.SmoothRange = 300;    % Desired smoothing range res           [m]
-Op.Temp.SmoothTime  = 15*60;  % Desired smoothing time res            [sec]
+Op.Temp.SmoothTime  = 20*60;  % Desired smoothing time res            [sec]
 Op.Temp             = MakeArrays(Op.Temp);
 
 if BSOverwrite

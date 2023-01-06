@@ -89,16 +89,13 @@ MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo)
 CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
 MaskCntRLow = CntsPerShot < 0.01;
 % Combining the masks
-WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR;
-WV.Mask2 = MaskNP | MaskErr | MaskGrad | MaskCntR | MaskCntRLow;
+WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR | MaskCntRLow;
 % Removing data with high amounts of bad data neighbors (speckle filtering)
 Mask2   = DensityFiltering(WV.Mask,5,0.5);
-Mask3   = DensityFiltering(WV.Mask2,5,0.5);
 WV.Mask = WV.Mask | Mask2;
-WV.Mask2 = WV.Mask2 | Mask3;
 %% Calculating smoothed profile for plotting
 PreMask = WV.Value;
-PreMask(WV.Mask2 == 1) = nan;
+PreMask(WV.Mask == 1) = nan;
 WV.Smoothed2  = SmoothOld2(PreMask,Options);
 % %% Plotting
 % PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)

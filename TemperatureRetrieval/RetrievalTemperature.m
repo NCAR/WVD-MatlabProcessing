@@ -28,8 +28,6 @@ if not(Possible)
     CWLogging('*** Temperature data not availible ***\n',Op,'Main')
     Temp = []; MPD = []; return
 end
-% Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
-% Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')

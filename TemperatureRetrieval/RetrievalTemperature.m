@@ -28,8 +28,8 @@ if not(Possible)
     CWLogging('*** Temperature data not availible ***\n',Op,'Main')
     Temp = []; MPD = []; return
 end
-Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
-Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
+% Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
+% Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
@@ -42,10 +42,12 @@ end
 % Checking if more data handling is needed
 if not(Found)
     MPD = [];
-    Op.Temp.HSRLType = 'On';
+    Options.HSRLType = 'On';
     % Mimicking NCIP information
     Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
     Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
+    Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
+    Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;
@@ -158,6 +160,9 @@ CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 %% Convert absorption to temperature
 CWLogging('     Converting to temperature\n',Op,'Sub')
 [T,Dt] = ConvertAlpha(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,GuessLapse,Type,Paths);
+%% Speckle filtering
+SpeckleMask = DensityFiltering(T.Value,3,0.5);
+T.Value(SpeckleMask == 0) = nan;
 %% Blanking low altitude data
 T.Value(T.Range<Options.BlankRange,:) = nan;
 %% Removing data in excess of the allowed backscatter coefficient

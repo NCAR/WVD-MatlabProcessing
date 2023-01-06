@@ -64,6 +64,9 @@ HSRL.Value = HSRLCalc(Counts.BGSub,HSRL);
 HSRL.Value(HSRL.Range<Options.BlankRange,:) = nan;
 %% Calculating optical depth and backscatter coefficient
 [HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
+%% Speckle filtering
+Mask2   = DensityFiltering(HSRL.Mask,5,0.5);
+HSRL.Mask = HSRL.Mask | Mask2;
 %% Smoothing
 A = HSRL.Value;
 A(HSRL.Mask) = nan;

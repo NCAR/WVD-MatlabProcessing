@@ -28,10 +28,12 @@ if not(Possible)
     CWLogging('*** Temperature data not availible ***\n',Op,'Main')
     Temp = []; MPD = []; return
 end
+Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
+Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
-    [Data1D.Surface,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
+    [~,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
     Data1D  = RecursivelyInterpolate1DStructure(Data1D,Options.TimeStamp,'linear');
     MPD = Data2D;
 else
@@ -40,12 +42,10 @@ end
 % Checking if more data handling is needed
 if not(Found)
     MPD = [];
-    Options.HSRLType = 'On';
+    Op.Temp.HSRLType = 'On'; Options.HSRLType = 'On';
     % Mimicking NCIP information
     Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
     Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
-    Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
-    Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
 end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;

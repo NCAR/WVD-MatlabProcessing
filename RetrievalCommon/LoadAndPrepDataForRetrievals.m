@@ -21,6 +21,10 @@ end
 try   % Try using onboard weather station to approximate atmosphere
    Surface             = Data.TimeSeries.WeatherStation;
    Surface.TimeStamp   = Surface.TimeStamp.*60.*60;
+   if all(isnan(Data.TimeSeries.WeatherStation.Temperature))
+       fprintf('**Using default weather station information.**\n')
+        error('No weather station data')
+   end
 catch % Using a default atmosphere if on can not be found
    Surface.TimeStamp   = Op.WV.TimeStamp';
    Surface.Temperature = ones(size(Surface.TimeStamp)).*15; % [Celcius]

@@ -61,15 +61,14 @@ function [Order0] = CalculateAlpha0(Online,Offline,DeltaR,P,T,WV,Const,Options,S
 %                  (alt,time,frequency)                             [unitless] 
 %
 %% Standard DIAL derivative term
-A = (Online.*circshift(Offline,[4,0]))./(circshift(Online,[4,0]).*Offline);
-A = circshift(A,[-2,0]);
+A = (Online.*circshift(Offline,[1,0]))./(circshift(Online,[1,0]).*Offline);
 A = A(1:size(P,1),:);
 %% Number density of O2 (Total air - moisture = dry * QO2 = dry O2)
 WV(WV<0) = 0;
 NO2 = (P.*Const.Atm2Pa./Const.Kb./T - WV./(1e3.*Const.MWV)).*Const.QO2;
 %% Alpha0 and transmission from alpha0
 Order0.Alpha.O2Offline = Spectra.O2Offline.AbsorptionObserved.*NO2;
-Order0.Alpha.O2Online  = real(Order0.Alpha.O2Offline - log(A)./2./DeltaR/4);
+Order0.Alpha.O2Online  = real(Order0.Alpha.O2Offline - log(A)./2./DeltaR);
 %% Looping over effective absorption to calculate further needed fields
 [~,FN] = RecursiveStruct2Cell(Order0.Alpha);
 for m=1:1:length(FN)

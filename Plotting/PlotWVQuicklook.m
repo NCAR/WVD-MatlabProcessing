@@ -131,6 +131,14 @@ if any(strcmp(System,{'mpd_02','mpd_03','mpd_04'}))            &&  ...
     Options.WV.CAxis = [0,25];
     Options.RB.ExtraName = [' (PRECIP -- ',Loc,')'];
     Options.WV.ExtraName = '';
+elseif any(strcmp(System,{'mpd_02','mpd_03'}))                 &&  ...
+    datenum(Date,'yyyymmdd') >= datenum('20230712','yyyymmdd') &&  ...
+    datenum(Date,'yyyymmdd') <= datenum('20230905','yyyymmdd')
+    % M2HATS
+    Loc = 'Tonopah';
+    Options.WV.CAxis = [0,6];
+    Options.RB.ExtraName = [' (M2HATS -- ',Loc,')'];
+    Options.WV.ExtraName = '';
 else
     Options.RB.ExtraName = '';
     Options.WV.ExtraName = '';

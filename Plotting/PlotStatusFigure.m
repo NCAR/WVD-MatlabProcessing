@@ -1,7 +1,7 @@
 
 
 
-function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,FigNum)
+function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,FigNum)
 %
 %
 %
@@ -14,7 +14,7 @@ Bounds.LLSeedStable = [0.5,1];      % Stability of laser seeds before warnings  
 Bounds.LLSeedLow    = [20,25];      % Minimum value of seed laser power times -1  [dBM]
 Bounds.EtalonStable = [0.05,0.25];  % Stability of etalons before warnings        [C]
 %% Checking inputs
-if nargin == 3
+if nargin == 4
     FigNum = FindCurrentFigure + 1;
 end
 %% Setting label information
@@ -92,6 +92,7 @@ for m=1:1:size(LabelInfo.Lasers,1)
     % If data exists, determine what its color coding should be
     if IsField
         % Checking if the lasers are locked
+        TempData.WaveDiff = TempData.WaveDiff - CalInfo.WMOffset;
         Locked = CheckDataStatus(Locked,TempData.WaveDiff,Bounds.LLError);
         % Checking if the seeds are stable 
         if sum(~isnan(TempData.SeedPower)) == 0

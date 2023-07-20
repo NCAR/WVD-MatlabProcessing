@@ -82,7 +82,7 @@ CalInfo.AfterpulseData = ReadMPDAfterpulseFile(fieldnames(Data.Lidar.Raw),fullfi
 %% Plotting field catalog infomation
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
-    [~,FigNum] = PlotStatusFigure(Data,RawData,Options);
+    [~,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo);
     SaveUpload(FigNum,Options,Paths,Server,'Status');
     CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
     FigNum = PlotHousekeepingFigure(Data,Options);

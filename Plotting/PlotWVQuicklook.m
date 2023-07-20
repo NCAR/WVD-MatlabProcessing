@@ -136,7 +136,7 @@ elseif any(strcmp(System,{'mpd_02','mpd_03'}))                 &&  ...
     datenum(Date,'yyyymmdd') <= datenum('20230905','yyyymmdd')
     % M2HATS
     Loc = 'Tonopah';
-    Options.WV.CAxis = [0,6];
+    Options.WV.CAxis = [0,8];
     Options.RB.ExtraName = [' (M2HATS -- ',Loc,')'];
     Options.WV.ExtraName = '';
 else

@@ -25,6 +25,11 @@ Subs        = [];
 Subs = GeneralPlotter(Data,{'UPS';'WeatherStation';{'Thermocouple','OpticalBench'};{'Thermocouple','HVACSource'};'HumiditySensor';{'Thermocouple','WVEtalonHeatSink'}},...
                       {'Temperature';'Temperature';'Temperature';'Temperature';'IntTemp';'Temperature'},...
                       {{'Temperature';'[^oC]'}},{1:4},{[-45,45]},{[]},Subs,PO); 
+
+% Add second transparent axis on top of the last with pressure
+Subs = CopyPlotter(Data,{{'Thermocouple','HSRLOven'}},{'Temperature'},...
+                      {{'HSRL Cell';'[^oC]'}},{[0,120]},{[]},Subs,PO);
+
 title([upper(erase(Options.System,'_')),' Housekeeping Parameters (',Options.Date,')'])
 % Add second transparent axis on top of the last with HSRL cell temperature
 
@@ -72,7 +77,7 @@ function [Subs] = CopyPlotter(Data,Types2Plot,Var2Plot,SubLabel,YMaxLim,YMinLim,
 %
 %
 %% Plotting constants
-Color2Use = [27,195,255]./255;
+Color2Use = [75,142,173]./255;
 %% Recreating the details of the axis to copy
 CurrentAxis = gca;
 Position = get(CurrentAxis,'position');
@@ -80,7 +85,7 @@ axes('Position',Position,'YAxisLocation','right','Color','none')
 set(gca,'ycolor',Color2Use)
 %% Looking for availible data and plotting if there
 for m=1:1:size(Types2Plot,1)
-   [IsField,TempData] = RecursivelyCheckIsField(Data,{'TimeSeries',Types2Plot{m,1}}); 
+   [IsField,TempData] = RecursivelyCheckIsField(Data,cellflat({'TimeSeries',Types2Plot{m,1}}));
    if IsField
        hold on; plot(TempData.TimeStamp,TempData.(Var2Plot{m}),'Color',Color2Use)
    end

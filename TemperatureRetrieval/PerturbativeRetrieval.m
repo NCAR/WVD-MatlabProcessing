@@ -62,6 +62,7 @@ function [Order0] = CalculateAlpha0(Online,Offline,DeltaR,P,T,WV,Const,Options,S
 %
 %% Standard DIAL derivative term
 A = (Online.*circshift(Offline,[1,0]))./(circshift(Online,[1,0]).*Offline);
+A = circshift(A,[-1,0]); % Removing offset of 1 bin upwards shift 
 A = A(1:size(P,1),:);
 %% Number density of O2 (Total air - moisture = dry * QO2 = dry O2)
 WV(WV<0) = 0;

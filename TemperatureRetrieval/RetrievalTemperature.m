@@ -159,8 +159,8 @@ CWLogging('     Perterbative Retrieval\n',Op,'Sub')
 CWLogging('     Converting to temperature\n',Op,'Sub')
 [T,Dt] = ConvertAlpha(Alpha,Const,Data1D,Data2D,Options,Data1D.Surface,Spectra,Op,GuessLapse,Type,Paths);
 %% Speckle filtering
-SpeckleMask = DensityFiltering(T.Value,3,0.5);
-T.Value(SpeckleMask == 0) = nan;
+SpeckleMask = DensityFiltering(isnan(T.Value),3,0.5);
+T.Value(SpeckleMask == 1) = nan;
 %% Blanking low altitude data
 T.Value(T.Range<Options.BlankRange,:) = nan;
 %% Removing data in excess of the allowed backscatter coefficient

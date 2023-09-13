@@ -15,6 +15,12 @@ function [Spec] = ReadSystemScanData(Sp,Scan,Const)
 for m=1:1:size(FN,1)
     try
         SubField = fields(Sp.(FN{m,1}));
+         % Protection from identical scan wavelengths popping up
+        if any(diff(Scan.(FN{m,1}).Wavelength)==0)
+            Remove = find(diff(Scan.(FN{m,1}).Wavelength)==0);
+            Scan.(FN{m,1}).Wavelength(Remove) = [];
+            Scan.(FN{m,1}).Transmission(Remove) = [];
+        end
         Tr = interp1(Scan.(FN{m,1}).Wavelength,Scan.(FN{m,1}).Transmission, ...
                      Sp.(FN{m,1}).(SubField{1}).Lambda);
         Spec.(FN{m,1}).Lambda       = Sp.(FN{m,1}).(SubField{1}).Lambda;

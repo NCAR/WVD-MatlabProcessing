@@ -153,6 +153,10 @@ function SaveUpload(FN,Op,Paths,Serv,Type)
 %         Type:  A string containing the type of figure to be saved
 %
 %%
-FTPFigure(FN,Op,Paths,Serv,Type)
+try
+    FTPFigure(FN,Op,Paths,Serv,Type)
+catch
+    CWLogging('---------Catalog upload failed--------\n',Options,'Main')
+end
 SaveFigure(FN,Op,Paths,Type)
 end

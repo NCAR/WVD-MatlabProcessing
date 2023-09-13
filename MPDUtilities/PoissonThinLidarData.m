@@ -51,7 +51,7 @@ function [P] = PythonThinning(CData)
 %
 %%
 %% Finding where photon counts should be masked (can't deal with negatives)
-Mask = (CData.Counts<0) | isnan(CData.Counts);
+Mask = (CData.Counts<1) | isnan(CData.Counts);
 CData.Counts(Mask) = 1;      % Removing negative values
 %% Poisson thinning
 P{1,1} = double(pyrunfile('PoissThin.py','F',x=int64(CData.Counts)));

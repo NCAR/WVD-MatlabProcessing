@@ -10,7 +10,7 @@ function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,FigNum)
 %% Plotting Constants
 Bounds.QError       = [20,100];     % Elements in queues before (warning, error)
 Bounds.LLError      = [1e-4,5e-4];  % Stability of lasers before warnings         [nm]
-Bounds.LLSeedStable = [0.5,1];      % Stability of laser seeds before warnings    [dBM]
+Bounds.LLSeedStable = [1.0,2.0];      % Stability of laser seeds before warnings    [dBM]
 Bounds.LLSeedLow    = [20,25];      % Minimum value of seed laser power times -1  [dBM]
 Bounds.EtalonStable = [0.05,0.25];  % Stability of etalons before warnings        [C]
 %% Checking inputs
@@ -215,11 +215,7 @@ LabelInfo.Children       = {'MCS'    ,'MCS';
                             'Clock'  ,'QuantumComposer'};
 %% Settings for installed hardware
 switch Type
-%     case 'mpd_02'
-%         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'HSRL'};
-%         LabelInfo.Etalons       = {'WVEtalon';'HSRLEtalon';'HSRLEtalon2'};
-%         LabelInfo.Environmental = {'WVEtalonHeatSink';'RbEtalonHeatSink';'Bench';'RbOven';'Humidity'};
-    case {'mpd_00','mpd_01','mpd_05'}
+    case {'mpd_00','mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'}
         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'O2Online';'O2Offline'};
         LabelInfo.Etalons       = {'WVEtalon';'O2Etalon'};
         LabelInfo.Environmental = {'WVEtalonHeatSink';'O2EtalonHeatSink';'Bench';'KOven';'Humidity'};

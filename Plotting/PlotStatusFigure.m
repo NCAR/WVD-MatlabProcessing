@@ -9,10 +9,11 @@ function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,FigNum)
 %
 %% Plotting Constants
 Bounds.QError       = [20,100];     % Elements in queues before (warning, error)
-Bounds.LLError      = [1e-4,5e-4];  % Stability of lasers before warnings         [nm]
-Bounds.LLSeedStable = [1.0,2.0];      % Stability of laser seeds before warnings    [dBM]
-Bounds.LLSeedLow    = [20,25];      % Minimum value of seed laser power times -1  [dBM]
-Bounds.EtalonStable = [0.05,0.25];  % Stability of etalons before warnings        [C]
+Bounds.LLError      = [1e-4,5e-4];  % Stability of lasers before warnings          [nm]
+Bounds.LLSeedStable = [2.0,3.0];    % Stability of laser seeds before warnings     [dBM]
+Bounds.LLSeedLow    = [20,25];      % Minimum value of seed laser power times -1   [dBM]
+Bounds.EtalonStable = [0.05,0.25];  % Stability of etalons before warnings         [C]
+Bounds.LaserAmp     = [5,25];       % Stability of amplified power before warnings [%]
 %% Checking inputs
 if nargin == 4
     FigNum = FindCurrentFigure + 1;
@@ -21,7 +22,7 @@ end
 LabelInfo = DefineLabelTypes(Options.System);
 %% Making the labels
 [Labels,Last] = MakeLabels(LabelInfo.Children(:,1),{'Responding';'Queues';'Data'});   % Children
-A = cellfun(@(X) strcat(X,{'Locked';'SeedPower'}),LabelInfo.Lasers,'Uni',false);
+A = cellfun(@(X) strcat(X,{'Locked';'SeedPower';'AmpPower'}),LabelInfo.Lasers,'Uni',false);
 [Labels,Last] = MakeLabels({''},cat(1,A{:}),Labels,Last);                             % Lasers
 [Labels,Last] = MakeLabels({''},strcat(LabelInfo.Etalons,{'Locked'}),Labels,Last);    % Etalons 
 [Labels,Last] = MakeLabels({'UPS'},LabelInfo.UPS,Labels,Last);                        % UPS
@@ -29,7 +30,7 @@ A = cellfun(@(X) strcat(X,{'Locked';'SeedPower'}),LabelInfo.Lasers,'Uni',false);
 clear A Last
 %% Pre-allocating data
 Time         = Options.TimeGrid1d;
-Contour      = nan(size(Time,1),size(Labels,1));
+Contour      = nan(size(Time,1),size(Labels,1)+1);
 DefaultData  = -1*ones(size(Time));
 GLTO         = -1;     % Global Last Time Observed
 %% Unpacking the MPD data
@@ -40,6 +41,7 @@ for m=1:1:size(LabelInfo.Children,1)
    % Checking for end of data (children with 2 data types, pick reliable one)
    if strcmp(LabelInfo.Children{m,2},'WavelengthLocking'); CheckData = 'Laser';
    elseif strcmp(LabelInfo.Children{m,2},'MCS');           CheckData = 'Power';
+   elseif strcmp(LabelInfo.Children{m,2},'CurrentSensor'); CheckData = 'Current';
    else;                                                   CheckData = LabelInfo.Children{m,2};
    end
    % Checking if data is availible
@@ -87,6 +89,7 @@ end
 for m=1:1:size(LabelInfo.Lasers,1)
     % Default data if if can not be found
     Locked = DefaultData; Stable = DefaultData; Low = DefaultData; 
+    PowerCheck = DefaultData;
     % Checking if data exists
     [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Laser',LabelInfo.Lasers{m}});
     % If data exists, determine what its color coding should be
@@ -104,10 +107,21 @@ for m=1:1:size(LabelInfo.Lasers,1)
         Low    = CheckDataStatus(Low,TempData.SeedPower,Bounds.LLSeedLow);
         Stable(Low == 1) = 1; Stable(Low == 2) = 2;
     end
+    % Checking if data exists
+    [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Power',LabelInfo.Lasers{m}});
+    if IsField
+        % Checking if the amplified power is stable
+        if sum(~isnan(TempData.LaserPower)) == 0
+            FirstGood = -70;
+        else
+            FirstGood = TempData.LaserPower(~isnan(TempData.LaserPower));
+        end
+        PowerCheck = CheckDataStatus(PowerCheck,(TempData.LaserPower - FirstGood(1))./FirstGood(1).*100,Bounds.LaserAmp);
+    end
     % Filling the data contour
-    Contour(:,LastContour + (m-1)*2 + (1:2)) = [Locked,Stable];
+    Contour(:,LastContour + (m-1)*3 + (1:3)) = [Locked,Stable,PowerCheck];
 end
-LastContour = LastContour + 2*m;
+LastContour = LastContour + 3*m;
 clear Locked Stable IsField TempData m Raw
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Etalons %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Checking for the end of the data (must check raw data because it is not
@@ -162,16 +176,54 @@ for m=1:1:1
     % Filling the data contour
     Contour(:,LastContour + (1:3)) = [Battery,OnBattery,BatteryLow];
 end
+LastContour = LastContour + 3;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Thermocouples %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checking for the end of the data (must check raw data because it is not
+% yet pushed to a known time grid)
+[IsField,TempData] = RecursivelyCheckIsField(RawData,'Thermocouple');
+if IsField
+    [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
+end
+for m=1:1:1
+    for n=1:1:length(LabelInfo.Environmental)
+        switch LabelInfo.Environmental{n}
+            case {'WVEtalonHeatSink','HSRLEtalonHeatSink'}
+                Good = [20,36]; Warning = [15,40];
+            case 'OpticalBench'
+                Good = [25,33]; Warning = [20,36];
+            case 'HSRLOven'
+                Good = [95,110]; Warning = [80,115];
+            case 'HVACSource'
+                Good = [20,35]; Warning = [10,40];
+            otherwise
+                Good = [nan,nan]; Warning = [nan,nan];
+        end
+        % Checking if data exists
+        [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Thermocouple',LabelInfo.Environmental{n}});
+        if IsField
+           Color = TempData.Temperature.*0 + 2;
+            Color(TempData.Temperature>=Warning(1)&TempData.Temperature<=Warning(2)) = 1;
+            Color(TempData.Temperature>=Good(1)&TempData.Temperature<=Good(2)) = 0;
+        else
+            Color = zeros(size(Time,1),1) - 1;
+        end
+        Contour(:,LastContour + n) = Color;
+        if n==length(LabelInfo.Environmental)
+            % Padding the last element so it can be rendered
+            Contour(:,LastContour + n + 1) = Color;
+        end
+    end
+end
 
 %% Removing data not yet taken
 % I should check here to see if the global last time observed is low
 % because there is no data at the end of the day or because it could not
 % have possibly been taken yet
-if GLTO > 0 && (now-1 < datenum(Options.Date,'yyyymmdd'))
+NowUTC = datenum(datetime('now', 'timezone', 'utc'));
+if GLTO > 0 && (NowUTC-1 < datenum(Options.Date,'yyyymmdd'))
     % Final check...the absolute Global Last Observed Time should be right
     % now. If that is less than the GLTO, there was a file issue
-    TimeOfDay = (now-datenum(Options.Date,'yyyymmdd'))*24;
+    TimeOfDay = (NowUTC-datenum(Options.Date,'yyyymmdd'))*24;
     if GLTO > TimeOfDay && TimeOfDay>0
         GLTO = TimeOfDay;
     end
@@ -180,7 +232,7 @@ end
 %% Plotting all data
 % Setting up the elements needed to plot and label the axis
 StatusElements = size(Labels,1);
-[X,Y] = meshgrid(Time,0.5:StatusElements-0.5);
+[X,Y] = meshgrid(Time,0.5:StatusElements+0.5);
 % Plotting the contour on the left axis
 figure(FigNum);
 yyaxis left
@@ -209,7 +261,7 @@ LabelInfo.Children       = {'MCS'    ,'MCS';
                             'LL'     ,'WavelengthLocking';
                             'WS'     ,'WeatherStation';
                             'HK'     ,'Thermocouple';
-                            %'Cur'    ,'CurrentSensor';
+                            'Cur'    ,'CurrentSensor';
                             'Hum'    ,'HumiditySensor';
                             'UPS'    ,'UPS';
                             'Clock'  ,'QuantumComposer'};
@@ -218,7 +270,7 @@ switch Type
     case {'mpd_00','mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'}
         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'O2Online';'O2Offline'};
         LabelInfo.Etalons       = {'WVEtalon';'O2Etalon'};
-        LabelInfo.Environmental = {'WVEtalonHeatSink';'O2EtalonHeatSink';'Bench';'KOven';'Humidity'};
+        LabelInfo.Environmental = {'WVEtalonHeatSink';'HSRLEtalonHeatSink';'OpticalBench';'HSRLOven';'HVACSource'};
     otherwise
         LabelInfo.Lasers        = {'WVOnline';'WVOffline'};
         LabelInfo.Etalons       = {'WVEtalon'};

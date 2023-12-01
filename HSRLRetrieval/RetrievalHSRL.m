@@ -2,7 +2,7 @@
 % Written For: NCAR
 % Modificication Info: Created August, 2022
 
-function [HSRL] = RetrievalHSRL(Op,Paths,Data,Cal)
+function [HSRL,Klett,Fernald] = RetrievalHSRL(Op,Paths,Data,Cal)
 %
 % Inputs: Op:    Full options structure
 %         Paths: Structure containing full file paths needed for processing
@@ -49,7 +49,7 @@ Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 % Building an estimate of the atmosphere
 HSRL.TimeStamp = Counts.BGSub.O2OfflineComb.TimeStamp;
 HSRL.Range     = Counts.BGSub.O2OfflineComb.Range;
-HSRL.TGuess    = (Surf.Temperature-0.0065.*Options.Range)';                % Kelvin
+HSRL.TGuess    = (Surf.Temperature-0.0065.*HSRL.Range')';                % Kelvin
 HSRL.PGuess    = (Surf.Pressure.*(Surf.Temperature./HSRL.TGuess').^-5.5)'; % Atmospheres
 % Extracting estimates to be a self contained data structure
 T = ExtractAtmoStructs(HSRL,'TGuess');
@@ -60,10 +60,36 @@ Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
 HSRL.Value = HSRLCalc(Counts.BGSub,HSRL);
 % Calculate HSRL Data (Spuler's way)
 [~,HSRL.Mask] = HSRLCalcSpuler(Counts.BGSub,HSRL.TGuess,HSRL.PGuess,Spectra,Const);
+%% Calculating Backscatter Ratio with Klett inversion (for comparison only)
+% Applying saturation correction to raw counts observed
+Raw = Counts.Binned.O2OfflineComb.Counts;
+Counts.Binned.O2OfflineComb.Counts = CorrectionNonparalyzable(Raw,35e-9,Data1D.MCS.O2Offline.ProfilesPerHistogram', HSRL.Range(2)-HSRL.Range(1));
+% Reapplying background subtraction
+Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
+%Performing the Klett inversion
+SigmaR       = KlettInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,1,0.01,50,770.1e-9,P.Value,T.Value);
+BetaPFrenald = FernaldInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,50,770.1e-9,P.Value,T.Value);
 %% Blanking low altitude data
 HSRL.Value(HSRL.Range<Options.BlankRange,:) = nan;
 %% Calculating optical depth and backscatter coefficient
 [HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
+%% Normalizing non-quantitiative retrievals
+Norm   = mean(HSRL.Value(20:25,:))./mean(SigmaR(20:25,:));
+Norm2  = mean(HSRL.ABC(20:25,:))./mean(BetaPFrenald(20:25,:));
+[BetaM,~] = RayleighBackscatterCoeff(770.1085e-9,HSRL.PGuess.*1013.25,HSRL.TGuess);
+% Saving the Klett inversion retrievals
+Klett.TimeStamp = HSRL.TimeStamp;
+Klett.Range     = HSRL.Range;
+Klett.BSR       = SigmaR.*Norm;
+Klett.Norm      = repmat(Norm,length(HSRL.Range),1);
+[Klett.ABC,Klett.OD] = BackscatterRatioToBackscatterCoefficient(Klett.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
+% Saving the Fernald inversion retrievals
+Fernald.TimeStamp = HSRL.TimeStamp;
+Fernald.Range     = HSRL.Range;
+Fernald.ABC       = BetaPFrenald.*Norm2;
+Fernald.BSR       = (Fernald.ABC + BetaM)./BetaM;
+Fernald.Norm      = repmat(Norm2,length(HSRL.Range),1);
+[~,Fernald.OD] = BackscatterRatioToBackscatterCoefficient(Fernald.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Speckle filtering
 Mask2   = DensityFiltering(HSRL.Mask,5,0.5);
 HSRL.Mask = HSRL.Mask | Mask2;

@@ -49,6 +49,8 @@ if not(Found)
 end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;
+Data2D.Onboard.Klett = Retrievals.Klett;
+Data2D.Onboard.Fernald = Retrievals.Fernald;
 try
     Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
 catch

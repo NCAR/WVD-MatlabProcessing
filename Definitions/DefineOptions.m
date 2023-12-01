@@ -60,6 +60,10 @@ Op.HSRL.MinRange    = 0;      % Start of retrievals                   [m]
 Op.HSRL.SmoothRange = 2*37.5; % Desired smoothing range res           [m]
 Op.HSRL.SmoothTime  = 2*60;   % Desired smoothing time res            [sec]
 Op.HSRL             = MakeArrays(Op.HSRL);
+% Klett inversion parameters
+Op.Klett.GuessK           = 1;
+Op.Klett.GuessSigma       = 0.01;
+Op.Klett.GuessLidarRatio  = 30;
 %% Defining Temperature retrieval options
 Op.Temp             = Def;
 Op.Temp.Bootstrap   = false;  % Boolean to turn bootstrapping on

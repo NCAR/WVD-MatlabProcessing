@@ -102,7 +102,7 @@ if ProcessRetF || ProcessRetS
             SaveUpload(FigNum,Options,Paths,Server,'Backscatter_WV')
         end
         CWLogging('------------HSRL Retrieval------------\n',Options,'Main')
-        Retrievals.HSRL = RetrievalHSRL(Options,Paths,Data,CalInfo);
+        [Retrievals.HSRL,Retrievals.Klett,Retrievals.Fernald]    = RetrievalHSRL(Options,Paths,Data,CalInfo);
     else
         Retrievals.WaterVapor = []; Retrievals.HSRL = [];
     end

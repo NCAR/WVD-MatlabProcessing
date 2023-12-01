@@ -49,7 +49,7 @@ Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 % Building an estimate of the atmosphere
 HSRL.TimeStamp = Counts.BGSub.O2OfflineComb.TimeStamp;
 HSRL.Range     = Counts.BGSub.O2OfflineComb.Range;
-HSRL.TGuess    = (Surf.Temperature-0.0065.*HSRL.Range')';                % Kelvin
+HSRL.TGuess    = (Surf.Temperature-0.0065.*HSRL.Range')';                  % Kelvin
 HSRL.PGuess    = (Surf.Pressure.*(Surf.Temperature./HSRL.TGuess').^-5.5)'; % Atmospheres
 % Extracting estimates to be a self contained data structure
 T = ExtractAtmoStructs(HSRL,'TGuess');

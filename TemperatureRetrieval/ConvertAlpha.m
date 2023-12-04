@@ -205,7 +205,7 @@ function [LS] = CalculateLineStrength(Const, Energy, LS0, RefT, Temperature)
 %                      temperature (units of......)
 %
 %% Calculating the line strength
-LS = (LS0.*((RefT./Temperature).^1.5).*exp((100.*Const.H.*Const.C./Const.Kb) ...
+LS = (LS0.*((RefT./Temperature).^1.0).*exp((100.*Const.H.*Const.C./Const.Kb) ...
                                      .*Energy.*(1./RefT - 1./Temperature)))./100;
 end
 

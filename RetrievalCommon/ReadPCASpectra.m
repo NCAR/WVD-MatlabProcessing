@@ -19,8 +19,11 @@ for n=1:1:length(Paths.PCA.Spectra)
     Files = FindPossibleFiles(Paths.PCASpec,Paths.PCA.Spectra{n});
     FileWL = FindCenterWaveLength(Files);
     for m=1:1:length(Paths.PCA.Wavelengths)
+        % Throwing away bad wavelength reads
+        A = WaveL.(Paths.PCA.Wavelengths{m,1}).Value;
+        A(A<1e-9) = nan;
         % Checking how far the trained data is from the desired wavelength
-        WaveDiffs = abs(FileWL - median(WaveL.(Paths.PCA.Wavelengths{m,1}).Value,'omitnan').*1e9);
+        WaveDiffs = abs(FileWL - median(A,'omitnan').*1e9);
         % Loading the nearest data set
         CWLogging(['    Loading: ',Files(WaveDiffs == min(WaveDiffs)).name,'\n'],Op,'Main')
         Sp.(Paths.PCA.Wavelengths{m,1}).(Paths.PCA.SpectraLabels{n,1}) =...

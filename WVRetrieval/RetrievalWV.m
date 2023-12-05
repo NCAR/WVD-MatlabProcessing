@@ -53,15 +53,15 @@ if Options.Bootstrap
         end
     end
     % Adding all bootstrap averages together
-    [WVComb,VarComb] = CalculateVariableAndVariance(WVTrial,{'Value','Smoothed2'},{'WV','Var'});
+    [WVComb,VarComb] = CalculateVariableAndVariance(WVTrial,{'Value','Smoothed'},{'WV','Var'});
     % Parsing out data for returning
     WV                = WVTrial{n,1};
     WV.Value          = WVComb.Value;
-    WV.Smoothed       = WVComb.Smoothed2;
+    WV.Smoothed       = WVComb.Smoothed;
     WV.Variance       = VarComb.Value;
-    WV.VarianceSm     = VarComb.Smoothed2;
+    WV.VarianceSm     = VarComb.Smoothed;
     WV.MaxChange      = VarComb.ValueMaxChange;
-    WV.MaxChangeSm    = VarComb.Smoothed2MaxChange;
+    WV.MaxChangeSm    = VarComb.SmoothedMaxChange;
     WV.BootStrapSteps = WVTrial;
 else
     % Background subtracting photons
@@ -87,7 +87,7 @@ WV.Python       = Python.Online;
 % remove non-physical water vapor values
 MaskNP   = WV.Smoothed > 30;
 % Removing high error regions
-MaskErr1  = WV.VarianceSm > (20^2);
+MaskErr1  = WV.VarianceSm > (5^2);
 %MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed2) > 5 & WV.Variance > 3^2;
 MaskErr2 = 0.*MaskErr1;
 MaskErr  = MaskErr1 | MaskErr2;
@@ -98,15 +98,15 @@ MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 % Remove high count rate regions
 MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 2e6;
 % Remove low count rate regions
-CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
-MaskCntRLow = CntsPerShot < 0.01;
+% CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
+% MaskCntRLow = CntsPerShot < 0.01;
 % Combining the masks
-WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR | MaskCntRLow;
+WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR; %  | MaskCntRLow;
 % Removing data with high amounts of bad data neighbors (speckle filtering)
 Mask2   = DensityFiltering(WV.Mask,5,0.5);
 WV.Mask = WV.Mask | Mask2;
 %% Plotting
-% PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
+PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
 %% Calculating WV uptime
 A = all(isnan(WV.RB.Value));
 WV.UpTime = 1 - sum(A)./size(A,2);
@@ -149,8 +149,8 @@ WV.TimeStamp  = Counts.BGSub.WVOnline.TimeStamp;
 WV.Range      = Counts.BGSub.WVOnline.Range;
 WV.Value      = N.*Const.MWV.*1000;                   % molec/m^3 to g/m^3
 WV.Variance   = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
-WV.Smoothed   = WeightedSmooth(WV.Value,Options);
-WV.Smoothed2  = SmoothOld2(WV.Value,Options);
+% WV.Smoothed   = WeightedSmooth(WV.Value,Options);
+WV.Smoothed  = SmoothOld2(WV.Value,Options);
 end
 
 function [N,NErr] = DIALEquation(On,Off,OnBG,OffBG,SOn,SOff,Bin)

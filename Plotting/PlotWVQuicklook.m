@@ -38,11 +38,11 @@ for m=1:1:size(A,1); B{m,1} = ['10^{',A{m},'}']; end      %#ok<AGROW>
 set(cb,'ytick',C,'yticklabel',B)
 %% Plotting Water Vapor
 % Applying the water vapor data mask
-WV.Smoothed2(WV.Mask) = nan;
+WV.Smoothed(WV.Mask) = nan;
 % Plotting
 if AddCRLB; Subs = 5; Range = 3:4; else; Subs = 4; Range = 3:4; end
 Ax(2) = subplot(Subs,1,Range);
-pcolor(WV.TimeStamp./60./60,WV.Range./1e3,WV.Smoothed2);
+pcolor(WV.TimeStamp./60./60,WV.Range./1e3,WV.Smoothed);
 colormap(gca,'jet')
 % Formatting the subplot
 FormatAxis(Date, Options.WV, 'Water Vapor (g/m^3)',Subs,Range);

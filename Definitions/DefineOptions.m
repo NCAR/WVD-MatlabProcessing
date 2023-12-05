@@ -14,7 +14,7 @@ function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet,BSOverwri
 %         ProcessHK:  A boolean value: true runs housekeeping figures,
 %                     false does not
 %         ProcessRet: A boolean value: true runs retrievals, false does not
-%         BSOverwrite:A boolean value: true forces temperature processing, 
+%         BSOverwrite:A boolean value: true forces bootstrap processing,
 %                     false allows default settings
 %
 % Outputs: Op:        A structure containing all user defined options
@@ -44,6 +44,8 @@ Def.MinRange      = 0;        % Start of retrievals                   [m]
 Def.BlankRange    = 450;      % Altitude below which data is blanked  [m]
 %% Defining Water Vapor retrieval options
 Op.WV             = Def;
+Op.WV.Bootstrap   = false;    % Boolean to turn bootstrapping on
+Op.WV.BootIters   = 30;       % Iterations to use when bootstraping
 Op.WV.BinTime     = 4*60;     % Desired data time resolution          [sec]
 Op.WV.GradFilt    = 1000;     % Count rate gradient to filter         [ ]
 Op.WV.MaxRange    = 6.5e3;    % Max range to run retrievals to        [m]
@@ -53,6 +55,8 @@ Op.WV.SmoothTime  = 4*60;     % Desired smoothing time res            [sec]
 Op.WV             = MakeArrays(Op.WV);
 %% Defining HSRL retrieval options
 Op.HSRL             = Def;
+Op.HSRL.Bootstrap   = false;  % Boolean to turn bootstrapping on
+Op.HSRL.BootIters   = 30;     % Iterations to use when bootstraping
 Op.HSRL.BinTime     = 2*60;   % Desired data time resolution          [sec]
 Op.HSRL.BlankRange  = 250;    % Blank data from 0 to this range       [m]
 Op.HSRL.MaxRange    = 8e3;    % Max range to run retrievals to        [m]
@@ -82,8 +86,10 @@ Op.Temp.SmoothTime  = 20*60;  % Desired smoothing time res            [sec]
 Op.Temp             = MakeArrays(Op.Temp);
 
 if BSOverwrite
-    Op.Temp.Bootstrap   = true;
-    Op.Temp.HSRLType    = 'On';
+    Op.WV.Bootstrap   = true;
+    Op.HSRL.Bootstrap = true;
+    Op.Temp.Bootstrap = true;
+    Op.Temp.HSRLType  = 'On';
 end
 
 %% Defining plotting options

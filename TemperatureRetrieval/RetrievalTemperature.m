@@ -17,8 +17,8 @@ Options = Op.Temp;
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
 Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
-Paths.PCA.Spectra       = {'O2';'RB'};   % Spectra to load
-Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Name of spectra in code
+Paths.PCA.Spectra       = {'O2';'RB'};                 % Spectra to load
+Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Spectra name in code
 %% Checking if temperature processing can be run
 % Pulling out and loading needed data
 As   = {'O2Online';'O2Offline'};
@@ -30,7 +30,6 @@ if not(Possible)
 end
 Data1D.Surface.Temperature = BuildSimpleStruct(Surface,'Temperature');
 Data1D.Surface.Pressure    = BuildSimpleStruct(Surface,'Pressure');
-
 % Loading python data for HSRL and WV data or using onboard
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
     [~,Data2D,Found] = LoadPythonData(Paths.PythonData,Op);
@@ -52,7 +51,7 @@ Data2D.Onboard.HSRL = Retrievals.HSRL;
 Data2D.Onboard.Klett = Retrievals.Klett;
 Data2D.Onboard.Fernald = Retrievals.Fernald;
 try
-    Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed2');
+    Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed');
 catch
     % If no WV processing is availible, assume WV is 0
     Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.HSRL,'Smoothed',1,0,0);
@@ -72,10 +71,6 @@ if Options.Bootstrap
         CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
-        % Pre-allocating variance variables that will later be overwritten
-        if m == 1
-            Var = {}; VarSum = {};
-        end
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        Temperature pre-process\n',Op,'Sub')
@@ -89,7 +84,7 @@ if Options.Bootstrap
         end
     end
     % Adding all bootstrap averages together
-    [TComb,VarComb] = CalculateTempAndVariance(T);
+    [TComb,VarComb] = CalculateVariableAndVariance(T,{'Value','Smoothed'},{'Temp','Var'});
     % Parsing out data for returning
     Temp             = T{n,1};
     Temp.Value       = TComb.Value;

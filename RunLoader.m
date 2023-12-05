@@ -13,7 +13,7 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %         ProcessHK:  A boolean value: true runs housekeeping figures,
 %                     false does not
 %         ProcessRet: A boolean value: true runs retrievals, false does not
-%         BSOverwrite:A boolean value: true forces temperature processing, 
+%         BSOverwrite:A boolean value: true forces bootstrap processing,
 %                     false allows default settings
 %                     
 % Outputs: Data:      Structure containing all of the loaded and processed
@@ -36,7 +36,8 @@ if nargin ~= 7
     BSOverwrite = false;
 end
 %% Adding path to utilities, defining options, and defining path info
-for el = {'Definitions','HSRLRetrieval','MPDUtilities','Plotting','RetrievalCommon','TemperatureRetrieval','Utilities','WVRetrieval'}
+for el = {'Bootstrapping','Definitions','HSRLRetrieval','MPDUtilities','Plotting',...
+           'RetrievalCommon','TemperatureRetrieval','Utilities','WVRetrieval'}
     addpath(fullfile(pwd,el{1,1}))
 end; clear el
 Options = DefineOptions(Date,System,Logging,ProcessHK,ProcessRetF|ProcessRetS,BSOverwrite);

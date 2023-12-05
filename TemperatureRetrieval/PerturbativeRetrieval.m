@@ -77,8 +77,7 @@ Order0.Alpha.O2Online  = real(Order0.Alpha.O2Offline - log(A)./2./DeltaR);
 for m=1:1:length(FN)
     % Calculating transmittion as function of (alt,time,frequency)...note
     % abs. array, F, is normalized because alpha used will belong to each
-    F = Spectra.(FN{m}).Absorption;
-    F = F./max(F,[],3);
+    F = Spectra.(FN{m}).Absorption./Spectra.O2Online.AbsorptionObserved;
     % Removing points where WV or A was not known
     NanMap = (isnan(WV) | isnan(Order0.Alpha.(FN{m})));
     Order0.Alpha.(FN{m})(NanMap) = 0;

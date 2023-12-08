@@ -1,6 +1,7 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % Modificication Info: Created August, 2022
+%                      Added Bootstrapping December, 2023
 
 function [HSRL,Klett,Fernald] = RetrievalHSRL(Op,Paths,Data,Cal)
 %
@@ -17,8 +18,8 @@ Options = Op.HSRL;
 %% Defining needed extra path information
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'O2Offline'};    % Base wavelengths
-Paths.PCA.Spectra       = {'RB'};   % Spectra to load
-Paths.PCA.SpectraLabels = {'RayleighBr'}; % Name of spectra in code
+Paths.PCA.Spectra       = {'RB'};           % Spectra to load
+Paths.PCA.SpectraLabels = {'RayleighBr'};   % Spectra name in code
 %% Checking if temperature processing can be run
 As   = {'O2Online';'O2Offline'};
 Chan = {'Mol'     ;'Mol'      };
@@ -35,8 +36,7 @@ clear As Chan PossibleComb PossibleMol
 % Reading Needed Data (Python HSRL and Receiver Scan)
 Sp.Optics.Mol  = ReadSystemScanData(Spectra.PCA,S.Mol,Const);
 Sp.Optics.Comb = ReadSystemScanData(Spectra.PCA,S.Comb,Const);
-% Reorganizing the loaded structures (because they get loaded assuming only
-% 2 channels are needed instead of 4)
+% Reorganizing loaded structures (loaded assuming 2 channels instead of 4)
 Counts.Raw     = ReorganizeStruct(C);
 Spectra.Optics = ReorganizeStruct(Sp.Optics);
 clear C S Sp
@@ -44,22 +44,56 @@ clear C S Sp
 Spectra.Optics = NormalizeReceiverScan(Spectra.Optics);
 %% HSRL Data Pre-Process
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
-Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
-%% Determining the temperature and pressure from the weather station 
-% Building an estimate of the atmosphere
-HSRL.TimeStamp = Counts.BGSub.O2OfflineComb.TimeStamp;
-HSRL.Range     = Counts.BGSub.O2OfflineComb.Range;
-HSRL.TGuess    = (Surf.Temperature-0.0065.*HSRL.Range')';                  % Kelvin
-HSRL.PGuess    = (Surf.Pressure.*(Surf.Temperature./HSRL.TGuess').^-5.5)'; % Atmospheres
-% Extracting estimates to be a self contained data structure
-T = ExtractAtmoStructs(HSRL,'TGuess');
-P = ExtractAtmoStructs(HSRL,'PGuess');
-%% Calculating HSRL per Stillwell et al. 2020
-Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
-[HSRL.Cmm,HSRL.Cmc,HSRL.Cam,HSRL.Cac] = CalculateHSRLEfficiencies(Spectra.Optics,Spectra.Rebuilt);
-HSRL.Value = HSRLCalc(Counts.BGSub,HSRL);
-% Calculate HSRL Data (Spuler's way)
-[~,HSRL.Mask] = HSRLCalcSpuler(Counts.BGSub,HSRL.TGuess,HSRL.PGuess,Spectra,Const);
+%% Bootstrapping
+if Options.Bootstrap
+    for m=1:1:Options.BootIters
+        CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
+        CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
+        Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
+        % Define guess lapse rate to define atmosphere
+        GuessLapse =  0.0065 + rand.*(0.0098-0.0065);
+        % Loop over each set of thinned data
+        for n=1:1:2
+            CWLogging('        HSRL pre-process\n',Op,'Sub')
+            Counts.BGSub = Thinned.(['PoissThined',num2str(n)]);
+            % Pre-defining data structures
+            T = Counts.BGSub.O2OfflineComb; P = Counts.BGSub.O2OfflineComb;
+            % Define guess atmosphere
+            T.Value = Surf.Temperature'-GuessLapse.*T.Range;               % Kelvin
+            P.Value = Surf.Pressure'.*(Surf.Temperature'./T.Value).^-5.5;  % Atmospheres
+            % Actually doing the nuts and bolts to retrieve backscatter ratio
+            HSRLTrial{m,n} = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);
+        end
+    end
+    % Adding all bootstrap averages together
+    [HSRLComb,VarComb] = CalculateVariableAndVariance(HSRLTrial,{'Value','Smoothed','Temp','Press'},{'HSRL','Var'});
+    % Parsing out data for returning
+    HSRL              = HSRLTrial{n,1};
+    HSRL.Value        = HSRLComb.Value;
+    HSRL.Smoothed     = HSRLComb.Smoothed;
+    HSRL.Variance     = VarComb.Value;
+    HSRL.VarianceSm   = VarComb.Smoothed;
+    HSRL.MaxChange      = VarComb.ValueMaxChange;
+    HSRL.MaxChangeSm    = VarComb.SmoothedMaxChange;
+    HSRL.BootStrapSteps = HSRLComb;
+    HSRL.TGuess         = HSRLComb.Temp;
+    HSRL.PGuess         = HSRLComb.Press;
+else
+    % Background subtracting photons
+    CWLogging('     Background Subtracting\n',Op,'Sub')
+    Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
+    % Define guess atmosphere
+    T = Counts.BGSub.O2OfflineComb; P = Counts.BGSub.O2OfflineComb;              % Pre-defining data structures
+    T.Value = Surf.Temperature'-0.008.*T.Range;                       % Kelvin
+    P.Value = Surf.Pressure'.*(Surf.Temperature'./T.Value).^-5.5;  % Atmospheres
+    % Calculating HSRL per Stillwell et al. 2020
+    HSRL = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);
+end
+
+%% Blanking low altitude data
+HSRL.Value(HSRL.Range<Options.BlankRange,:) = nan;
+%% Calculating optical depth and backscatter coefficient
+[HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Calculating Backscatter Ratio with Klett inversion (for comparison only)
 % Applying saturation correction to raw counts observed
 Raw = Counts.Binned.O2OfflineComb.Counts;
@@ -69,48 +103,38 @@ Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 %Performing the Klett inversion
 SigmaR       = KlettInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,1,0.01,50,770.1e-9,P.Value,T.Value);
 BetaPFrenald = FernaldInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,50,770.1e-9,P.Value,T.Value);
-%% Blanking low altitude data
-HSRL.Value(HSRL.Range<Options.BlankRange,:) = nan;
-%% Calculating optical depth and backscatter coefficient
-[HSRL.ABC,HSRL.OD] = BackscatterRatioToBackscatterCoefficient(HSRL.Value,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Normalizing non-quantitiative retrievals
-Norm   = mean(HSRL.Value(20:25,:))./mean(SigmaR(20:25,:));
-Norm2  = mean(HSRL.ABC(20:25,:))./mean(BetaPFrenald(20:25,:));
+% Norm   = mean(HSRL.Value(20:25,:))./mean(SigmaR(20:25,:));
+% Norm2  = mean(HSRL.ABC(20:25,:))./mean(BetaPFrenald(20:25,:));
 [BetaM,~] = RayleighBackscatterCoeff(770.1085e-9,HSRL.PGuess.*1013.25,HSRL.TGuess);
 % Saving the Klett inversion retrievals
 Klett.TimeStamp = HSRL.TimeStamp;
 Klett.Range     = HSRL.Range;
-Klett.BSR       = SigmaR.*Norm;
-Klett.Norm      = repmat(Norm,length(HSRL.Range),1);
+Klett.BSR       = SigmaR; % .*Norm;
+% Klett.Norm      = repmat(Norm,length(HSRL.Range),1);
 [Klett.ABC,Klett.OD] = BackscatterRatioToBackscatterCoefficient(Klett.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 % Saving the Fernald inversion retrievals
 Fernald.TimeStamp = HSRL.TimeStamp;
 Fernald.Range     = HSRL.Range;
-Fernald.ABC       = BetaPFrenald.*Norm2;
+Fernald.ABC       = BetaPFrenald; %.*Norm2;
 Fernald.BSR       = (Fernald.ABC + BetaM)./BetaM;
-Fernald.Norm      = repmat(Norm2,length(HSRL.Range),1);
+% Fernald.Norm      = repmat(Norm2,length(HSRL.Range),1);
 [~,Fernald.OD] = BackscatterRatioToBackscatterCoefficient(Fernald.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
-%% Speckle filtering
-Mask2   = DensityFiltering(HSRL.Mask,5,0.5);
-HSRL.Mask = HSRL.Mask | Mask2;
-%% Smoothing
-A = HSRL.Value;
-A(HSRL.Mask) = nan;
-HSRL.Smoothed  = WeightedSmooth(A,Options);
 end
 
-function [A] = ExtractAtmoStructs(HSRL,Type)
-%
-% Inputs: HSRL: HSRL data structure complete with atmospheric conditions
-%         Type: Type of data structure to output (Options: TGuess, PGuess)
-%
-% Outputs: A:   Atmospheric data from the HSRL data structure
-%
-%%
-A = HSRL;
-A.Value = A.(Type);
-A = rmfield(A,{'TGuess','PGuess'});
+function [HSRL] = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P)
+%% Calculating HSRL per Stillwell et al. 2020
+Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
+[HSRL.Cmm,HSRL.Cmc,HSRL.Cam,HSRL.Cac] = CalculateHSRLEfficiencies(Spectra.Optics,Spectra.Rebuilt);
+% Saving output data structure
+HSRL.TimeStamp = Counts.BGSub.O2OfflineComb.TimeStamp;
+HSRL.Range     = Counts.BGSub.O2OfflineComb.Range;
+HSRL.Value     = HSRLCalc(Counts.BGSub,HSRL);
+HSRL.Smoothed  = WeightedSmooth(HSRL.Value,Options);
+HSRL.Temp      = T.Value;
+HSRL.Press     = P.Value;
 end
+
 
 function [Out] = ReorganizeStruct(In)
 %
@@ -140,60 +164,6 @@ for m = {'O2Offline'}
     S.([m{1},'Mol']).Transmission = S.([m{1},'Mol']).Transmission.*(median(A));
 end
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Spuler
-function [BSR,Mask] = HSRLCalcSpuler(C,T,P,Sp,Const)
-%
-% Inputs: C:     Structure containing count arrays
-%         T:     Temperature array
-%         P:     Pressure array
-%         Sp:    Structure containing calibration/optical Spectra
-%         Const: Structure containing all universal constants
-%
-% Outputs: BSR:  Backscatter ratio calculated from Spuler's HSRL method
-%          Mask: Data mask from low signal counts
-%% Constants (needs to come through data but for now okay as constant)
-lambda  = 770.1085*1E-9; % wavelength in nm (should really get this elsewhere)
-%% Calculating the geometric overlap function
-O2_geometric_correction = mean(C.O2OnlineComb.Counts./C.O2OnlineMol.Counts,2,'omitnan')';
-% trying to make this an automatic calculated value, but it blows up in clouds
-O2_geometric_correction(ismember(O2_geometric_correction,[0,Inf,-Inf])) = nan;
-%% Calculate optical efficiencies 
-try
-    % the geometric correction is ignored for now
-    eta_comb = median(O2_geometric_correction,'omitnan');
-catch
-    warning('Problem with the geometric correction, assigning a fixed value.');
-    eta_comb = 0.5988;  % override, and use this value for now
-end
-% only a fraction of total molecular gets through the K filter
-% need to know filter width, molecular scatter width RB which is range dependent
-eta_comb_cal = 1./(mean(Sp.Optics.O2OfflineMol.Transmission./ ...
-                        Sp.Optics.O2OfflineComb.Transmission,'omitnan'));
-eta_mol = Sp.Optics.O2OfflineMol.Transmission./ ...
-         (Sp.Optics.O2OfflineComb.Transmission/eta_comb_cal);
-%% Calculate the Rayleigh-Doppler broadening for each height
-% from Fiocco and DeWolf 1968
-K0  = 2*pi/(lambda)/Const.C;
-K   = K0 + K0; % backscatter is double Doppler shifted
-lam = Sp.Optics.O2OfflineMol.Lambda.*1e-9;
-lam = reshape(lam,1,1,length(lam));  % dimension of range, time, spectral wavelength
-RD  = sqrt(Const.MAir./(2*pi*K^2*Const.Kb.*T))...
-    .*exp((-1*Const.MAir./(2*K^2*Const.Kb.*T)).*(2*pi*((1./lam)-(1./lambda))).^2);
-% Bosenberg 1998 suggests a simple Brillouin broadening correction: RD width x 1.2 ~ RDB width
-% (valid in the lower 10km of a standard atmosphere)
-RD = RD.*1.2;
-% calculate the overall efficiency of the molecular channel
-eta_mol     = reshape(eta_mol,1,1,length(eta_mol));  % dimension of range, time, spectral wavelength
-eta_mol_all = trapz(RD.*1.2.*eta_mol,3)./trapz(RD.*1.2,3);
-%% Calculate backscatter ratio
-BSR = (C.O2OfflineComb.Counts./eta_comb)./(C.O2OfflineMol.Counts./eta_mol_all);
-%% simple data mask to remove low count regions
-threshold = 0.25;
-Mask = C.O2OfflineMol.Counts< threshold;
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculating the efficiencies from Stillwell et al. 2020 Equation 4.

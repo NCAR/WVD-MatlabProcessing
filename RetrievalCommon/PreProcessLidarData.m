@@ -32,7 +32,7 @@ for m=1:1:size(Cell,1)
         % Removing the cumsum
         Counts    =  (CumCounts - [zeros(1,size(CumCounts,2));CumCounts(1:end-1,:)])';
         GoodData    =  (CumGoodData - [zeros(1,size(CumGoodData,2));CumGoodData(1:end-1,:)])';
-        InterpCell{m,1}.(BinDir{n}) = ChannelData.(BinDir{n})(BinNum(n):BinNum(n):end);
+        InterpCell{m,1}.(BinDir{n}) = ChannelData.(BinDir{n})(1:BinNum(n):end);
     end
     Counts(Counts==0 & GoodData >= 1) = nan;
     InterpCell{m,1}.Counts = Counts;

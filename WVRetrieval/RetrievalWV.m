@@ -76,6 +76,7 @@ else
     P.Value = Surface.Pressure'.*(Surface.Temperature'./T.Value).^-5.5;  % Atmospheres
     % Calculating water vapor molecule number using the DIAL equation
     WV = CalcualteWaterVapor(Const,Counts,Data1D,Options,Op,Spectra,T,P);
+    WV.VarianceSm = WV.Variance;
     % Set threshold for low count rate mask
     LowCountRateThresh = 0.01;
 end

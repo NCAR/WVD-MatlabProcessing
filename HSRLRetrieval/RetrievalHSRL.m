@@ -75,7 +75,7 @@ if Options.Bootstrap
     HSRL.VarianceSm   = VarComb.Smoothed;
     HSRL.MaxChange      = VarComb.ValueMaxChange;
     HSRL.MaxChangeSm    = VarComb.SmoothedMaxChange;
-    HSRL.BootStrapSteps = HSRLComb;
+    HSRL.BootStrapSteps = HSRLTrial;
     HSRL.TGuess         = HSRLComb.Temp;
     HSRL.PGuess         = HSRLComb.Press;
 else
@@ -120,6 +120,12 @@ Fernald.ABC       = BetaPFrenald; %.*Norm2;
 Fernald.BSR       = (Fernald.ABC + BetaM)./BetaM;
 % Fernald.Norm      = repmat(Norm2,length(HSRL.Range),1);
 [~,Fernald.OD] = BackscatterRatioToBackscatterCoefficient(Fernald.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
+%% Making HSRL mask
+HSRL.Mask = zeros(size(HSRL.Value));
+HSRL.Mask(HSRL.Variance./HSRL.Value > 2) = 1;
+HSRL.Mask(HSRL.OD > 2)                   = 1;
+HSRL.Mask = DensityFiltering(HSRL.Mask,5,0.5);
+HSRL.Mask = HSRL.Mask>0.5;
 end
 
 function [HSRL] = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P)

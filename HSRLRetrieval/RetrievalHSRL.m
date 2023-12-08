@@ -88,6 +88,9 @@ else
     P.Value = Surf.Pressure'.*(Surf.Temperature'./T.Value).^-5.5;  % Atmospheres
     % Calculating HSRL per Stillwell et al. 2020
     HSRL = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);
+    HSRL.TGuess = T.Value;
+    HSRL.PGuess = P.Value;
+    HSRL.Variance = HSRL.Value .*nan;
 end
 
 %% Blanking low altitude data

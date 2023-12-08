@@ -38,15 +38,16 @@ if Options.Bootstrap
         CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
+        % Define guess lapse rate to define atmosphere
+        GuessLapse =  -0.0065 + rand.*(0.0098-0.0065);
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        Water Vapor pre-process\n',Op,'Sub')
             Counts.BGSub = Thinned.(['PoissThined',num2str(n)]);
             % Pre-defining data structures
             T = Counts.BGSub.WVOffline; P = Counts.BGSub.WVOffline;
-            % Define guess atmosphere (lapse rate is a random starting variable)
-            GuessLapse =  -1*(0.0065 + rand.*(0.0098-0.0065));
-            T.Value = Surface.Temperature'-GuessLapse.*T.Range;                  % Kelvin
+            % Define guess atmosphere
+            T.Value = Surface.Temperature'+GuessLapse.*T.Range;                  % Kelvin
             P.Value = Surface.Pressure'.*(Surface.Temperature'./T.Value).^-5.5;  % Atmospheres
             % Actually doing the nuts and bolts to retrieve water vapor
             [WVTrial{m,n}] = CalcualteWaterVapor(Const,Counts,Data1D,Options,Op,Spectra,T,P); %#ok<AGROW>
@@ -63,6 +64,8 @@ if Options.Bootstrap
     WV.MaxChange      = VarComb.ValueMaxChange;
     WV.MaxChangeSm    = VarComb.SmoothedMaxChange;
     WV.BootStrapSteps = WVTrial;
+    % Set threshold for low count rate mask
+    LowCountRateThresh = 0.005;
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
@@ -73,6 +76,8 @@ else
     P.Value = Surface.Pressure'.*(Surface.Temperature'./T.Value).^-5.5;  % Atmospheres
     % Calculating water vapor molecule number using the DIAL equation
     WV = CalcualteWaterVapor(Const,Counts,Data1D,Options,Op,Spectra,T,P);
+    % Set threshold for low count rate mask
+    LowCountRateThresh = 0.01;
 end
 
 %% Saving data structure and smoothing
@@ -87,7 +92,7 @@ WV.Python       = Python.Online;
 % remove non-physical water vapor values
 MaskNP   = WV.Smoothed > 30;
 % Removing high error regions
-MaskErr1  = WV.VarianceSm > (5^2);
+MaskErr1  = WV.VarianceSm > (10^2);
 %MaskErr2 = abs(sqrt(WV.Variance)./WV.Smoothed2) > 5 & WV.Variance > 3^2;
 MaskErr2 = 0.*MaskErr1;
 MaskErr  = MaskErr1 | MaskErr2;
@@ -98,15 +103,15 @@ MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 % Remove high count rate regions
 MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 2e6;
 % Remove low count rate regions
-% CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
-% MaskCntRLow = CntsPerShot < 0.01;
+CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
+MaskCntRLow = CntsPerShot < LowCountRateThresh;
 % Combining the masks
-WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR; %  | MaskCntRLow;
+WV.Mask = MaskNP | MaskErr | MaskGrad | MaskCntR  | MaskCntRLow;
 % Removing data with high amounts of bad data neighbors (speckle filtering)
 Mask2   = DensityFiltering(WV.Mask,5,0.5);
 WV.Mask = WV.Mask | Mask2;
 %% Plotting
-PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
+% PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, MaskCntRLow, Mask2)
 %% Calculating WV uptime
 A = all(isnan(WV.RB.Value));
 WV.UpTime = 1 - sum(A)./size(A,2);
@@ -149,7 +154,6 @@ WV.TimeStamp  = Counts.BGSub.WVOnline.TimeStamp;
 WV.Range      = Counts.BGSub.WVOnline.Range;
 WV.Value      = N.*Const.MWV.*1000;                   % molec/m^3 to g/m^3
 WV.Variance   = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
-% WV.Smoothed   = WeightedSmooth(WV.Value,Options);
 WV.Smoothed  = SmoothOld2(WV.Value,Options);
 end
 
@@ -263,32 +267,35 @@ Navg(isnan(N)) = nan;
 
 end
 
-function PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, Mask2)
+function PlotWVMask(WV, MaskNP, MaskErr1, MaskErr2, MaskGrad, MaskCntR, MaskCntRLow, Mask2)
 %
-% Inputs: WV:       Data structure containing all of the WV data to be
-%                   passed back to the main program
-%         MaskNP:   Mask of non-physical water vapor values
-%         MaskErr1: Mask of high-variance water vapor values
-%         MaskErr2: Mask of weird variance water vapor values
-%         MaskGrad: Mask calculated from the gradient filter
-%         MaskCntR: Mask calculated from the count rate
-%         Mask2:    Mask calculated from the speckle filter
+% Inputs: WV:          Data structure containing all of the WV data to be
+%                      passed back to the main program
+%         MaskNP:      Mask of non-physical water vapor values
+%         MaskErr1:    Mask of high-variance water vapor values
+%         MaskErr2:    Mask of weird variance water vapor values
+%         MaskGrad:    Mask calculated from the gradient filter
+%         MaskCntR:    Mask calculated from the high count rate
+%         MaskCntRLow: Mask calculated from the low count rate
+%         Mask2:       Mask calculated from the speckle filter
 %
 % Outputs: none
 %
 %% Plotting masks
 figure(100)
-subplot(6,1,1); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskNP));
+subplot(7,1,1); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskNP));
 shading flat; colorbar; caxis([0,1]); title('High Value')
-subplot(6,1,2); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr1));
+subplot(7,1,2); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr1));
 shading flat; colorbar; caxis([0,1]); title('High Variance')
-subplot(6,1,3); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr2));
+subplot(7,1,3); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskErr2));
 shading flat; colorbar; caxis([0,1]); title('Weird Variance')
-subplot(6,1,4); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskGrad));
+subplot(7,1,4); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskGrad));
 shading flat; colorbar; caxis([0,1]); title('Gradient Filter')
-subplot(6,1,5); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskCntR));
+subplot(7,1,5); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskCntR));
 shading flat; colorbar; caxis([0,1]); title('Count Rate')
-subplot(6,1,6); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(Mask2));
+subplot(7,1,6); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(MaskCntRLow));
+shading flat; colorbar; caxis([0,1]); title('Count Rate')
+subplot(7,1,7); pcolor(WV.TimeStamp./60./60,WV.Range./1e3,double(Mask2));
 shading flat; colorbar; caxis([0,1]); title('Speckle')
 
 end

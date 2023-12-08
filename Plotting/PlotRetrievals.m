@@ -16,9 +16,10 @@ PO.TextXLoc = 0.01;
 PO.TextYLoc = 0.9;
 PO.FontSize = 16;
 
-%% Applying optical depth filter to HSRL data
-Retrievals.HSRL.Smoothed(Retrievals.HSRL.OD>3.0) = nan;
+%% Applying masks to data
+Retrievals.WaterVapor.Smoothed(Retrievals.WaterVapor.Mask) = nan;
 Retrievals.HSRL.Smoothed(Retrievals.HSRL.Mask) = nan;
+Retrievals.Temperature.Smoothed(Retrievals.Temperature.InputMask) = nan;
 
 %% Plotting retrieved data
 figure(FigNum);
@@ -27,7 +28,7 @@ set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
 % Water vapor data
 subplot(7,1,1:2);
 try
-    pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,Retrievals.WaterVapor.Smoothed2)
+    pcolor(Retrievals.WaterVapor.TimeStamp./60./60,Retrievals.WaterVapor.Range./1e3,Retrievals.WaterVapor.Smoothed)
 catch
     pcolor(Options.WV.TimeStamp./60./60,Options.WV.Range./1e3,zeros(size(Options.WV.Range,2),size(Options.WV.TimeStamp,2)).*nan)
 end

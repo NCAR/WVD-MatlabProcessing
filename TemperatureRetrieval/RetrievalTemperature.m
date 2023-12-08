@@ -52,6 +52,7 @@ Data2D.Onboard.Klett = Retrievals.Klett;
 Data2D.Onboard.Fernald = Retrievals.Fernald;
 try
     Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.WaterVapor,'Smoothed');
+    Data2D.Onboard.WV.Mask = Retrievals.WaterVapor.Mask;
 catch
     % If no WV processing is availible, assume WV is 0
     Data2D.Onboard.WV   = BuildSimpleStruct(Retrievals.HSRL,'Smoothed',1,0,0);
@@ -62,7 +63,13 @@ Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);
 % Bin lidar data to desired analysis resolution
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid
+try
+    Data2D.Onboard.HSRL = rmfield(Data2D.Onboard.HSRL,{'BootStrapSteps','MaxChange','MaxChangeSm'});
+catch
+end
 Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');
+% Making a mask for known bad values to use later for temperature
+InputMask = Data2D.Onboard.WV.Mask > 0 | Data2D.Onboard.HSRL.Mask >0;
 
 %% Bootstrapping
 if Options.Bootstrap
@@ -97,6 +104,7 @@ if Options.Bootstrap
     Temp.MaxChangeSm = VarComb.SmoothedMaxChange;
     Temp.BootStrapSteps = T;
     Temp.Alpha       = Alpha;
+    Temp.InputMask   = InputMask;
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
@@ -111,6 +119,7 @@ else
     Temp.MaxChange   = [];
     Temp.MaxChangeSm = [];
     Temp.Alpha       = Alpha;
+    Temp.InputMask   = InputMask;
 end
 end
 

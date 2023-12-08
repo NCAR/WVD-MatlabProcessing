@@ -71,12 +71,13 @@ if Options.Bootstrap
         CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
+        % Define guess lapse rate to define atmosphere
+        GuessLapse =  -0.0065 + rand.*(0.0098-0.0065);
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        Temperature pre-process\n',Op,'Sub')
             Counts.BGSub = Thinned.(['PoissThined',num2str(n)]);
-            % Define guess atmosphere (lapse rate is a random starting variable)
-            GuessLapse =  -1*(0.0065 + rand.*(0.0098-0.0065));
+            % Define guess atmosphere
             ConstProfile = (Options.Range').*(GuessLapse);
             Data2D.NCIP.Temperature.Value = ConstProfile+Data1D.Surface.Temperature.Value';
             % Actually doing the nuts and bolts to retrieve temperature

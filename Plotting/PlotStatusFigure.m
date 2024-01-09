@@ -21,12 +21,13 @@ end
 %% Setting label information
 LabelInfo = DefineLabelTypes(Options.System);
 %% Making the labels
-[Labels,Last] = MakeLabels(LabelInfo.Children(:,1),{'Responding';'Queues';'Data'});   % Children
+[Labels,Last] = MakeLabels(LabelInfo.Children(:,1),{'Responding';'Queues';'Data'}); % Children
 A = cellfun(@(X) strcat(X,{'Locked';'SeedPower';'AmpPower'}),LabelInfo.Lasers,'Uni',false);
 [Labels,Last] = MakeLabels({''},cat(1,A{:}),Labels,Last);                             % Lasers
 [Labels,Last] = MakeLabels({''},strcat(LabelInfo.Etalons,{'Locked'}),Labels,Last);    % Etalons 
 [Labels,Last] = MakeLabels({'UPS'},LabelInfo.UPS,Labels,Last);                        % UPS
-[Labels, ~  ] = MakeLabels({''},strcat(LabelInfo.Environmental,{'Temp'}),Labels,Last);% Environmental 
+[Labels,Last] = MakeLabels({'Temp:'},strcat(LabelInfo.Environmental,{''}),Labels,Last);% Environmental 
+[Labels, ~  ] = MakeLabels({''},strcat(LabelInfo.Current,{'Current'}),Labels,Last);   % Current 
 clear A Last
 %% Pre-allocating data
 Time         = Options.TimeGrid1d;
@@ -214,6 +215,42 @@ for m=1:1:1
         end
     end
 end
+LastContour = LastContour + 5;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Current Monitor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Checking for the end of the data (must check raw data because it is not
+% yet pushed to a known time grid)
+[IsField,TempData] = RecursivelyCheckIsField(RawData,'Current');
+if IsField
+    [~,GLTO] = DetermineDataAvailibility(TempData,Time,Options,GLTO,false);
+end
+for m=1:1:1
+    for n=1:1:length(LabelInfo.Current)
+        switch LabelInfo.Current{n}
+            case {'HVAC'}
+                Good = [0,10]; Warning = [0,12.5];
+            case 'SystemInput'
+                Good = [0,14]; Warning = [0,16];
+            otherwise
+                Good = [nan,nan]; Warning = [nan,nan];
+        end
+        % Checking if data exists
+        [IsField,TempData] = RecursivelyCheckIsField(Data, {'TimeSeries','Current',LabelInfo.Current{n}});
+        if IsField
+            Color = TempData.Current.*0 + 2;
+            Color(TempData.Current>=Warning(1)&TempData.Current<=Warning(2)) = 1;
+            Color(TempData.Current>=Good(1)&TempData.Current<=Good(2)) = 0;
+        else
+            Color = zeros(size(Time,1),1) - 1;
+        end
+        Contour(:,LastContour + n) = Color;
+        if n==length(LabelInfo.Environmental)
+            % Padding the last element so it can be rendered
+            Contour(:,LastContour + n + 1) = Color;
+        end
+    end
+end
+
+
 
 %% Removing data not yet taken
 % I should check here to see if the global last time observed is low
@@ -277,6 +314,7 @@ switch Type
         LabelInfo.Environmental = {'WVEtalonHeatSink';'Bench';'Humidity'};
 end
 LabelInfo.UPS            = {'BatteryStatus';'OnBattery';'BatteryLow'};
+LabelInfo.Current        = {'HVAC';'SystemInput'};
 
 end
 

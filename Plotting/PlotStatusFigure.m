@@ -286,6 +286,8 @@ title({[upper(erase(Options.System,'_')),' Status (',Options.Date,')'];
      '\color{black}, \color[rgb]{0.75,0.00,0.00}fault\color{black})']})
 %% Formatting the figure
 FormatStatusFigure(gca)
+%% Send out email warning if needed
+EmailWarning(Labels(:,1),X,Contour',GLTO)
 end
 
 function [LabelInfo] = DefineLabelTypes(Type)
@@ -344,7 +346,12 @@ end
 %% Creating the labels and determining what side they should be on
 for m=1:1:size(FirstItem,1)
     for n=1:1:size(Status,1)
-        Labels{end+1,1} = [FirstItem{m},' ',Status{n}];  %#ok<*AGROW>
+        if isempty(FirstItem{m})
+            Labels{end+1,1} = [Status{n}];
+        else
+            Labels{end+1,1} = [FirstItem{m},' ',Status{n}];
+        end
+        % Labels{end+1,1} = [FirstItem{m},' ',Status{n}];  %#ok<*AGROW>
         Side = DetermineSide(m,Last);
         if strcmp(Side,'Left')
             Labels{end,2}   = Labels{end,1};

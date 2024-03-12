@@ -1,6 +1,6 @@
 
 
-function EmailWarning(Labels,Times,Status,GLTO)
+function EmailWarning(Labels,Times,Status,GLTO,System)
 %
 %
 %
@@ -8,7 +8,7 @@ function EmailWarning(Labels,Times,Status,GLTO)
 %
 %
 %% 
-Fault = 0;            % Value to look for to see if status is bad ("Fault")
+Fault = 2;            % Value to look for to see if status is bad ("Fault")
 TimeToLookBack = 0.5; % Hours
 Warning = [];         % Pre-allocating an empty string
 %% Labels of elements of interest to check
@@ -44,7 +44,7 @@ if ~isempty(Warning)
     % Outputting the warnings for the logs
     fprintf(Warning)
     % Eamiling warnings to user
-    SendEmail('stillwel@ucar.edu','MPD Status Error',Warning)
+    SendEmail('stillwel@ucar.edu',['MPD Status Error: ',System],Warning)
     % SendEmail('7203293917@txt.att.net','MPD Status Error',Warning)
 end
 

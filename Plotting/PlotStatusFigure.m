@@ -287,7 +287,7 @@ title({[upper(erase(Options.System,'_')),' Status (',Options.Date,')'];
 %% Formatting the figure
 FormatStatusFigure(gca)
 %% Send out email warning if needed
-EmailWarning(Labels(:,1),X,Contour',GLTO)
+EmailWarning(Labels(:,1),X,Contour',GLTO,Options.System)
 end
 
 function [LabelInfo] = DefineLabelTypes(Type)

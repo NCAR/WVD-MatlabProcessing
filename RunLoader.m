@@ -1,7 +1,7 @@
 % Written By: Robert Stillwell
 % Written For: NCAR
 % 
-function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRetF,ProcessRetS,BSOverwrite)
+function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,System,Logging,ProcessHK,ProcessRetF,ProcessRetS,BSOverwrite,SendEmail,EmailTargets)
 %
 % Inputs: Date:       String defining the date to run of the form YYYYMMDD
 %         System:     String defining the system number to run of the form
@@ -26,7 +26,7 @@ function [Data,Retrievals,Options,Paths,RawData,RawTSData] = RunLoader(Date,Syst
 %                     processed MPD time series data
 %
 %% Checking inputs and using default values if running as stand-alone
-if nargin ~= 7
+if nargin ~= 9
     Date        = '20210426';
     System      = 'mpd_05';
     Logging     = 'Skinny';
@@ -34,6 +34,8 @@ if nargin ~= 7
     ProcessRetF = false;
     ProcessRetS = false;
     BSOverwrite = false;
+    SendEmail   = false;
+    EmailTargets={'stillwel@ucar.edu'};
 end
 %% Adding path to utilities, defining options, and defining path info
 for el = {'Bootstrapping','Definitions','HSRLRetrieval','MPDUtilities','Plotting',...
@@ -83,7 +85,7 @@ CalInfo.AfterpulseData = ReadMPDAfterpulseFile(fieldnames(Data.Lidar.Raw),fullfi
 %% Plotting field catalog infomation
 if ProcessHK
     CWLogging('--------Plotting status figure--------\n',Options,'Main')
-    [~,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo);
+    [~,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,SendEmail,EmailTargets);
     SaveUpload(FigNum,Options,Paths,Server,'Status');
     CWLogging('-----Plotting housekeeping figure-----\n',Options,'Main')
     FigNum = PlotHousekeepingFigure(Data,Options);

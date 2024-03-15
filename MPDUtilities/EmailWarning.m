@@ -1,6 +1,6 @@
 
 
-function EmailWarning(Labels,Times,Status,GLTO,System)
+function EmailWarning(Labels,Times,Status,GLTO,System,EmailTargets)
 %
 %
 %
@@ -12,29 +12,37 @@ Fault = 2;            % Value to look for to see if status is bad ("Fault")
 TimeToLookBack = 0.5; % Hours
 Warning = [];         % Pre-allocating an empty string
 %% Labels of elements of interest to check
-RequiredData  = {'MCS Data','LL Data','WS Data'};
-RequiredPower = {'WVOnlineAmpPower','WVOfflineAmpPower','O2OnlineAmpPower','O2OfflineAmpPower'};
-BooleanChecks = {'UPS OnBattery','Temp: HSRLOven','HVACCurrent'};
+RequiredData   = {'MCS Data','LL Data','WS Data'};
+RequiredPower  = {'WVOnlineAmpPower','WVOfflineAmpPower','O2OnlineAmpPower','O2OfflineAmpPower'};
+BooleanChecks  = {'HVACCurrent'};
+AnyErrorChecks =  {'UPS OnBattery','Temp: HSRLOven'};
 %%
 StartTime = GLTO -TimeToLookBack;
 EndTime   = GLTO;
 %% Checking that all required data is availible
 for m=RequiredData
     % Checking for missing data or warnign flags
-    [Missing,WarnReturn] = CheckForWarning(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
+    [Missing,WarnReturn] = CheckForWarning_All(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
     % Appending warnings to the warning string if needed
     Warning = AppendToWarningString(Warning,Missing,WarnReturn,m{1},' seems to be missing',StartTime,EndTime);
 end
 %% Checking that all laser powers are above zero
 for m=RequiredPower
-    [Missing,WarnReturn] = CheckForWarning(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
+    [Missing,WarnReturn] = CheckForWarning_All(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
     % Appending warnings to the warning string if needed
     Warning = AppendToWarningString(Warning,Missing,WarnReturn,m{1},' seems low',StartTime,EndTime);
 end
-%%
+%% Checking for things where continuous warnings are a problam
 for m=BooleanChecks
     %
-    [Missing,WarnReturn] = CheckForWarning(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
+    [Missing,WarnReturn] = CheckForWarning_All(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
+    % Appending warnings to the warning string if needed
+    Warning = AppendToWarningString(Warning,Missing,WarnReturn,m{1},' flag warning',StartTime,EndTime);
+end
+%% Checking for things where any positive warning is a problem
+for m=AnyErrorChecks
+    %
+    [Missing,WarnReturn] = CheckForWarning_Any(Labels,m{1},Fault,Times,Status,StartTime,EndTime);
     % Appending warnings to the warning string if needed
     Warning = AppendToWarningString(Warning,Missing,WarnReturn,m{1},' flag warning',StartTime,EndTime);
 end
@@ -43,14 +51,15 @@ end
 if ~isempty(Warning)
     % Outputting the warnings for the logs
     fprintf(Warning)
-    % Eamiling warnings to user
-    SendEmail('stillwel@ucar.edu',['MPD Status Error: ',System],Warning)
-    % SendEmail('7203293917@txt.att.net','MPD Status Error',Warning)
+    % Emailing warnings to user
+    for m=EmailTargets
+        SendEmail(m{1},['MPD Status Error: ',System],Warning)
+    end
 end
 
 end
 
-function [Missing,WarningReturn] = CheckForWarning(Labels,Desired,Fault,Times,Status,StartTime,EndTime)
+function [Missing,WarningReturn] = CheckForWarning_All(Labels,Desired,Fault,Times,Status,StartTime,EndTime)
 %
 %
 %
@@ -66,9 +75,36 @@ end
 if ~isempty(Column)
     % Extracting the dta from the column of interst
     T = Times(Column,:); S = Status(Column,:);
-    % Seeing if all data for the look back period is "Fault" (i.e. = 2)
+    % Seeing if all data for look back period is "Fault" (i.e. = 2) or nan
     Missing       = false;
-    WarningReturn = all(S(T>StartTime & T<EndTime) == Fault);
+    WarningReturn = all(S(T>StartTime & T<EndTime) == Fault | ...
+                        isnan(S(T>StartTime & T<EndTime)));
+else
+    Missing       = true;
+    WarningReturn = true;
+end
+end
+
+function [Missing,WarningReturn] = CheckForWarning_Any(Labels,Desired,Fault,Times,Status,StartTime,EndTime)
+%
+%
+%
+%% Determining where to look for data in array
+Col = strcmp(Labels,Desired);
+if any(Col)
+    Column = find(Col,1,'first');
+else
+    Column = [];
+end
+%% Pulling out data of interest
+% Checking if element is present
+if ~isempty(Column)
+    % Extracting the dta from the column of interst
+    T = Times(Column,:); S = Status(Column,:);
+    % Seeing if all data for look back period is "Fault" (i.e. = 2) or nan
+    Missing       = false;
+    WarningReturn = any(S(T>StartTime & T<EndTime) == Fault) | ...
+                    all(isnan(S(T>StartTime & T<EndTime)));
 else
     Missing       = true;
     WarningReturn = true;

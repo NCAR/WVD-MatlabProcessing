@@ -1,7 +1,7 @@
 
 
 
-function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,FigNum)
+function [Labels,FigNum] = PlotStatusFigure(Data,RawData,Options,CalInfo,SendEmail,EmailTargets,FigNum)
 %
 %
 %
@@ -15,7 +15,7 @@ Bounds.LLSeedLow    = [20,25];      % Minimum value of seed laser power times -1
 Bounds.EtalonStable = [0.05,0.25];  % Stability of etalons before warnings         [C]
 Bounds.LaserAmp     = [5,25];       % Stability of amplified power before warnings [%]
 %% Checking inputs
-if nargin == 4
+if nargin == 6
     FigNum = FindCurrentFigure + 1;
 end
 %% Setting label information
@@ -287,7 +287,14 @@ title({[upper(erase(Options.System,'_')),' Status (',Options.Date,')'];
 %% Formatting the figure
 FormatStatusFigure(gca)
 %% Send out email warning if needed
-EmailWarning(Labels(:,1),X,Contour',GLTO,Options.System)
+if floor(NowUTC) == datenum(Options.Date,'yyyymmdd')
+    TimeOfDay = (NowUTC-datenum(Options.Date,'yyyymmdd'))*24;
+    if TimeOfDay > 0.5
+        if SendEmail
+            EmailWarning(Labels(:,1),X,Contour',TimeOfDay,Options.System,EmailTargets)
+        end
+    end
+end
 end
 
 function [LabelInfo] = DefineLabelTypes(Type)

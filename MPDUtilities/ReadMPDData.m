@@ -93,7 +93,7 @@ for m=1:1:length(Types)
             CodeName = {'TimeStamp';'Type';'-';'-';'-'};
             Type     = {'-';'String';'-';'-';'-'};
         case 'Current'
-            DataType = 'Current*.nc';
+            DataType = 'Current_*.nc';
             Vars     = {'time';'Current';'CurrentMonitorLocations'};
             CodeName = {'TimeStamp';'-';'Type'};
             Type     = {'-';'-';'String'};

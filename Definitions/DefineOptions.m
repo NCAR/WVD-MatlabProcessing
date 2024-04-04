@@ -50,6 +50,7 @@ Op.WV.BinTime     = 4*60;     % Desired data time resolution          [sec]
 Op.WV.GradFilt    = 1000;     % Count rate gradient to filter         [ ]
 Op.WV.MaxRange    = 6.5e3;    % Max range to run retrievals to        [m]
 Op.WV.MinRange    = 150;      % Start of retrievals                   [m]
+Def.BlankRange    = 150;      % Altitude below which data is blanked  [m]
 Op.WV.SmoothRange = 150;      % Desired smoothing range res           [m]
 Op.WV.SmoothTime  = 4*60;     % Desired smoothing time res            [sec]
 Op.WV             = MakeArrays(Op.WV);

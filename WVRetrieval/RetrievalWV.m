@@ -154,6 +154,7 @@ Spectra.Rebuilt = BuildSpectra(Spectra.PCA,T,P,Data1D.Wavelength,Op);
 WV.TimeStamp  = Counts.BGSub.WVOnline.TimeStamp;
 WV.Range      = Counts.BGSub.WVOnline.Range;
 WV.Value      = N.*Const.MWV.*1000;                   % molec/m^3 to g/m^3
+WV.Value(WV.Range<Options.BlankRange,:) = nan;        % Blanking low data
 WV.Variance   = (NErr.*Const.MWV.*1000).^2;           % molec/m^3 to g/m^3
 WV.Smoothed  = SmoothOld2(WV.Value,Options);
 end

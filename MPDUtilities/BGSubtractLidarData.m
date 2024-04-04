@@ -43,7 +43,7 @@ else
     % Determining the background index
     A = floor(Op.BackgroundInd/BinInfo.BinNum(contains(BinInfo.BinDir,'Range')));
     %  Background subtracting but only for data to max altitude
-    BGS.Background = mean(Counts(end-A:end,:));
+    BGS.Background = mean(Counts(end-A:end,:),'omitnan');
     BGS.Counts     = Counts(CData.Range<Op.MaxRange,:) - BGS.Background;
     BGS.Raw        = Counts(CData.Range<Op.MaxRange,:);
     BGS.Range      = CData.Range(CData.Range<Op.MaxRange);

@@ -170,7 +170,7 @@ function [S] = NormalizeReceiverScan(S)
 %% Normalizing scan parameters
 for m = {'O2Offline'}
     A = S.([m{1},'Comb']).Transmission./S.([m{1},'Mol']).Transmission; 
-    S.([m{1},'Mol']).Transmission = S.([m{1},'Mol']).Transmission.*(median(A));
+    S.([m{1},'Mol']).Transmission = S.([m{1},'Mol']).Transmission.*(median(A,'omitnan'));
 end
 end
 
@@ -194,10 +194,10 @@ Optics.O2OfflineMol.Transmission  = Optics.O2OfflineMol.Transmission./Normalizat
 A = permute(Optics.O2OfflineMol.Transmission,[3,1,2]);
 B = permute(Optics.O2OfflineComb.Transmission,[3,1,2]);
 %% Calculating the spectrally resolved efficiency of each detector
-Cmm = sum(A.*Rb.O2Offline.RayleighBr,3); % Molecular spectrum on molecular detector
-Cmc = sum(B.*Rb.O2Offline.RayleighBr,3); % Molecular spectrum on combined detector
-Cam = sum(A.*Rb.O2Offline.Aerosol,3);    % Aerosol spectrum on molecular detector
-Cac = sum(B.*Rb.O2Offline.Aerosol,3);    % Aerosol spectrum on combined detector
+Cmm = sum(A.*Rb.O2Offline.RayleighBr,3,'omitnan'); % Molecular spectrum on molecular detector
+Cmc = sum(B.*Rb.O2Offline.RayleighBr,3,'omitnan'); % Molecular spectrum on combined detector
+Cam = sum(A.*Rb.O2Offline.Aerosol,3,'omitnan');    % Aerosol spectrum on molecular detector
+Cac = sum(B.*Rb.O2Offline.Aerosol,3,'omitnan');    % Aerosol spectrum on combined detector
 end
 
 % Calculating the backscatter ratio from Stillwell et al. 2020 Equation 6.

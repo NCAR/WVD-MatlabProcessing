@@ -116,6 +116,10 @@ for m=1:1:length(FieldNames)
     % Temperary variables to simplify the math
     Order1.Eta.(FieldNames{m})  = dgdr.*E.*Order0.Tm.(FieldNames{m});
     Order1.Zeta.(FieldNames{m}) = g.*E.*Order0.Tm.(FieldNames{m});
+
+    Order1.Eta.(FieldNames{m})(isnan(Order1.Eta.(FieldNames{m}))) = 0;
+    Order1.Zeta.(FieldNames{m})(isnan(Order1.Zeta.(FieldNames{m}))) = 0;
+
     % Calculate perturbative terms
     Order1.DeltaW.(FieldNames{m}) = trapz(Order1.Zeta.(FieldNames{m}).*(1-Order1.f.(FieldNames{m})),3)./trapz(Order1.Zeta.(FieldNames{m}),3);
     Order1.DeltaG.(FieldNames{m}) = trapz(Order1.Eta.(FieldNames{m}),3)./trapz(Order1.Zeta.(FieldNames{m}),3);

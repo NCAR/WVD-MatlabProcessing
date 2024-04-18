@@ -227,7 +227,7 @@ for m=1:1:1
     for n=1:1:length(LabelInfo.Current)
         switch LabelInfo.Current{n}
             case {'HVAC'}
-                Good = [0,10]; Warning = [0,12.5];
+                Good = [0,10]; Warning = [0,16];
             case 'SystemInput'
                 Good = [0,15]; Warning = [0,17];
             otherwise

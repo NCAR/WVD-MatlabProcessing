@@ -102,8 +102,8 @@ if Options.Bootstrap
     Temp.VarianceSm  = VarComb.Smoothed;
     Temp.MaxChange   = VarComb.ValueMaxChange;
     Temp.MaxChangeSm = VarComb.SmoothedMaxChange;
-    Temp.BootStrapSteps = T;
-    Temp.Alpha       = Alpha;
+    %Temp.BootStrapSteps = T;
+    %Temp.Alpha       = Alpha;
     Temp.InputMask   = InputMask;
 else
     % Background subtracting photons

@@ -75,7 +75,7 @@ if Options.Bootstrap
     HSRL.VarianceSm   = VarComb.Smoothed;
     HSRL.MaxChange      = VarComb.ValueMaxChange;
     HSRL.MaxChangeSm    = VarComb.SmoothedMaxChange;
-    HSRL.BootStrapSteps = HSRLTrial;
+    %HSRL.BootStrapSteps = HSRLTrial;
     HSRL.TGuess         = HSRLComb.Temp;
     HSRL.PGuess         = HSRLComb.Press;
 else

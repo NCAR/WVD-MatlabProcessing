@@ -63,7 +63,7 @@ if Options.Bootstrap
     WV.VarianceSm     = VarComb.Smoothed;
     WV.MaxChange      = VarComb.ValueMaxChange;
     WV.MaxChangeSm    = VarComb.SmoothedMaxChange;
-    WV.BootStrapSteps = WVTrial;
+    %WV.BootStrapSteps = WVTrial;
     % Set threshold for low count rate mask
     LowCountRateThresh = 0.005;
 else

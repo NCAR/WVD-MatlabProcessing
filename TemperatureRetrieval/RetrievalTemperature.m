@@ -64,7 +64,8 @@ Spectra.Optics = ReadSystemScanData(Spectra.PCA,Scan,Const);
 [Counts.Binned,BinInfo] = PreProcessLidarData(Counts.Raw,Options);
 % Downsample and interpolate ancillary data to known MPD grid
 try
-    Data2D.Onboard.HSRL = rmfield(Data2D.Onboard.HSRL,{'BootStrapSteps','MaxChange','MaxChangeSm'});
+    Data2D.Onboard.HSRL = rmfield(Data2D.Onboard.HSRL,{'MaxChange','MaxChangeSm'});
+    Data2D.Onboard.HSRL = rmfield(Data2D.Onboard.HSRL,{'BootStrapSteps'});
 catch
 end
 Data2D = RecursivelyInterpolate2DStructure(Data2D,Options.TimeStamp,Options.Range,'linear');

@@ -18,7 +18,7 @@ PO.FontSize = 16;
 
 %% Applying masks to data
 Retrievals.WaterVapor.Smoothed(Retrievals.WaterVapor.Mask) = nan;
-Retrievals.HSRL.Smoothed(Retrievals.HSRL.Mask) = nan;
+Retrievals.HSRL.ABC(Retrievals.HSRL.Mask) = nan;
 Retrievals.Temperature.Smoothed(Retrievals.Temperature.InputMask) = nan;
 
 %% Plotting retrieved data
@@ -35,8 +35,8 @@ end
 FormatAxis([0,10],CM_viridis(64),Options,PO,'Absolute Humidity [g/m^3]','Retrievals',[],[0,24],[0,6]);
 % Aerosol backscatter coefficient 
 subplot(7,1,3:4);
-pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.Smoothed)))
-CB = FormatAxis([0,2],flipud(CM_magma(64)),Options,PO,'Backscatter Ratio [unitless]',[],[],[0,24],[0,6]);
+pcolor(Retrievals.HSRL.TimeStamp./60./60,Retrievals.HSRL.Range./1e3,real(log10(Retrievals.HSRL.ABC)))
+CB = FormatAxis([-7,-4],flipud(CM_magma(64)),Options,PO,'Aerosol Backscatter Coefficient [1/m/sr]',[],[],[0,24],[0,6]);
 % Temperature
 subplot(7,1,5:6);
 pcolor(Retrievals.Temperature.TimeStamp./60./60,Retrievals.Temperature.Range./1e3,Retrievals.Temperature.Smoothed-273.15);

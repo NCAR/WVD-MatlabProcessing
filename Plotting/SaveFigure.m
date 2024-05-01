@@ -16,6 +16,7 @@ if Op.SaveFigures
         mkdir(Base)
     end
     saveas(FN,fullfile(Base,[lower(erase(Op.System,'_')),'.',Op.Date,'.',Type,'.png']))
+    %saveas(FN,fullfile(Base,[lower(erase(Op.System,'_')),'.',Op.Date,'.',Type,'.fig']))
     close(FN)
 end
 end

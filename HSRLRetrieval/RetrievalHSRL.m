@@ -125,9 +125,9 @@ Fernald.BSR       = (Fernald.ABC + BetaM)./BetaM;
 [~,Fernald.OD] = BackscatterRatioToBackscatterCoefficient(Fernald.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Making HSRL mask
 HSRL.Mask = zeros(size(HSRL.Value));
-HSRL.Mask(HSRL.Variance./HSRL.Value > 2) = 1;
-HSRL.Mask(HSRL.OD > 2)                   = 1;
-HSRL.Mask = DensityFiltering(HSRL.Mask,5,0.5);
+HSRL.Mask(HSRL.Variance./HSRL.Value > 5) = 1;
+HSRL.Mask(HSRL.OD > 1)                   = 1;
+HSRL.Mask = DensityFiltering(HSRL.Mask,5,0.25);
 HSRL.Mask = HSRL.Mask>0.5;
 end
 
@@ -208,11 +208,13 @@ function [BSR] = HSRLCalc(C,HSRL)
 %
 % Outputs: BSR: Backscatter ratio   [unitless]
 %
+%% Applying Savitzky-Golay filter to the molecular counts in time and range
+C.O2OfflineComb.Counts(C.O2OfflineComb.Counts<10) = nan;
+C.O2OfflineMol.Counts  = smoothdata2(C.O2OfflineMol.Counts,'sgolay',{3,11});
+
 %%
-BSR = 1 - ((HSRL.Cmm.*C.O2OfflineComb.Counts.*C.O2OnlineMol.Counts -    ...
-            HSRL.Cmc.*C.O2OfflineMol.Counts .*C.O2OnlineComb.Counts)./  ...
-           (HSRL.Cam.*C.O2OfflineComb.Counts.*C.O2OnlineMol.Counts -    ...
-            HSRL.Cac.*C.O2OfflineMol.Counts .*C.O2OnlineComb.Counts));
+BSR = 1 - ((HSRL.Cmm.*C.O2OfflineComb.Counts - HSRL.Cmc.*C.O2OfflineMol.Counts)./  ...
+           (HSRL.Cam.*C.O2OfflineComb.Counts - HSRL.Cac.*C.O2OfflineMol.Counts));
 end
 
 % This function is used to convert backscatter ratio (observed quantity) to

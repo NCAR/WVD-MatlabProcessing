@@ -37,6 +37,13 @@ Qwv(Qwv>=0.1) = nan;
 %% Loading Hitran information if needed
 if strcmp(Options.Method,'LBL')
     Hitran = LoadHitranData(Paths.HitranSpec);
+    % Figuring out what pair of lines to use
+    MedianOnline = median(Data1D.Wavelength.O2Online.Value,'omitnan').*1e9;
+    if MedianOnline > 769.85
+        Hitran = Hitran(2:-1:1,:);
+    else
+        Hitran = Hitran(3:4,:);
+    end
 end
 
 %% Calculating constants

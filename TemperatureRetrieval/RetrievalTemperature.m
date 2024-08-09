@@ -15,7 +15,7 @@ function [Temp,MPD] = RetrievalTemperature(Op,Paths,Data,Cal,Retrievals)
 Options = Op.Temp;
 %% Defining needed extra path information
 Paths.PCASpec           = fullfile(Paths.Code,'TemperatureRetrieval','PCASpectra');
-Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11.par');
+Paths.HitranSpec        = fullfile(Paths.Code,'TemperatureRetrieval','HitranData','62503f11_Slimmed.par');
 Paths.PCA.Wavelengths   = {'O2Online';'O2Offline'};    % Base wavelengths
 Paths.PCA.Spectra       = {'O2';'RB'};                 % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption';'RayleighBr'}; % Spectra name in code

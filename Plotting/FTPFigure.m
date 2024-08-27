@@ -17,11 +17,9 @@ if Op.UploadFig && Serv
     % Printing a temp file for uploading
     print(FN, Name, '-dpng', '-r300') % set the resolution as 300 dpi
     % Opening up an FTP connection to the field catalog and uploading file
-    test=ftp('catalog.eol.ucar.edu', 'anonymous', 'spuler@ucar.edu');
-    cd(test,Paths.FieldCat);
+    test=sftp('catalog.eol.ucar.edu', "rsfdata", "Password", "MakeHcrLookGood5#");
+    cd(test,'operations');
     mput(test, Name);
-%     cd(test);
-%     dir(test,'lidar*')
     close(test);
     % Removing the temp file so as not to clog up the working directory
     delete(Name)

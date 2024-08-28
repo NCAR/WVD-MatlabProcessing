@@ -18,7 +18,7 @@ if Op.UploadFig && Serv
     print(FN, Name, '-dpng', '-r300') % set the resolution as 300 dpi
     % Opening up an FTP connection to the field catalog and uploading file
     test=sftp('catalog.eol.ucar.edu', "rsfdata", "Password", "MakeHcrLookGood5#");
-    cd(test,'operations');
+    cd(test,Paths.FieldCat);
     mput(test, Name);
     close(test);
     % Removing the temp file so as not to clog up the working directory

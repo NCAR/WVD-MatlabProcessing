@@ -32,7 +32,7 @@ Paths.CalFiles   = fullfile(CalBase,'calfiles');
 Paths.CalVal     = fullfile(CalBase,'calvals',['dial',System(end),'_calvals.json']);
 Paths.Code       = pwd;
 Paths.Data       = fullfile(DataBase,[System,'_data'],Date(1:4),Date);
-Paths.FieldCat   = '/pub/incoming/catalog/operations';
+Paths.FieldCat   = 'operations';
 Paths.PythonData = fullfile(ProcBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(ProcBase,[System,'_processed_data'],'Quickload',SubFolder);

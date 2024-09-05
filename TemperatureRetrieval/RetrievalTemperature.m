@@ -42,9 +42,9 @@ end
 if not(Found)
     MPD = [];
     Op.Temp.HSRLType = 'On'; Options.HSRLType = 'On';
-    % Mimicking NCIP information
-    Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
-    Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
+%     % Mimicking NCIP information
+%     Data2D.Guess.Temperature   = BuildSimpleStruct(Retrievals.HSRL,'TGuess');
+%     Data2D.Guess.Pressure      = BuildSimpleStruct(Retrievals.HSRL,'PGuess');
 end
 %% Putting info in a form handy for data files and access for processing
 Data2D.Onboard.HSRL = Retrievals.HSRL;
@@ -80,7 +80,7 @@ if Options.Bootstrap
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
         % Define guess lapse rate to define atmosphere
-        GuessLapse =  -0.0065 + rand.*(0.0098-0.0065);
+        GuessLapse =  -(0.0065 + rand.*(0.0098-0.0065));
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        Temperature pre-process\n',Op,'Sub')
@@ -88,6 +88,8 @@ if Options.Bootstrap
             % Define guess atmosphere
             ConstProfile = (Options.Range').*(GuessLapse);
             Data2D.NCIP.Temperature.Value = ConstProfile+Data1D.Surface.Temperature.Value';
+            Data2D.NCIP.Pressure.Value = Surface.Pressure'.*((Surface.Temperature'./Data2D.NCIP.Temperature.Value).^ ...
+                                                    (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
             % Actually doing the nuts and bolts to retrieve temperature
             [Alpha{m,n},~,T{m,n},Dt{m,n}] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Bootstrap',Paths);
         end
@@ -149,13 +151,13 @@ function [Alpha,POrders,T,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,
 %          Dt
 %
 %% Checking which data inputs to use
+T    = Data2D.NCIP.Temperature;
+P    = Data2D.NCIP.Pressure;
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
-    T    = Data2D.NCIP.Temperature;
-    P    = Data2D.NCIP.Pressure;
     ABC  = Data2D.MPD.BSCoefficient.Value;
 else
-    T    = Data2D.Guess.Temperature;
-    P    = Data2D.Guess.Pressure;
+%     T    = Data2D.Guess.Temperature;
+%     P    = Data2D.Guess.Pressure;
     ABC  = Data2D.Onboard.HSRL.ABC;
 end
 %% Constructing the needed spectra for processing

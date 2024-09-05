@@ -84,6 +84,13 @@ for m=1:1:Options.TempIter
     TCurrent.Value = TCurrent.Value + DeltaT;
     if abs(TempDiffAvg) <= Tolerance
         break
+    else
+        % Updating the current pressure
+        Integral = zeros(size(Pressure.Value));
+        for n=1:1:size(Pressure.Value,1)-1
+            Integral(n+1,1) = trapz(Altitude(1:n+1,1),Const.MolMAir.*Const.G0./Const.R./TCurrent.Value(1:n+1,1));
+        end
+        Atmo.Pressure.Value = Surf.Pressure.Value.*exp(-Integral);
     end
 %     % Plotting just to see whats going on
 %     if mod(m,5)==1

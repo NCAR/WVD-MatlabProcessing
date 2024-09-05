@@ -39,7 +39,7 @@ if Options.Bootstrap
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
         % Define guess lapse rate to define atmosphere
-        GuessLapse =  -0.0065 + rand.*(0.0098-0.0065);
+        GuessLapse =  -(0.0065 + rand.*(0.0098-0.0065));
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        Water Vapor pre-process\n',Op,'Sub')
@@ -47,8 +47,9 @@ if Options.Bootstrap
             % Pre-defining data structures
             T = Counts.BGSub.WVOffline; P = Counts.BGSub.WVOffline;
             % Define guess atmosphere
-            T.Value = Surface.Temperature'+GuessLapse.*T.Range;                  % Kelvin
-            P.Value = Surface.Pressure'.*(Surface.Temperature'./T.Value).^-5.5;  % Atmospheres
+            T.Value = Surface.Temperature'+GuessLapse.*T.Range;            % Kelvin
+            P.Value = Surface.Pressure'.*((Surface.Temperature'./T.Value).^...
+                           (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
             % Actually doing the nuts and bolts to retrieve water vapor
             [WVTrial{m,n}] = CalcualteWaterVapor(Const,Counts,Data1D,Options,Op,Spectra,T,P); %#ok<AGROW>
         end
@@ -72,8 +73,10 @@ else
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Define guess atmosphere
     T = Counts.BGSub.WVOffline; P = Counts.BGSub.WVOffline;              % Pre-defining data structures
-    T.Value = Surface.Temperature'-0.008.*T.Range;                       % Kelvin
-    P.Value = Surface.Pressure'.*(Surface.Temperature'./T.Value).^-5.5;  % Atmospheres
+    GuessLapse = -0.008;
+    T.Value = Surface.Temperature'+GuessLapse.*T.Range;                    % Kelvin
+    P.Value = Surface.Pressure'.*((Surface.Temperature'./T.Value).^ ...
+                           (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
     % Calculating water vapor molecule number using the DIAL equation
     WV = CalcualteWaterVapor(Const,Counts,Data1D,Options,Op,Spectra,T,P);
     WV.VarianceSm = WV.Variance;

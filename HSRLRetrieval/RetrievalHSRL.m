@@ -51,7 +51,7 @@ if Options.Bootstrap
         CWLogging('        Poisson Thinning & Background Subtracting\n',Op,'Sub')
         Thinned = PoissonThinLidarData(Counts.Binned,BinInfo,Options);
         % Define guess lapse rate to define atmosphere
-        GuessLapse =  0.0065 + rand.*(0.0098-0.0065);
+        GuessLapse =  -(0.0065 + rand.*(0.0098-0.0065));
         % Loop over each set of thinned data
         for n=1:1:2
             CWLogging('        HSRL pre-process\n',Op,'Sub')
@@ -59,8 +59,9 @@ if Options.Bootstrap
             % Pre-defining data structures
             T = Counts.BGSub.O2OfflineComb; P = Counts.BGSub.O2OfflineComb;
             % Define guess atmosphere
-            T.Value = Surf.Temperature'-GuessLapse.*T.Range;               % Kelvin
-            P.Value = Surf.Pressure'.*(Surf.Temperature'./T.Value).^-5.5;  % Atmospheres
+            T.Value = Surf.Temperature'+GuessLapse.*T.Range;               % Kelvin
+            P.Value = Surf.Pressure'.*((Surf.Temperature'./T.Value).^ ...
+                           (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
             % Actually doing the nuts and bolts to retrieve backscatter ratio
             HSRLTrial{m,n} = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);
         end
@@ -84,8 +85,10 @@ else
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
     % Define guess atmosphere
     T = Counts.BGSub.O2OfflineComb; P = Counts.BGSub.O2OfflineComb;              % Pre-defining data structures
-    T.Value = Surf.Temperature'-0.008.*T.Range;                       % Kelvin
-    P.Value = Surf.Pressure'.*(Surf.Temperature'./T.Value).^-5.5;  % Atmospheres
+    GuessLapse = -0.008;
+    T.Value = Surface.Temperature'+GuessLapse.*T.Range;                    % Kelvin
+    P.Value = Surface.Pressure'.*((Surface.Temperature'./T.Value).^ ...
+                           (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
     % Calculating HSRL per Stillwell et al. 2020
     HSRL = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);
     HSRL.TGuess = T.Value;

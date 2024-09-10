@@ -74,6 +74,10 @@ InputMask = Data2D.Onboard.WV.Mask > 0 | Data2D.Onboard.HSRL.Mask >0;
 
 %% Bootstrapping
 if Options.Bootstrap
+    % Pre-defining guess atmosphere axes
+    Data2D.NCIP.Temperature.TimeStamp = Data1D.Surface.Temperature.TimeStamp;
+    Data2D.NCIP.Temperature.Range     = Options.Range;
+    Data2D.NCIP.Pressure              = Data2D.NCIP.Temperature;
     % Looping over bootstrap iterations
     for m=1:1:Options.BootIters
         CWLogging(['   Bootstrap iteration: ',num2str(m),'\n'],Op,'Main')
@@ -156,8 +160,6 @@ P    = Data2D.NCIP.Pressure;
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
     ABC  = Data2D.MPD.BSCoefficient.Value;
 else
-%     T    = Data2D.Guess.Temperature;
-%     P    = Data2D.Guess.Pressure;
     ABC  = Data2D.Onboard.HSRL.ABC;
 end
 %% Constructing the needed spectra for processing

@@ -13,13 +13,12 @@ MaxDt      = 2;         % Threshold of temperature change per iteration
 
 %% Pulling out the water vapor contour to modify the number density of O2
 [IsField,Humidity] = RecursivelyCheckIsField(Data2D, {'MPD','Humidity'});
-[IsField2,Atmo   ] = RecursivelyCheckIsField(Data2D, {'NCIP'});
-if IsField && IsField2
+[~,Atmo   ]        = RecursivelyCheckIsField(Data2D, {'NCIP'});
+if IsField
     % Applying the humidity mask
     Humidity.Value(ceil(Humidity.Mask)==1 | Humidity.Value<0) = 0;
 else
     [~,Humidity] = RecursivelyCheckIsField(Data2D, {'Onboard','WV'});
-    [~,Atmo    ] = RecursivelyCheckIsField(Data2D, {'Guess'});
 end
 
 %% Preparing atmospheric parameters
@@ -82,15 +81,22 @@ for m=1:1:Options.TempIter
     CWLogging(sprintf('      Mean dT: %4.3f\n',TempDiffAvg),Op,'Retrievals')
     % Updating the current temperature
     TCurrent.Value = TCurrent.Value + DeltaT;
+    % Updating the current pressure
     if abs(TempDiffAvg) <= Tolerance
         break
     else
-        % Updating the current pressure
-        Integral = zeros(size(Pressure.Value));
-        for n=1:1:size(Pressure.Value,1)-1
-            Integral(n+1,1) = trapz(Altitude(1:n+1,1),Const.MolMAir.*Const.G0./Const.R./TCurrent.Value(1:n+1,1));
+        % Pre-allocating arrays and filling in nan temperature values
+        Integral = zeros(size(Atmo.Pressure.Value));
+        FillTemperature = TCurrent.Value;
+        FillTemperature(isnan(TCurrent.Value)) = Atmo.Temperature.Value(isnan(TCurrent.Value));
+        % Calculating the integral term of the pressure parameterization
+        for p=1:1:size(Atmo.Pressure.Value,2)
+            for n=1:1:size(Atmo.Pressure.Value,1)-1
+                Integral(n+1,p) = trapz(Atmo.Pressure.Range(1:n+1),Const.MolMAir.*Const.G0./Const.R./FillTemperature(1:n+1,p));
+            end
         end
-        Atmo.Pressure.Value = Surf.Pressure.Value.*exp(-Integral);
+        % Calculating the new pressure
+        Atmo.Pressure.Value = Surf.Pressure.Value'.*exp(-Integral);
     end
 %     % Plotting just to see whats going on
 %     if mod(m,5)==1

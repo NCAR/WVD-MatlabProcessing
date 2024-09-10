@@ -10,14 +10,12 @@ function [Alpha,Pt] = PerturbativeRetrieval(Constants,Counts,Data2D,Options,Spec
 %
 %
 %% Checking which data inputs to use
+T    = Data2D.NCIP.Temperature.Value;
+P    = Data2D.NCIP.Pressure.Value;
 if strcmp(Options.HSRLType,'Py') || strcmp(Options.HSRLType,'PyP')
-    T    = Data2D.NCIP.Temperature.Value;
-    P    = Data2D.NCIP.Pressure.Value;
     HSRL = Data2D.MPD.BackRatio.Value;
     WV   = Data2D.MPD.Humidity.Value;
 else
-    T    = Data2D.Guess.Temperature.Value;
-    P    = Data2D.Guess.Pressure.Value;
     HSRL = Data2D.Onboard.HSRL.Smoothed;
 %     HSRL = Data2D.Onboard.Fernald.BSR;
     WV   = Data2D.Onboard.WV.Value;

@@ -19,7 +19,12 @@ if ismac
     Server   = false;
 elseif isunix
     DataBase = '/scr/smaug1/rsfdata/MPD';
-    CalBase  = '/scr/smaug1/rsfdata/MPD/calibration/eol-lidar-calvals';
+    if strcmp(getenv('HOSTNAME'),'eol-saturn.eol.ucar.edu') || ...
+       strcmp(getenv('HOSTNAME'),'eol-mamba.eol.ucar.edu')
+        CalBase  = '/h/eol/stillwel/Documents/Code/eol-lidar-calvals';
+    else
+        CalBase  = '/scr/smaug1/rsfdata/MPD/calibration/eol-lidar-calvals';
+    end
     ProcBase = DataBase;
     Server   = true;
 end

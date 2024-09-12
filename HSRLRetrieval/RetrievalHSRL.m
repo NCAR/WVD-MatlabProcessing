@@ -110,21 +110,17 @@ Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 SigmaR       = KlettInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,1,0.01,50,770.1e-9,P.Value,T.Value);
 BetaPFrenald = FernaldInversion(HSRL.Range,Counts.BGSub.O2OfflineComb.Counts,Cal,50,770.1e-9,P.Value,T.Value);
 %% Normalizing non-quantitiative retrievals
-% Norm   = mean(HSRL.Value(20:25,:))./mean(SigmaR(20:25,:));
-% Norm2  = mean(HSRL.ABC(20:25,:))./mean(BetaPFrenald(20:25,:));
 [BetaM,~] = RayleighBackscatterCoeff(770.1085e-9,HSRL.PGuess.*1013.25,HSRL.TGuess);
 % Saving the Klett inversion retrievals
 Klett.TimeStamp = HSRL.TimeStamp;
 Klett.Range     = HSRL.Range;
-Klett.BSR       = SigmaR; % .*Norm;
-% Klett.Norm      = repmat(Norm,length(HSRL.Range),1);
+Klett.BSR       = SigmaR;
 [Klett.ABC,Klett.OD] = BackscatterRatioToBackscatterCoefficient(Klett.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 % Saving the Fernald inversion retrievals
 Fernald.TimeStamp = HSRL.TimeStamp;
 Fernald.Range     = HSRL.Range;
-Fernald.ABC       = BetaPFrenald; %.*Norm2;
+Fernald.ABC       = BetaPFrenald;
 Fernald.BSR       = (Fernald.ABC + BetaM)./BetaM;
-% Fernald.Norm      = repmat(Norm2,length(HSRL.Range),1);
 [~,Fernald.OD] = BackscatterRatioToBackscatterCoefficient(Fernald.BSR,HSRL.Range,HSRL.TGuess,HSRL.PGuess);
 %% Making HSRL mask
 HSRL.Mask = zeros(size(HSRL.Value));

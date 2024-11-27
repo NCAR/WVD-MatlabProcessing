@@ -116,8 +116,17 @@ else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
     Counts.BGSub = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
-    % Actually doing the nuts and bolts to retrieve temperature
+    % Pre-defining guess atmosphere axes
+    Data2D.NCIP.Temperature.TimeStamp = Data1D.Surface.Temperature.TimeStamp;
+    Data2D.NCIP.Temperature.Range     = Options.Range;
+    Data2D.NCIP.Pressure              = Data2D.NCIP.Temperature;
+    % Define guess atmosphere
     GuessLapse = -0.008;
+    ConstProfile = (Options.Range').*(GuessLapse);
+    Data2D.NCIP.Temperature.Value = ConstProfile+Data1D.Surface.Temperature.Value';
+    Data2D.NCIP.Pressure.Value = Surface.Pressure'.*((Surface.Temperature'./Data2D.NCIP.Temperature.Value).^ ...
+                                                    (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
+    % Actually doing the nuts and bolts to retrieve temperature
     [Alpha,~,Temp,Dt] = CalculateTemperature(Const,Counts,Data1D,Data2D,Options,Spectra,Op,GuessLapse,'Standard',Paths);
     % Making the output data structure
     Temp.Dt          = Dt;

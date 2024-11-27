@@ -102,7 +102,9 @@ if ProcessRetF || ProcessRetS
     % WV Retrieval and HSRL Retrieval
     if ProcessRetF
         CWLogging('--------Water Vapor Retrieval---------\n',Options,'Main')
-        [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo);
+        [Retrievals.WaterVapor] = RetrievalWV(Options,Paths,Data,CalInfo,false);
+        CWLogging('-------Water Vapor Low Retrieval------\n',Options,'Main')
+        [Retrievals.WaterVaporLow] = RetrievalWV(Options,Paths,Data,CalInfo,true);
         if not(isempty(Retrievals.WaterVapor))
             FigNum = PlotWVQuicklook(Retrievals.WaterVapor,Options.Plot,Options);
             SaveUpload(FigNum,Options,Paths,Server,'Backscatter_WV')

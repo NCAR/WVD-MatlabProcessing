@@ -21,7 +21,7 @@ function [Op] = DefineOptions(Date,System,Logging,ProcessHK,ProcessRet,BSOverwri
 %                     desired for processing MPD data
 %
 %% Defining user options 
-Op.Afterpulse    = true;
+Op.Afterpulse    = false;
 Op.BreakSize     = 15;          % Medians allowed before marking databreak
 Op.Date          = Date;
 Op.InterpMethod  = 'linear';
@@ -37,12 +37,15 @@ Op.Default.Range     = 16e3;                   % Units are kilometers
 Op.TimeGrid1d        = ((30:60:86400)./3600)'; % Data every 60 seconds
 Op.TimeGridLidar     = ((0:60:86400)./3600)';  % Data every 60 seconds
 % Default settings (used to simplify definitions with common settings)
+Def.BackgroundLow = 16e3;     % Altitude bottom to calcluate background [m]
+Def.BackgroundHigh= 17e3;     % Altitude top to calcluate background    [m]
 Def.BackgroundInd = 10;       % Pre-int bins to estimate background noise
 Def.MaxTime       = 24*60*60; % Max time to run retrievals to         [sec]
 Def.BinRange      = 2*37.5;   % Desired data range resolution         [m]
 Def.MinRange      = 0;        % Start of retrievals                   [m]
 Def.BlankRange    = 450;      % Altitude below which data is blanked  [m]
 %% Defining Water Vapor retrieval options
+% Standard retrieval
 Op.WV             = Def;
 Op.WV.Bootstrap   = false;    % Boolean to turn bootstrapping on
 Op.WV.BootIters   = 30;       % Iterations to use when bootstraping
@@ -54,6 +57,21 @@ Def.BlankRange    = 150;      % Altitude below which data is blanked  [m]
 Op.WV.SmoothRange = 150;      % Desired smoothing range res           [m]
 Op.WV.SmoothTime  = 4*60;     % Desired smoothing time res            [sec]
 Op.WV             = MakeArrays(Op.WV);
+% Low altitude retrieval
+Op.WVLow             = Def;
+Op.WVLow.BlankRange  = 90;      % Altitude below which data is blanked  [m]
+Op.WVLow.Bootstrap   = false;   % Boolean to turn bootstrapping on
+Op.WVLow.BootIters   = 30;      % Iterations to use when bootstraping
+Op.WVLow.BinTime     = 4*60;    % Desired data time resolution        [sec]
+Op.WVLow.BinRange    = 30;
+Op.WVLow.GradFilt    = 1000;    % Count rate gradient to filter       [ ]
+Op.WVLow.MaxRange    = 6.480e3; % Max range to run retrievals to      [m]
+Op.WVLow.MinRange    = 0;       % Start of retrievals                 [m]
+Op.WVLow.BlankCounts = 75;      % Altitude below which data is blanked[m]
+Op.WVLow.SmoothRange = [];      % Desired smoothing range res         [m]
+Op.WVLow.SmoothTime  = 6*60;    % Desired smoothing time res          [sec]
+Op.WVLow             = MakeArrays(Op.WVLow);
+
 %% Defining HSRL retrieval options
 Op.HSRL             = Def;
 Op.HSRL.Bootstrap   = false;  % Boolean to turn bootstrapping on
@@ -87,10 +105,11 @@ Op.Temp.SmoothTime  = 20*60;  % Desired smoothing time res            [sec]
 Op.Temp             = MakeArrays(Op.Temp);
 
 if BSOverwrite
-    Op.WV.Bootstrap   = true;
-    Op.HSRL.Bootstrap = true;
-    Op.Temp.Bootstrap = true;
-    Op.Temp.HSRLType  = 'On';
+    Op.WV.Bootstrap    = true;
+    Op.WVLow.Bootstrap = true;
+    Op.HSRL.Bootstrap  = true;
+    Op.Temp.Bootstrap  = true;
+    Op.Temp.HSRLType   = 'On';
 end
 
 %% Defining plotting options

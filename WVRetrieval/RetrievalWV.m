@@ -3,7 +3,7 @@
 % Modificication Info: Created March, 2022
 %                      Added Bootstrapping December, 2023
 
-function [WV] = RetrievalWV(Op,Paths,Data,Cal)
+function [WV] = RetrievalWV(Op,Paths,Data,Cal,Low)
 %
 % Inputs: Op:      Full options structure
 %         Options: Temperature processing specific options
@@ -14,14 +14,19 @@ function [WV] = RetrievalWV(Op,Paths,Data,Cal)
 %
 %
 %% Extracting just the water vapor options for simplicity
-Options = Op.WV;
+if Low
+    Options = Op.WVLow;
+    As   = {'WVOnlineLow';'WVOfflineLow'};
+else
+    Options = Op.WV;
+    As   = {'WVOnline';'WVOffline'};
+end
 %% Defining needed extra path information
 Paths.PCASpec           = fullfile(Paths.Code,'WVRetrieval','PCASpectra');
 Paths.PCA.Wavelengths   = {'WVOnline';'WVOffline'};  % Base wavelengths
 Paths.PCA.Spectra       = {'WV'};                    % Spectra to load
 Paths.PCA.SpectraLabels = {'Absorption'};            % Spectra name in code
 %% Checking if water vapor processing can be run
-As   = {'WVOnline';'WVOffline'};
 Chan = {'';''};
 [Const,Counts.Raw,Data1D,~,Spectra,Surface,Possible] = LoadAndPrepDataForRetrievals(As,Chan,Cal,Data,Op,Options,Paths);
 if not(Possible)
@@ -66,7 +71,11 @@ if Options.Bootstrap
     WV.MaxChangeSm    = VarComb.SmoothedMaxChange;
     %WV.BootStrapSteps = WVTrial;
     % Set threshold for low count rate mask
-    LowCountRateThresh = 0.005;
+    if Low
+        LowCountRateThresh = 0.0005;
+    else
+        LowCountRateThresh = 0.005;
+    end
 else
     % Background subtracting photons
     CWLogging('     Background Subtracting\n',Op,'Sub')
@@ -88,7 +97,7 @@ end
 Counts.BGSub    = BGSubtractLidarData(Counts.Binned,[],BinInfo,Options);
 Rb              = CalculateRelativeBackscatter(Cal,Counts,Data1D,Options);
 WV.RB.TimeStamp = Counts.BGSub.WVOnline.TimeStamp;
-WV.RB.Range     = Counts.Binned.WVOffline.Range;
+WV.RB.Range     = Counts.Binned.WVOffline.Range(1:size(Rb,1));
 WV.RB.Value     = Rb;
 WV.Python       = Python.Online;
 
@@ -101,7 +110,11 @@ MaskErr1  = WV.VarianceSm > (10^2);
 MaskErr2 = 0.*MaskErr1;
 MaskErr  = MaskErr1 | MaskErr2;
 % Gradient filter
-MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
+if Low
+    MaskGrad = MaskNP.*0;
+else
+    MaskGrad = GradientFilter(Rb, Data1D.MCS.WVOffline, BinInfo, Options);
+end
 % RB and are not the same size (in range) so downsize Gradient filter mask
 MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 % Remove high count rate regions
@@ -122,6 +135,9 @@ WV.UpTime = 1 - sum(A)./size(A,2);
 end
 
 function [Rb] = CalculateRelativeBackscatter(Cal,Counts,Data1D,Options)
+
+%%
+Counts.Binned.WVOffline.Range = Counts.Binned.WVOffline.Range(1:size(Counts.Binned.WVOffline.Counts,1));
 %% Calculating relative backscatter
 % Scale term is (range Resolution x Shots Binned x Offline Duty Cycle)
 SwitchRate = Data1D.MCS.WVOffline.ProfilesPerHistogram./(Data1D.MCS.WVOnline.ProfilesPerHistogram+Data1D.MCS.WVOffline.ProfilesPerHistogram);

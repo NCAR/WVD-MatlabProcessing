@@ -41,9 +41,17 @@ if isempty(CData)
     BGS = RecursiveCell2Struct(BSubCell, FieldNames);
 else
     % Determining the background index
-    A = floor(Op.BackgroundInd/BinInfo.BinNum(contains(BinInfo.BinDir,'Range')));
+    if RecursivelyCheckIsField(Op, 'BinRange')
+        % Handling case where background top and bottom should be defined
+        A = floor(Op.BackgroundLow./Op.BinRange);
+        B = floor(Op.BackgroundHigh./Op.BinRange);
+    else
+        % Handling case where background index is not defined
+        B = size(Counts,1);
+        A = B - floor(Op.BackgroundInd/BinInfo.BinNum(contains(BinInfo.BinDir,'Range')));
+    end
     %  Background subtracting but only for data to max altitude
-    BGS.Background = mean(Counts(end-A:end,:),'omitnan');
+    BGS.Background = mean(Counts(A:B,:),'omitnan');
     BGS.Counts     = Counts(CData.Range<Op.MaxRange,:) - BGS.Background;
     BGS.Raw        = Counts(CData.Range<Op.MaxRange,:);
     BGS.Range      = CData.Range(CData.Range<Op.MaxRange);

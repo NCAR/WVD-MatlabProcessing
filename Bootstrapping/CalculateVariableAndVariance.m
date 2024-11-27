@@ -20,7 +20,7 @@ for CalcType = Variable
         for m=1:1:size(T,1)
             % Calculating the parameter of interest
             Step = StepCalc(T{m,1}.(CT),T{m,2}.(CT),In);
-            Mask = ~isnan(Step);
+            Mask = ~isnan(Step) & ~isinf(Step);
             % Removing nans from the summation
             Step(~Mask) = 0;
             % Summing steps 

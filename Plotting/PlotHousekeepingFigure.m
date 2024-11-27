@@ -219,6 +219,7 @@ function ControlYMaxLims(MaxLimits)
 YLimits = ylim;
 if YLimits(1) < MaxLimits(1); YLimits(1) = MaxLimits(1); end
 if YLimits(2) > MaxLimits(2); YLimits(2) = MaxLimits(2); end
+if YLimits(1) > YLimits(2); YLimits(1) = YLimits(2) - 10; end
 ylim(YLimits);
 end
 

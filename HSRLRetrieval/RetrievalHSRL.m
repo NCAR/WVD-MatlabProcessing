@@ -86,8 +86,8 @@ else
     % Define guess atmosphere
     T = Counts.BGSub.O2OfflineComb; P = Counts.BGSub.O2OfflineComb;              % Pre-defining data structures
     GuessLapse = -0.008;
-    T.Value = Surface.Temperature'+GuessLapse.*T.Range;                    % Kelvin
-    P.Value = Surface.Pressure'.*((Surface.Temperature'./T.Value).^ ...
+    T.Value = Surf.Temperature'+GuessLapse.*T.Range;                    % Kelvin
+    P.Value = Surf.Pressure'.*((Surf.Temperature'./T.Value).^ ...
                            (Const.MolMAir.*Const.G0./Const.R./GuessLapse));% Atmospheres
     % Calculating HSRL per Stillwell et al. 2020
     HSRL = CalculateBackscatterRatio(Counts,Data1D,Op,Options,Spectra,T,P);

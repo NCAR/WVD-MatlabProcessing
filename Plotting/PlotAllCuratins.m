@@ -4,10 +4,12 @@
 
 function [FigNum] = PlotAllCuratins(Data,Options,FigNum)
 %
+% Inputs: Data:    Structure containing all lidar data to be plotted
+%         Options: Strucutre containing user defined plotting options
+%         FigNum:  Desired figure number to plot (will be default if not
+%                  used)
 %
-%
-%
-%
+% Outputs: FigNum: Actual figure number plotted
 %
 %% Setting plot options
 % Setting parameters for figure and panel size

@@ -1,9 +1,14 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
 
 function [FigNum] = PlotHousekeepingFigure(Data,Options,FigNum)
 %
+% Inputs: Data:    Structure containing all housekeeping data to be plotted
+%         Options: Strucutre containing user defined plotting options
+%         FigNum:  Desired figure number to plot (will be default if not
+%                  used)
 %
-%
+% Outputs: FigNum: Actual figure number plotted
 %
 %% Checking inputs
 if nargin == 2
@@ -68,13 +73,18 @@ end
 
 function [Subs] = CopyPlotter(Data,Types2Plot,Var2Plot,SubLabel,YMaxLim,YMinLim,Subs,PO)
 %
-% Inputs: 
+% Inputs: Data:       Structure containing all housekeeping data to be plotted
+%         Types2Plot: Cell array containing data class to be plotted
+%         Var2Plot:   Cell array containing specific data to be plotted
+%         SubLabel:   Label used to define the plot
+%         YMaxLim:    Cell array containing sub-arrays defining the maximum
+%                     allowable y-axis value
+%         YMinLim:    Cell array containing sub-arrays defining the minimum
+%                     allowable y-axis value
+%         Subs:       Array containing handles identifying subplots
+%         PO:         Structure containing plotting options
 %
-%
-%
-%
-%
-%
+% Outputs: Subs:      Updated array containing handles identifying subplots
 %
 %% Plotting constants
 Color2Use = [75,142,173]./255;
@@ -98,13 +108,19 @@ end
 
 function [Subs] = GeneralPlotter(Data,Types2Plot,Var2Plot,SubLabel,Subplots,YMaxLim,YMinLim,Subs,PO)
 %
-% Inputs: 
+% Inputs: Data:       Structure containing all housekeeping data to be plotted
+%         Types2Plot: Cell array containing data class to be plotted
+%         Var2Plot:   Cell array containing specific data to be plotted
+%         SubLabel:   Label used to define the plot
+%         Subplots:   A cell array defining what subplot areas to use
+%         YMaxLim:    Cell array containing sub-arrays defining the maximum
+%                     allowable y-axis value
+%         YMinLim:    Cell array containing sub-arrays defining the minimum
+%                     allowable y-axis value
+%         Subs:       Array containing handles identifying subplots
+%         PO:         Structure containing plotting options
 %
-%
-%
-%
-%
-%
+% Outputs: Subs:      Updated array containing handles identifying subplots
 %
 %%
 Label    = '';
@@ -128,15 +144,23 @@ end
 
 function [Subs] = LaserPlotter(Data,Data2Find,Subplots,SubVars,Multiple,SubLabel,YMaxLim,YMinLim,Subs,PO)
 %
-% Inputs: Data:      Data strucutre containing all of the processed data
-%         Data2Find: Substructure to look for in Data. 
-%         Subplots:  A cell of elements defining which subplots to use when 
-%                    creating a subplot
-%         SubVars:   A cell of variables to plot coming from the subplot
-%                    pulled from the Data with Data2Find
-%         Multiple:  An array of constant offsets to use to scale the
-%                    element to be plotted
-%         SubLabel:  A call of strings used to put on each subplot
+% Inputs: Data:       Data strucutre containing all of the processed data
+%         Data2Find:  Substructure to look for in Data
+%         Subplots:   A cell of elements defining which subplots to use when
+%                     creating a subplot
+%         SubVars:    A cell of variables to plot coming from the subplot
+%                     pulled from the Data with Data2Find
+%         Multiple:   An array of constant offsets to use to scale the
+%                     element to be plotted
+%         SubLabel:   A call of strings used to put on each subplot
+%         YMaxLim:    Cell array containing sub-arrays defining the maximum
+%                     allowable y-axis value
+%         YMinLim:    Cell array containing sub-arrays defining the minimum
+%                     allowable y-axis value
+%         Subs:       Array containing handles identifying subplots
+%         PO:         Structure containing plotting options
+%
+% Outputs: Subs:      Array containing handles identifying subplots
 %
 %%
 Label    = '';

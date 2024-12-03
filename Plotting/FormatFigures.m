@@ -1,9 +1,12 @@
-
-
+% Written By: Robert Stillwell
+% Written For: NCAR
 
 function FormatFigures(Fig)
 %
+% Inputs: Fig: The number of the figure to be formatted (Output of the gcf
+%              function)
 %
+% Outputs: none
 %
 %% Checking if wants to format a single figure or all figures
 if nargin == 0

@@ -71,7 +71,6 @@ Op.WVLow.BlankCounts = 75;      % Altitude below which data is blanked[m]
 Op.WVLow.SmoothRange = [];      % Desired smoothing range res         [m]
 Op.WVLow.SmoothTime  = 6*60;    % Desired smoothing time res          [sec]
 Op.WVLow             = MakeArrays(Op.WVLow);
-
 %% Defining HSRL retrieval options
 Op.HSRL             = Def;
 Op.HSRL.Bootstrap   = false;  % Boolean to turn bootstrapping on
@@ -103,7 +102,7 @@ Op.Temp.MinRange    = 150;    % Start of retrievals                   [m]
 Op.Temp.SmoothRange = 300;    % Desired smoothing range res           [m]
 Op.Temp.SmoothTime  = 20*60;  % Desired smoothing time res            [sec]
 Op.Temp             = MakeArrays(Op.Temp);
-
+%% Overwritting settings if the user desires botstrapping
 if BSOverwrite
     Op.WV.Bootstrap    = true;
     Op.WVLow.Bootstrap = true;
@@ -111,7 +110,6 @@ if BSOverwrite
     Op.Temp.Bootstrap  = true;
     Op.Temp.HSRLType   = 'On';
 end
-
 %% Defining plotting options
 Op.Plot.FontSize    = 18;     % Font size to be applied to all figures
 Op.Plot.RB.MaxRange = 12e3;   % Max range to plot for field catalog   [m]

@@ -7,6 +7,7 @@ function [Struct] = RecursiveOverwriteField(Struct,FN,Data,Offset)
 % Inputs: Struct: A structure to search through for data to be overwritten
 %         FN:     A field name to look for for potential overwritting
 %         Data:   Data to overwrite the current field with
+%         Offset: An offset value to add (used for wavemeter in this case)
 %
 % Outputs: Struct: A structure that has been searched with possible data
 %                  overwritting

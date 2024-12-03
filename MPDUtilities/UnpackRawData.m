@@ -4,10 +4,12 @@
 
 function [Data,LidarData] = UnpackRawData(RawData)
 %
-% Inputs: RawData: A data structure that contains all of the loaded data 
+% Inputs: RawData:    A data structure that contains all of the loaded data
 %
-% Outputs: Data:   A data structure containing all loaded data unpacked 
-%                  into a usable form
+% Outputs: Data:      A data structure containing all loaded data unpacked
+%                     into a usable form
+%          LidarData: A structure breaking out the photon count data
+%                     produced by the lidar (not life support data)
 %
 %% Defining elements to unpack
 ToUnpack  = {'Container';'Etalon';'Laser';'MCS';'Current';'Thermocouple'};

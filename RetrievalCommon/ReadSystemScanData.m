@@ -4,9 +4,11 @@
 
 function [Spec] = ReadSystemScanData(Sp,Scan,Const)
 %
-% Input: Sp:    Structure containing all needed PCA spectra structures
-%        Scan:  Structure containing all the known calibration scan data
-%        Const: Structure containing assumed etalon properties
+% Input: Sp:     Structure containing all needed PCA spectra structures
+%        Scan:   Structure containing all the known calibration scan data
+%        Const:  Structure containing assumed etalon properties
+%
+% Outputs: Spec: Structure containing optical spectra for MPD
 %
 %% Modeling the etalon from known measured variables
 % Determining what the spectra to be built are

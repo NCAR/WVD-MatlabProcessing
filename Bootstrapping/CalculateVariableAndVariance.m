@@ -1,4 +1,5 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
 
 
 function [Temp,Var] = CalculateVariableAndVariance(T,Variable,Name)

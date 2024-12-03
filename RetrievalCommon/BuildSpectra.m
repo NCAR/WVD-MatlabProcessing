@@ -12,9 +12,9 @@ function [S] = BuildSpectra(PCASpectra,T,P,Lambda,Options)
 %                     should be in Kelvin. 
 %         P:          2d array of pressures to rebuild spectra at. Units
 %                     should be in atmospheres.
-%
-% 
-%
+%         Lambda:     Structure containing wavelength data for desired
+%                     rebuilt spectra
+%         Options:    Structure containing user defined options
 %                     
 % Outputs: S:         A structure containing the same top and mid levels as 
 %                     PCASpectra structure but with the bottom level being
@@ -83,9 +83,6 @@ function [CrossSection] = PCALineFitting(TrainingSet,PressRebuild,TempRebuild)
 %                             spectrum of interest is to be rebuilt        
 %         TempRebuild:        A column array of temperatures at which the
 %                             spectrum of interest is to be rebuilt
-%         WavelengthsDesired: A row vector of the exact wavelengths at
-%                             which to calculate the absorption cross
-%                             section
 %
 % Outputs: CrossSection:      Units [cm^2]
 %

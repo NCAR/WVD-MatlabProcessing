@@ -1,4 +1,6 @@
-
+% Written By: Robert Stillwell
+% Written For: NCAR
+% 
 % Function to convert power channel map to and from integrers. This is done
 % because the search for integers is much much faster than comparing
 % strings.

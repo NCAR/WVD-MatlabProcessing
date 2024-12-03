@@ -4,9 +4,10 @@
 
 function PlotLidarData(Data,FigNum)
 %
-% Inputs: RawData: A data structure containing loaded data
-%         Data:    A structure containing organized and interpolated data
+% Inputs: Data:    A structure containing organized and interpolated data
 %         FigNum:  A number of the current figure being plotted 
+%
+% Outputs: none
 %
 %% Constants
 C = 299792458;

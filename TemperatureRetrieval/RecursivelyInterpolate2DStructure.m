@@ -7,6 +7,8 @@ function [ReturnDataStructure] = RecursivelyInterpolate2DStructure(OriginalDataS
 % Inputs: OriginalDataStructure: Data structure to to interpolate
 %         NewTime:               An array of monotonically increasing time
 %                                stamps to interpolate data to 
+%         NewRange:              An array of monotonically increasing range
+%                                values to interpolate data to
 %         Method:                Mthod of interpolation to be used
 %
 % Outputs: ReturnDataStructure:  A structure containing all data as before
@@ -25,7 +27,9 @@ function [CellDataNew] = RecursiveInterpolateData(CellData,OldTime,NewTime,OldRa
 %                        
 % Inputs: CellData:      Cell array to recursively interpolate
 %         OldTime:       Array of time stamps to interpolate from
-%         NewTime:       Array of time stamps to interpolate data to 
+%         NewTime:       Array of time stamps to interpolate data to
+%         OldRange:      Array of range bins to interpolate from
+%         NewRange:      Array of range bins to interpolate data to
 %         Method:        The method of interpolation. Inputs should be the
 %                        same as those for the interp1 function
 %                        

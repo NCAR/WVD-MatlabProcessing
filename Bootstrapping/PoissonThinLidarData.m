@@ -8,7 +8,7 @@ function [Thinned] = PoissonThinLidarData(RawData,BinInfo,Options)
 %         BinInfo: A structure containing the user defined binning settings
 %         Options: User defined options for any particular processing 
 %
-% Output: Thinned: Strucutre containining original data, thinned data, and 
+% Output: Thinned: Structure containining original data, thinned data, and 
 %                  background subtracted data
 %
 %% Converting structure to cell array for iterating

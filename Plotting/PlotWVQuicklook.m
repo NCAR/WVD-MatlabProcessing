@@ -4,11 +4,11 @@
 
 function FigNum = PlotWVQuicklook(WV,Options,Op)
 %
-% Inputs: WV:
+% Inputs: WV:      Structure containing the processed water vapor data
 %         Options: Options structure for just WV
-%         Op: Full options structure
+%         Op:      Full options structure
 %
-% Outputs: none
+% Outputs: FigNum: Number of the produced quicklook figure
 %
 %% Checking for weird figure settings
 Options = OverwriteColorbar(Options,Op.Date,Op.System);

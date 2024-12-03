@@ -1,3 +1,6 @@
+% Written By: Robert Stillwell
+% Written For: National Center for Atmospheric Research
+%
 function [Return] = DensityFiltering(Array,Points,Allowable)
 %
 % Inputs: Array:     An array of data to be filtered by nan density. This

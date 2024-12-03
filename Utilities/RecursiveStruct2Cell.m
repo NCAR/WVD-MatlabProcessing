@@ -9,6 +9,7 @@ function [Cell,FieldNames,TimeStamps,Range] = RecursiveStruct2Cell(Struct)
 % Outputs: Cell:       A cell array with all data as the input structure
 %          FieldNames: The names of the variables in each cell 
 %          TimeStamps: Time stamps at the bottom level of each structure
+%          Range:      Range arrays at the bottom level of each structure
 %                      
 %% Converting structure to a cell array
 Cell           = struct2cell(Struct);

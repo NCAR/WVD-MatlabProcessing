@@ -6,8 +6,13 @@ function [ReturnDataStructure] = RecursivelyInterpolateStructure(OriginalDataStr
 %
 % Inputs: OriginalDataStructure: Data structure to to interpolate
 %         NewTime:               An array of monotonically increasing time
-%                                stamps to interpolate data to 
-%         Method:                Mthod of interpolation to be used
+%                                stamps to interpolate data to
+%         NewRange:              An array of monotonically increasing range
+%                                bins to interpolate data to
+%         Method:                Method of interpolation to be used
+%         OneD:                  Boolean value if teh interpolation should
+%                                be: True = 1 dimensional, False= 2
+%                                dimensional
 %
 % Outputs: ReturnDataStructure:  A structure containing all data as before
 %                                but with data interpolated to desired grid

@@ -19,7 +19,7 @@ Bad = {'Current'       ,'TimeStamp';
        'UPS'           ,'TimeStamp';
        'WeatherStation','TimeStamp'};
 % Don't currently see: Quantum Composer, Container, MCS
-%%
+%% Perform the check
 for m=1:1:size(Bad,1)
     % Checking if the fields exist
     [IsField,OldTime] = RecursivelyCheckIsField(Data, Bad(m,:));

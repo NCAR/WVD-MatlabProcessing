@@ -28,6 +28,8 @@ function [CellDataNew] = RecursiveInterpolateData(CellData,OldTime,NewTime,Metho
 %         NewTime:       Array of time stamps to interpolate data to 
 %         Method:        The method of interpolation. Inputs should be the
 %                        same as those for the interp1 function
+%         FieldNames:    A pass-through cell array containing the names of
+%                        the fields in the structure
 %                        
 % Outputs: CellDataNew:  Cell array containing all data as before but with 
 %                        data interpolated to desired grid

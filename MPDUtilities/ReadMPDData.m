@@ -214,20 +214,16 @@ if strcmp(FileType,'Power')
     end
 end
 %% Reshaping the location variable 
-if strcmp(FileType,'Thermocouple') && strcmp(FileVar,'ThermocoupleLocations')
+if (strcmp(FileType,'Thermocouple') && strcmp(FileVar,'ThermocoupleLocations')) || ...
+   (strcmp(FileType,'Current')      && strcmp(FileVar,'CurrentMonitorLocations'))
     % Channel map is already loaded so try to load the number of
     % measurements to repmat the map over
-    Key = ReadVariable(Filename,'Temperature','Double');
-    if iscell(Data) ~= 1 || size(Key,2) ~= length(Data)
-        for m=1:1:size(Key,2); DKey{m,1} = sprintf('Unknown%02.0f',m); end
-        Data = DKey; % Setting data to a default value
+    if strcmp(FileType,'Thermocouple')
+        Key = ReadVariable(Filename,'Temperature','Double');
+    elseif strcmp(FileType,'Current')
+        Key = ReadVariable(Filename,'Current','Double');
     end
-    Data = repmat(Data',size(Key,1),1);
-end
-if strcmp(FileType,'Current') && strcmp(FileVar,'CurrentMonitorLocations')
-    % Channel map is already loaded so try to load the number of
-    % measurements to repmat the map over
-    Key = ReadVariable(Filename,'Current','Double');
+    % Setting up keys to be the same size as main data of a type
     if iscell(Data) ~= 1 || size(Key,2) ~= length(Data)
         for m=1:1:size(Key,2); DKey{m,1} = sprintf('Unknown%02.0f',m); end
         Data = DKey; % Setting data to a default value

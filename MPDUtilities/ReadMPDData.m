@@ -124,9 +124,9 @@ for m=1:1:length(Types)
             Type     = {'-';'-';'-';'-';'-';'-';'-'};
         case 'Power'
             DataType = 'Power*.nc';
-            Vars     = {'time';'RTime';'Power';'AccumEx';'Demux';'ChannelAssignment'};
-            CodeName = {'TimeStamp';'-';'LaserPower';'-';'-';'Type'};
-            Type     = {'-';'-';'-';'-';'-';'String'};
+            Vars     = {'time';'RTime';'Power';'AccumEx';'Demux';'MCSInstance';'ChannelAssignment'};
+            CodeName = {'TimeStamp';'-';'LaserPower';'-';'-';'-';'Type'};
+            Type     = {'-';'-';'-';'-';'-';'-';'String'};
         case 'QuantumComposer'
             DataType = 'Clock*.nc';
             Vars     = {'time';'PulseDelay';'GateDelay';'DutyCycle';'SwitchRate';'PulseDuration';'PRF';'RiseTime';
@@ -202,16 +202,14 @@ if strcmp(FileType,'MCS') && strcmp(FileVar,'Channel')
     end
 end
 %% Power Channel Map (also load channel map to see what should be kept)
-if strcmp(FileType,'Power')
-    % Loading the channel map
-    Key = ReadVariable(Filename,'ChannelAssignment','String');
-    % If Key is read without error, use it to convert the channel number
-    if iscell(Key) && length(Key) == size(Data,2)     % Power data  
-        Data(:,contains(Key,'Unassigned')) = [];
-    elseif iscell(Key) && length(Key) == size(Data,1) % Labeling data
-        Data(contains(Key,'Unassigned')) = [];
-        Data = repmat(PowerChannels(Data)',ncinfo(Filename,'time').Size,1);
+if (strcmp(FileType,'Power') && strcmp(FileVar,'ChannelAssignment'))
+    Key = ReadVariable(Filename,'Power','Double');
+    % Setting up keys to be the same size as main data of a type
+    if iscell(Data) ~= 1 %|| size(Key,2) ~= length(Data)
+        for m=1:1:size(Key,2); DKey{m,1} = sprintf('Unknown%02.0f',m); end
+        Data = DKey; % Setting data to a default value
     end
+    Data = repmat(PowerChannels(Data)',size(Key,1),1);
 end
 %% Reshaping the location variable 
 if (strcmp(FileType,'Thermocouple') && strcmp(FileVar,'ThermocoupleLocations')) || ...

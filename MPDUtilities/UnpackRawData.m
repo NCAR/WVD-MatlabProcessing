@@ -18,24 +18,44 @@ SubField  = 'Data';
 %% Unpacking power data first
 [IsField,Power] = RecursivelyCheckIsField(RawData,'Power');
 if IsField
-    % Determining what data is and where
-    Key = Power.Type; Key(isnan(Key)) = [];
+    % Parsing out channel types for MCX...not necessary for the MCS
+    if size(Power.LaserPower,2) ~= size(Power.Type,2)
+        % Figuring out which block this power data belongs to
+        ChannelNum = size(Power.LaserPower,2);
+        Start      = ChannelNum.*Power.MCSInstance + 1;
+        % Pre-allocating data array
+        Type2 = nan.*ones(size(Power.LaserPower,1),ChannelNum);
+        % Looping over and removing pulse blocks
+        for m=1:1:size(Power.LaserPower,1)
+            Type2(m,:) = Power.Type(m,Start(m):(Start(m)+ChannelNum-1));
+        end
+        % Overwritting type with the actual value
+        Power.Type = Type2;
+    end
+    % Pulling out the data label from the array
+    Key = Power.Type; Key(isnan(Key)) = []; PTypes = unique(Key);
+    PTypes(PTypes==PowerChannels({'Unrecognized'})) = [];
     % Checking if the key is default data (nan)
     if isempty(Key)
         Key = ones(size(Power.Type)).*PowerChannels({'Unrecognized'});
     end
-    PTypes = unique(Key);
     % Converting power data to cell array
-    Power  = rmfield(Power,'Type');
+    Power  = rmfield(Power,'Type'); Power  = rmfield(Power,'MCSInstance');
     FN     = fieldnames(Power);
     Power  = struct2cell(Power);
     % Looping over all data and parsing
     for m=1:1:size(PTypes,1)     % Looping over power types
+        % Determining if there is data from this data type in this row
+        DataExistsInRow = sum(Key == PTypes(m),2) >= 1;
         for n=1:1:size(Power,1)  % Looping over fieldnames
-            if all(size(Key) ==  size(Power{n,1}))
-                Temp{m,1}{n,1} = Power{n,1}(Key == PTypes(m));
+            % Temporary variables to remove rows without relevant data
+            TempVarKeyData   = Key(DataExistsInRow,:);
+            TempVarPowerData = Power{n,1}(DataExistsInRow,:);
+            % Saving data
+            if all(size(TempVarKeyData) ==  size(TempVarPowerData))
+                Temp{m,1}{n,1} = TempVarPowerData(TempVarKeyData == PTypes(m));
             else
-                Temp{m,1}{n,1} = Power{n,1}; %#ok<*AGROW>
+                Temp{m,1}{n,1} = TempVarPowerData; %#ok<*AGROW>
             end
         end
     end
@@ -47,7 +67,7 @@ clear IsField Power
 %% Converting structure to cell to be able to loop over elements
 FieldNames = fieldnames(RawData);
 Data       = struct2cell(RawData);
-%% Unpacking the container/etalon/laser/MCS/Current data to be useful
+%% Unpacking the container/etalon/laser/MCS/Current/Thermocouple data
 for m=1:1:size(ToUnpack,1)
     Member = find(ismember(FieldNames,ToUnpack{m,1}));
     if isempty(Member) ~= 1

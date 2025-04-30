@@ -18,7 +18,8 @@ end
 figure(FigNum);
 set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
 %% Plotting Options
-PO.Hue      = {[0 0 0];[1 0 0];[0 0 1];[.8 0 .8];[0 1 1];[0 .5 0];};           % k,r,b,c,m,g
+% black,red,blue,cyan,magenta,green,gray,peach
+PO.Hue      = {[0 0 0];[1 0 0];[0 0 1];[.8 0 .8];[0 1 1];[0 .5 0];[0.5,0.5,0.5];[1,0.8,0.8];};
 PO.TextXLoc = 0.01;
 PO.TextYLoc = 0.9;
 PO.FontSize = 12;

@@ -9,7 +9,14 @@ function [Converted] = PowerChannels(Data)
 % 
 %
 %% Defining the numeric codes
-S = struct('WVOffline',1,'WVOnline',2,'HSRL',3,'O2Offline',4,'O2Online',5,'Unrecognized',6);
+A = {'WVOffline'   ,'WVOnline'   ,'HSRL'   ,'O2Offline'   ,'O2Online',   ...
+     'WVOfflineTWA','WVOnlineTWA','HSRLTWA','O2OfflineTWA','O2OnlineTWA'};
+B = {'Unrecognized','Unassigned'};
+C = arrayfun(@(m) sprintf('Unknown%02.0f',m),1:99,'UniformOutput',false);
+% Converting to structure
+TypeArray = [(1:length(A)),ones(1,length(B)).*length(A)+1,ones(1,length(C)).*length(A)+1];
+S = cell2struct(num2cell(TypeArray),cat(2,A,B,C),2);
+
 %% Converting
 if isa(Data,'cell')  % Converting from string to number
     try % Convert all data strings to numbers 

@@ -18,26 +18,33 @@ SubField  = 'Data';
 %% Unpacking power data first
 [IsField,Power] = RecursivelyCheckIsField(RawData,'Power');
 if IsField
-    % Parsing out channel types for MCX...not necessary for the MCS
+    % If data is from the MCX, it has a weird sized channel map. If so,
+    % block parse the instance and also convert to voltage. Data from MCS
+    % and default data will have a size that matches.
     if size(Power.LaserPower,2) ~= size(Power.Type,2)
         % Figuring out which block this power data belongs to
         ChannelNum = size(Power.LaserPower,2);
         Start      = ChannelNum.*Power.MCSInstance + 1;
-        % Pre-allocating data array
+        % Pre-allocating data array and looping over to label pulse blocks
         Type2 = nan.*ones(size(Power.LaserPower,1),ChannelNum);
-        % Looping over and removing pulse blocks
         for m=1:1:size(Power.LaserPower,1)
             Type2(m,:) = Power.Type(m,Start(m):(Start(m)+ChannelNum-1));
         end
         % Overwritting type with the actual value
         Power.Type = Type2;
+        % Converting power (Power = Power/Number of Shots/Electrical Gain)
+        Gain = repmat(1240.9*[0.5*ones(1,4),11*ones(1,2)],1,2);
+        Power.LaserPower = Power.LaserPower./(2.^Power.AccumEx)./Gain;
     end
     % Pulling out the data label from the array
-    Key = Power.Type; Key(isnan(Key)) = []; PTypes = unique(Key);
-    PTypes(PTypes==PowerChannels({'Unrecognized'})) = [];
+    Key = Power.Type; Key(isnan(Key)) = [];
     % Checking if the key is default data (nan)
-    if isempty(Key)
+    if isempty(Key) % Adding default data to pass through
         Key = ones(size(Power.Type)).*PowerChannels({'Unrecognized'});
+        PTypes = Key(1);
+    else % Removing unknown channels (unconnected and unneeded)
+        PTypes = unique(Key);
+        PTypes(PTypes==PowerChannels({'Unrecognized'})) = [];
     end
     % Converting power data to cell array
     Power  = rmfield(Power,'Type'); Power  = rmfield(Power,'MCSInstance');
@@ -61,20 +68,19 @@ if IsField
     end
     % Converting to a full structure and cleaning up unneeded variables
     RawData.Power = cell2struct(cellfun(@(s) cell2struct(s,FN),Temp,'Uni',false),PowerChannels(PTypes));
-    clear EqualKey FN IsField Key m n PTypes Temp
 end
-clear IsField Power
-%% Converting structure to cell to be able to loop over elements
+clear IsField Power FN Key m n PTypes Temp
+%% Unpacking the container/etalon/laser/MCS/Current/Thermocouple data
+% Converting structure to cell to be able to loop over elements
 FieldNames = fieldnames(RawData);
 Data       = struct2cell(RawData);
-%% Unpacking the container/etalon/laser/MCS/Current/Thermocouple data
-for m=1:1:size(ToUnpack,1)
+for m=1:1:size(ToUnpack,1) % Looping over elements to unpack
     Member = find(ismember(FieldNames,ToUnpack{m,1}));
-    if isempty(Member) ~= 1
+    if isempty(Member) ~= 1 % If data is availible, unpack it
         Data{Member,1} = UnpackTimeSeriesData(Data{Member,1});
     end
 end
-%% Converting back to strucutre
+% Converting back to strucutre
 Data = cell2struct(Data,FieldNames);
 %% Checking for MCS data and handling accordingly 
 [IsField,LidarData.Raw] = RecursivelyCheckIsField(Data,MCSField);

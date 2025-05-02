@@ -68,7 +68,9 @@ try
         end
     end
 catch
-    fprintf('     Failed to load variable\n')
+    % Telling the user what failed to load and from what file
+    [~,name,ext] = fileparts(Filename);
+    fprintf(['     Failed to load variable: ',name,ext,' -> ', FileVar,'\n'])
     A = nan;
 end
 end

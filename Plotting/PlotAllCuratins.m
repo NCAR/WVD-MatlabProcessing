@@ -48,7 +48,13 @@ end
 BinInfo.BinNum = [1;1];
 BinInfo.BinDir = {'Range';'TimeStamp'};
 % Defining the range and background settings
-Op.BackgroundInd = 10;
+try
+    Op.BinRange = DataNeeded.(CountType{1}).Range(2) - DataNeeded.(CountType{1}).Range(1);
+catch
+    Op.BinRange  = 37.5;
+end
+Op.BackgroundLow = 16e3;     % Altitude bottom to calcluate background [m]
+Op.BackgroundHigh= 17e3;     % Altitude top to calcluate background    [m]
 Op.MaxRange      = 12e3;
 % Background subtracting 
 Data2.BGSub = BGSubtractLidarData(DataNeeded,[],BinInfo,Op);

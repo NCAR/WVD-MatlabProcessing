@@ -118,7 +118,7 @@ end
 % RB and are not the same size (in range) so downsize Gradient filter mask
 MaskGrad = MaskGrad(1:size(MaskErr,1),1:size(MaskErr,2));
 % Remove high count rate regions
-MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 2e6;
+MaskCntR = CntRate(Counts.BGSub.WVOffline.Counts, Data1D.MCS.WVOffline, BinInfo) > 10e6;
 % Remove low count rate regions
 CntsPerShot = Counts.BGSub.WVOffline.Counts./Data1D.MCS.WVOffline.ProfilesPerHistogram';
 MaskCntRLow = CntsPerShot < LowCountRateThresh;

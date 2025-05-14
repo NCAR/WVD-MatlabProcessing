@@ -118,7 +118,15 @@ function Options = OverwriteColorbar(Options, Date, System)
 %
 %
 %%
-if any(strcmp(System,{'mpd_02','mpd_03','mpd_04'}))            &&  ...
+if any(strcmp(System,{'mpd_04'}))            &&  ...
+    datenum(Date,'yyyymmdd') >= datenum('20250506','yyyymmdd') &&  ...
+    datenum(Date,'yyyymmdd') <= datenum('20250820','yyyymmdd')
+    % Japan Bridge
+    Loc = 'Fukue';
+    Options.WV.CAxis = [0,20];
+    Options.RB.ExtraName = [' (BRIDGE -- ',Loc,')'];
+    Options.WV.ExtraName = '';
+elseif any(strcmp(System,{'mpd_02','mpd_03','mpd_04'}))            &&  ...
     datenum(Date,'yyyymmdd') >= datenum('20220520','yyyymmdd') &&  ...
     datenum(Date,'yyyymmdd') <= datenum('20220901','yyyymmdd')
     switch System

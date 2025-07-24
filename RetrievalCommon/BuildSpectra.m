@@ -27,8 +27,8 @@ function [S] = BuildSpectra(PCASpectra,T,P,Lambda,Options)
 %% Reshaping temperature and pressure arrays and storing in a cell array
 B = cellfun(@(S) reshape(S.Value,length(S.Range)*length(S.TimeStamp),1),{T;P},'Uni',false);
 %% Rebuilding spectra at all temperatures
-for m=1:1:size(Cell)          % Looping over wavelengths
-    for n=1:1:size(Cell{m,1}) % Looping over spectra types
+for m=1:1:size(Cell,1)          % Looping over wavelengths
+    for n=1:1:size(Cell{m,1},1) % Looping over spectra types
         tic
         % Unpacking PCA data structure
         PCAData = PCASpectra.(FN{m,1}).(FN{m,2}{n,1});

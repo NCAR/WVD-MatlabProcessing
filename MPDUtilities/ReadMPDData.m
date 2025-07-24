@@ -23,7 +23,7 @@ for m=1:1:size(ToLoad,1)                              % Looping over filetypes
         % No files to load
         TimeBounds = linspace(0,24,100)';
         % Looping over varaibles and filling with default blank data
-        for p=1:1:size(ToLoad{m,CType.FileVar})
+        for p=1:1:size(ToLoad{m,CType.FileVar},1)
             CWLogging(['Loading: ',ToLoad{m,CType.File},', default\n'],Options,'Sub')
             % Pre-allocating data array space
             if strcmp(ToLoad{m,CType.CodeVar}{p},'TimeStamp')
@@ -35,7 +35,7 @@ for m=1:1:size(ToLoad,1)                              % Looping over filetypes
     else
         Found = true;
         % Looping over varaibles
-        for p=1:1:size(ToLoad{m,CType.FileVar})
+        for p=1:1:size(ToLoad{m,CType.FileVar},1)
             % Writing logging information to the command window
             CWLogging(['Loading: ',ToLoad{m,CType.File},', ',ToLoad{m,CType.FileVar}{p},...
                            ' as ',ToLoad{m,CType.CodeVar}{p},'\n'],Options,'Sub')

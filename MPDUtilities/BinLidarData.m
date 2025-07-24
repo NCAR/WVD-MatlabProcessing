@@ -43,7 +43,7 @@ Sizes       = cellfun(@(B) cellfun(@(A) size(A,1),B),UniqueRes,'Uni',false);
 NeedsInterp = size(unique(vertcat(Sizes{:})),1) > 1;
 %% Pushing data to know grid by looping over data types
 InterpData = cell(size(RawData)); % Pre-allocating cell array
-Start = (1:size(Times)-1)';       % Defining counter to get the start times 
+Start = (1:size(Times,1)-1)';       % Defining counter to get the start times 
 for m=1:1:size(RawData,1)
     % Determining the time stamps as the middle of the data period
     InterpData{m,1}.TimeStamp = mean([Times(Start),Times(Start+1)],2,'omitnan');
@@ -52,7 +52,7 @@ for m=1:1:size(RawData,1)
         RawData{m,1}=InterpDataToDefaultGrid(RawData{m,1},DefaultOptions);
     end
     % Looping over interpolation time frames
-    for n=1:1:size(Times)-1
+    for n=1:1:size(Times,1)-1
         % Finding all data in the desired time frame
         Elements = find(RawData{m,1}.TimeStamp >= Times(n) & ...
                         RawData{m,1}.TimeStamp <  Times(n+1));

@@ -173,7 +173,7 @@ if IsField
     Av = fieldnames(TempData);
     Av(ismember(Av,'Unknown')) = []; 
     % Plotting all data
-    for n=1:1:size(Subplots)
+    for n=1:1:size(Subplots,1)
         Label    = '';
         for m=1:1:size(Av,1)
             % Only plot Amplifier data if it is current

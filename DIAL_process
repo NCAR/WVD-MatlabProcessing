@@ -13,7 +13,15 @@ logging=\'$2\'
 email=\$3
 targets=$4
 # set the Matlab command
-matcmd="cd('/home/rsfdata/git/WVD-MatlabProcessing'); [~]=RunLoader(${daystr},${node},${logging},true,true,false,false,$email,{$targets}); exit"
+if [[ ${node} == "'mpd_06'" ]]; then
+process=false
+else
+process=true
+fi
+
+#echo $process
+
+matcmd="cd('/home/rsfdata/git/WVD-MatlabProcessing'); [~]=RunLoader(${daystr},${node},${logging},true,$process,false,false,$email,{$targets}); exit"
 # file, save_quicklook, save_data, save_netCDF, save_catalog
 cmd="/opt/local/MATLAB/R2023b/bin/matlab -nodisplay -nosplash -r \"$matcmd\""
 echo "cmd = $cmd"

@@ -41,4 +41,13 @@ Paths.PythonData = fullfile(ProcBase,[System,'_processed_data'],'Python',...
                                 [lower(erase(System,'_')),'.',Date,'.Python.nc']);
 Paths.Quickload  = fullfile(ProcBase,[System,'_processed_data'],'Quickload',SubFolder);
 Paths.Quicklook  = fullfile(ProcBase,[System,'_processed_data'],'Quicklook');
+
+
+%% Checking if it is actually the ADiHSRL
+if strcmp(System,'mpd_06')
+    Paths.Data       = fullfile(DataBase,'adihsrl_data',Date(1:4),Date);
+    Paths.PythonData = '';
+    Paths.Quicklook  = fullfile(ProcBase,'adihsrl_processed_data','Quicklook');
+    Paths.Quickload  = '';
+end
 end

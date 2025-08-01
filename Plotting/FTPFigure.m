@@ -13,7 +13,11 @@ function FTPFigure(FN,Op,Paths,Serv,Type)
 %%
 if Op.UploadFig && Serv
     % Creating the name of the file to submit
-    Name = ['lidar.NCAR_',upper(erase(Op.System,'_')),'.',Op.Date,'00.',Type,'.png'];
+    if strcmp(Op.System,'mpd_06')
+        Name = ['lidar.NSF_NCAR_ADi_HSRL.',Op.Date,'00.',Type,'.png'];
+    else
+        Name = ['lidar.NCAR_',upper(erase(Op.System,'_')),'.',Op.Date,'00.',Type,'.png'];
+    end
     % Printing a temp file for uploading
     print(FN, Name, '-dpng', '-r300') % set the resolution as 300 dpi
     % Opening up an FTP connection to the field catalog and uploading file

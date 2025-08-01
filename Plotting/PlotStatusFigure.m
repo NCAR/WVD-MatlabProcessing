@@ -317,6 +317,10 @@ switch Type
         LabelInfo.Lasers        = {'WVOnline';'WVOffline';'O2Online';'O2Offline'};
         LabelInfo.Etalons       = {'WVEtalon';'O2Etalon'};
         LabelInfo.Environmental = {'WVEtalonHeatSink';'HSRLEtalonHeatSink';'OpticalBench';'HSRLOven';'HVACSource'};
+    case {'mpd_06'}  % ADi HSRL
+        LabelInfo.Lasers        = {'HSRL'};
+        LabelInfo.Etalons       = {'HSRLEtalon'};
+        LabelInfo.Environmental = {'WVEtalonHeatSink';'HSRLEtalonHeatSink';'OpticalBench';'HSRLOven';'HVACSource'};
     otherwise
         LabelInfo.Lasers        = {'WVOnline';'WVOffline'};
         LabelInfo.Etalons       = {'WVEtalon'};

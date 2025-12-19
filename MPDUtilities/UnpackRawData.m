@@ -101,6 +101,12 @@ function [NewData] = UnpackTimeSeriesData(Data)
 %
 %% Finding unique hardware types
 UniqueTypes = sortrows(unique(Data.Type));
+try
+    if any(contains(UniqueTypes,{'Empty'}))
+        UniqueTypes = sortrows(setdiff(unique(Data.Type),{'Empty'}));
+    end
+catch
+end
 AllTypes    = Data.Type;
 %% Checking if any data exists that is not just default
 if isa(AllTypes,'double')

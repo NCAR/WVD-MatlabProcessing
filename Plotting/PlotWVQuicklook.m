@@ -120,7 +120,7 @@ function Options = OverwriteColorbar(Options, Date, System)
 %%
 if any(strcmp(System,{'mpd_04'}))            &&  ...
     datenum(Date,'yyyymmdd') >= datenum('20250506','yyyymmdd') &&  ...
-    datenum(Date,'yyyymmdd') <= datenum('20250820','yyyymmdd')
+    datenum(Date,'yyyymmdd') <= datenum('20250920','yyyymmdd')
     % Japan Bridge
     Loc = 'Fukue';
     Options.WV.CAxis = [0,20];

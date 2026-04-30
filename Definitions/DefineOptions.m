@@ -63,7 +63,7 @@ Op.WVLow.BlankRange  = 90;      % Altitude below which data is blanked  [m]
 Op.WVLow.Bootstrap   = false;   % Boolean to turn bootstrapping on
 Op.WVLow.BootIters   = 30;      % Iterations to use when bootstraping
 Op.WVLow.BinTime     = 4*60;    % Desired data time resolution        [sec]
-Op.WVLow.BinRange    = 30;
+%Op.WVLow.BinRange    = 30;
 Op.WVLow.GradFilt    = 1000;    % Count rate gradient to filter       [ ]
 Op.WVLow.MaxRange    = 6.480e3; % Max range to run retrievals to      [m]
 Op.WVLow.MinRange    = 0;       % Start of retrievals                 [m]
@@ -120,7 +120,7 @@ Op.Plot.WV.MinRange = 0;      % Min range to plot for field catalog   [m]
 Op.Plot.WV.CAxis    = [0,10]; % Colorbar range for absolute humidity
 %% Defining data to read 
 Op.DataNames = {'Container';'Current';'Etalon';'HumiditySensor';'Laser';'MCS';
-                'Power';'QuantumComposer';'Thermocouple';'UPS';'WeatherStation'}; 
+                'Power';'SmartSwitch';'Thermocouple';'UPS';'WeatherStation'}; 
 end
 
 function [S] = MakeArrays(S)

@@ -43,6 +43,7 @@ for m=1:1:size(LabelInfo.Children,1)
    if strcmp(LabelInfo.Children{m,2},'WavelengthLocking'); CheckData = 'Laser';
    elseif strcmp(LabelInfo.Children{m,2},'MCS');           CheckData = 'Power';
    elseif strcmp(LabelInfo.Children{m,2},'CurrentSensor'); CheckData = 'Current';
+   elseif strcmp(LabelInfo.Children{m,2},'Clock');         CheckData = 'SmartSwitch';
    else;                                                   CheckData = LabelInfo.Children{m,2};
    end
    % Checking if data is availible
@@ -96,7 +97,7 @@ for m=1:1:size(LabelInfo.Lasers,1)
     % If data exists, determine what its color coding should be
     if IsField
         % Checking if the lasers are locked
-        TempData.WaveDiff = TempData.WaveDiff - CalInfo.WMOffset;
+        %TempData.WaveDiff = TempData.WaveDiff - CalInfo.WMOffset;
         Locked = CheckDataStatus(Locked,TempData.WaveDiff,Bounds.LLError);
         % Checking if the seeds are stable 
         if sum(~isnan(TempData.SeedPower)) == 0
@@ -195,7 +196,7 @@ for m=1:1:1
             case 'HSRLOven'
                 Good = [95,110]; Warning = [80,115];
             case 'HVACSource'
-                Good = [20,35]; Warning = [10,40];
+                Good = [10,35]; Warning = [5,40];
             otherwise
                 Good = [nan,nan]; Warning = [nan,nan];
         end
@@ -310,7 +311,7 @@ LabelInfo.Children       = {'MCS'    ,'MCS';
                             'Cur'    ,'CurrentSensor';
                             'Hum'    ,'HumiditySensor';
                             'UPS'    ,'UPS';
-                            'Clock'  ,'QuantumComposer'};
+                            'Clock'  ,'Clock'};
 %% Settings for installed hardware
 switch Type
     case {'mpd_00','mpd_01','mpd_02','mpd_03','mpd_04','mpd_05'}

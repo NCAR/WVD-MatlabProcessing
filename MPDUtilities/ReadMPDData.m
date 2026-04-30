@@ -128,11 +128,16 @@ for m=1:1:length(Types)
             CodeName = {'TimeStamp';'-';'LaserPower';'-';'-';'-';'Type'};
             Type     = {'-';'-';'-';'-';'-';'-';'String'};
         case 'QuantumComposer'
-            DataType = 'Clock*.nc';
+            DataType = 'Clock_*.nc';
             Vars     = {'time';'PulseDelay';'GateDelay';'DutyCycle';'SwitchRate';'PulseDuration';'PRF';'RiseTime';
                         'TSOA';'Online';'Offline';'Gate'};
             CodeName = {'TimeStamp';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-'};
             Type     = {'-';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-';'-'};
+        case 'SmartSwitch'
+            DataType = 'ClockState*.nc';
+            Vars     = {'time';'StartBlock';'EndBlock'};
+            CodeName = {'TimeStamp';'-';'-'};
+            Type     = {'-';'-';'-'};
         case 'Thermocouple'
             DataType = 'HKeep*.nc';
             Vars     = {'time';'Temperature';'ThermocoupleLocations'};

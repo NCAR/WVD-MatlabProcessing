@@ -65,6 +65,7 @@ RawData = CheckMonotonicTimeStamps(RawData);
 % Applying wavemeter offset if possible
 if isfield(CalInfo,'WMOffset') && isfield(RawData,'Laser')
     RawData.Laser = RecursiveOverwriteField(RawData.Laser,'WavelengthActual',[],-CalInfo.WMOffset);
+    RawData.Laser = RecursiveOverwriteField(RawData.Laser,'WaveDiff',[],-CalInfo.WMOffset);
 end
 % Unpacking the container/etalon/laser/MCS data to be useful
 CWLogging('------------Unpack raw data-----------\n',Options,'Main')
@@ -73,6 +74,10 @@ CWLogging('------------Unpack raw data-----------\n',Options,'Main')
 CWLogging('---------Finding data breaks----------\n',Options,'Main')
 Data.TimeSeries = RecursivelyIdentifyBreaks(RawTSData,Options.BreakSize);
 % Recursively pushing all 1-d data to a constant grid 
+if isfield(Data.Lidar.Raw,'Other')
+    Data.Lidar.Raw = rmfield(Data.Lidar.Raw,'Other');
+    Data.TimeSeries.MCS = rmfield(Data.TimeSeries.MCS,'Other');
+end
 CWLogging('---------Interpolate 1d data----------\n',Options,'Main')
 Data.TimeSeries = RecursivelyInterpolateStructure(Data.TimeSeries,Options.TimeGrid1d,[],Options.InterpMethod,true);
 % Making sure that no time series elements are NaNs

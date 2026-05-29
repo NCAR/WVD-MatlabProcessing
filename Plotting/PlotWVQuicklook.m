@@ -147,6 +147,14 @@ elseif any(strcmp(System,{'mpd_02','mpd_03'}))                 &&  ...
     Options.WV.CAxis = [0,8];
     Options.RB.ExtraName = [' (M2HATS -- ',Loc,')'];
     Options.WV.ExtraName = '';
+elseif any(strcmp(System,{'mpd_02','mpd_03','mpd_04','mpd_05'}))   &&  ...
+    datenum(Date,'yyyymmdd') >= datenum('20260609','yyyymmdd') &&  ...
+    datenum(Date,'yyyymmdd') <= datenum('20260909','yyyymmdd')
+    % MPD Thermodynamic Test
+    Loc = 'SGP';
+    Options.WV.CAxis = [0,20];
+    Options.RB.ExtraName = [' (MPD Thermo -- ',Loc,')'];
+    Options.WV.ExtraName = '';
 else
     Options.RB.ExtraName = '';
     Options.WV.ExtraName = '';

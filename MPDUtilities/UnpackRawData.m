@@ -101,7 +101,9 @@ function [NewData] = UnpackTimeSeriesData(Data)
 %
 %% Finding unique hardware types
 UniqueTypes = sortrows(unique(Data.Type));
+%UniqueTypes = UniqueTypes(~cellfun('isempty',UniqueTypes));
 try
+    UniqueTypes = UniqueTypes(~cellfun('isempty',UniqueTypes));
     if any(contains(UniqueTypes,{'Empty'}))
         UniqueTypes = sortrows(setdiff(unique(Data.Type),{'Empty'}));
     end
@@ -117,6 +119,9 @@ if isa(AllTypes,'double')
         UniqueTypes = {'Unrecognized'};
     end
 end
+
+
+
 %% Removing types from the strucutre and making it a cell array for looping
 Data       = rmfield(Data,'Type');
 FieldNames = fieldnames(Data);

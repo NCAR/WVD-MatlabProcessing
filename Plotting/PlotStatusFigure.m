@@ -194,7 +194,7 @@ for m=1:1:1
             case 'OpticalBench'
                 Good = [25,33]; Warning = [20,36];
             case 'HSRLOven'
-                Good = [95,110]; Warning = [80,115];
+                Good = [90,110]; Warning = [80,115];
             case 'HVACSource'
                 Good = [10,35]; Warning = [5,40];
             otherwise

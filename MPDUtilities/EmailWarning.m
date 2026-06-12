@@ -8,9 +8,9 @@ function EmailWarning(Labels,Times,Status,GLTO,System,EmailTargets)
 %
 %
 %% 
-Fault = 2;            % Value to look for to see if status is bad ("Fault")
-TimeToLookBack = 0.5; % Hours
-Warning = [];         % Pre-allocating an empty string
+Fault = 2;             % Value to look for to see if status is bad ("Fault")
+TimeToLookBack = 0.75; % Hours
+Warning = [];          % Pre-allocating an empty string
 %% Labels of elements of interest to check
 RequiredData   = {'MCS Data','LL Data','WS Data'};
 RequiredPower  = {'WVOnlineAmpPower','WVOfflineAmpPower','O2OnlineAmpPower','O2OfflineAmpPower'};

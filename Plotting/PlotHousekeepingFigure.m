@@ -21,7 +21,7 @@ set(gcf,'position',[1023,66,859,912],'color',[1,1,1])
 % black,red,blue,cyan,magenta,green,gray,peach
 PO.Hue      = {[0 0 0];[1 0 0];[0 0 1];[.8 0 .8];[0 1 1];[0 .5 0];[0.5,0.5,0.5];[1,0.8,0.8];};
 PO.TextXLoc = 0.01;
-PO.TextYLoc = 0.9;
+PO.TextYLoc = 0.95;
 PO.FontSize = 12;
 PO.XLims    = [0,24]; 
 PO.XTick    = 0:6:24;
@@ -181,9 +181,18 @@ if IsField
                 subplot(PO.MaxSubs,1,Subplots{n}); hold on;
                 plot(TempData.(Av{m}).TimeStamp,TempData.(Av{m}).(SubVars{n}).*Multiple(n),'Color',PO.Hue{m})
                 Label = [Label, '\color[rgb]{',num2str(PO.Hue{m}),'}',Av{m},'\color{black}, ']; %#ok<AGROW>
-            end
+                if mod(m,4) == 0 && size(Av,1) > 4
+                    Label = [Label,'|'];  %#ok<AGROW>
+                end
+	    end
         end
-        L{n} = Label;
+        if contains(Label,'|')
+            A = split(Label, '|');
+            A(cellfun(@isempty,A)) = [];
+            L{n} = A;
+        else
+            L{n} = Label;
+        end
     end
 end
 %% Formatting subplot
@@ -228,7 +237,12 @@ for n=1:1:length(Subplots)
     if max(Subplots{n}) ~= PO.MaxSubs; set(gca,'xticklabel',{}); end
     % Adding text to define subplot contents (legend)
     if iscell(Label)
-        L = Label{n}(1:end-2);
+        if iscell(Label{n})
+            L = Label{n};
+            L{end} = L{end}(1:end-2);
+        else
+            L = Label{n}(1:end-2);
+        end
     else
         L = Label(1:end-2);
     end
@@ -262,7 +276,8 @@ end
 function AddPlotText(TextXLoc,TextYLoc,Text,FontSize)
 XLoc = xlim; XLoc = (XLoc(2)-XLoc(1)).*TextXLoc + XLoc(1);
 YLoc = ylim; YLoc = (YLoc(2)-YLoc(1)).*TextYLoc + YLoc(1);
-text(XLoc,YLoc,Text,'Fontsize',FontSize,'Fontweight','bold')
+text(XLoc,YLoc,Text,'Fontsize',FontSize,'Fontweight','bold', ...
+     'HorizontalAlignment', 'left','VerticalAlignment', 'top')
 end
 
 function out = cellflat(celllist)

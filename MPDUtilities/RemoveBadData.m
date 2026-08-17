@@ -28,6 +28,10 @@ end
 if IsField
     Data.Laser.Current(Data.Laser.Current==0) = nan;
 end
+[IsField,~] = RecursivelyCheckIsField(Data, {'Thermocouple','Temperature'});
+if IsField
+    Data.Thermocouple.Temperature(Data.Thermocouple.Temperature==400) = nan;
+end
 end
 
 % This function removes identified bad data from the data structure
@@ -43,7 +47,7 @@ function [Struct] = RemoveData(Struct,GoodData)
 if sum(~GoodData) == length(GoodData)
     [IsField,TimeStamp] = RecursivelyCheckIsField(Struct,'TimeStamp');
     % Removing bad data in the entire structure
-    Cell = cellfun(@(X) X.*nan,struct2cell(Struct),'Uni',false);
+    Cell = cellfun(@nanIfNumeric, struct2cell(Struct), 'Uni', false);
     % Converting back to a named structure from a cell arrray
     Struct = cell2struct(Cell,fieldnames(Struct));
     % Putting back the original timestamps
@@ -65,4 +69,12 @@ if sum(~GoodData) > 0
     % Converting back to a named structure from a cell arrray
     Struct = cell2struct(Cell,fieldnames(Struct));
 end
+end
+
+function Y = nanIfNumeric(X)
+    if isnumeric(X)
+        Y = X .* nan;
+    else
+        Y = X;
+    end
 end
